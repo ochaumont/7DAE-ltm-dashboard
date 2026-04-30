@@ -1,0 +1,30 @@
+environment: int
+
+replicaCount: 1
+
+image:
+  repository: r-2k77-devops-docker-releases-local.artifactory.fr.eu.airbus.corp/hosting/fits/int/nextjs-hello-image
+  pullPolicy: IfNotPresent
+
+nextjs:
+  application:
+    base: "/app-f1fd/nextjs-hello/"
+    port: "8080"
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: nextjs-hello-int.f1fd-fits.airbus.corp
+      paths:
+        - path: /app-f1fd/nextjs-hello
+          pathType: Prefix
+  tls: []
+
+autoscaling:
+  enabled: false
+
+resources:
+  limits:   { cpu: 200m, memory: 128Mi }
+  requests: { cpu: 50m,  memory: 64Mi }

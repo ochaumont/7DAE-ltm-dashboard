@@ -1,0 +1,16 @@
+1. Get the application URL:
+
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Values.deployment.name }}-{{ .Values.environment }}-{{ .Values.deployment.service }} -o jsonpath="{.spec.ports[0].nodePort}")
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "ClusterIP" .Values.service.type }}
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Values.deployment.name }}-{{ .Values.environment }}-{{ .Values.deployment.service }} 8080:{{ .Values.service.port }}
+  echo "Visit http://127.0.0.1:8080"
+{{- end }}
