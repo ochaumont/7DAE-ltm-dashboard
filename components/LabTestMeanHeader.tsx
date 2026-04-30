@@ -1,6 +1,7 @@
 import type { LabTestMean } from "@/lib/types";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
+import Avatar from "./Avatar";
 
 export default function LabTestMeanHeader({
   labTestMean,
@@ -35,11 +36,7 @@ export default function LabTestMeanHeader({
       </div>
       {m.manager && (
         <div className="flex items-center gap-3 pt-2">
-          <img
-            src={m.manager.avatar}
-            alt={m.manager.name}
-            className="w-10 h-10 rounded-full object-cover border border-border"
-          />
+          <Avatar name={m.manager.name} seed={m.manager.email} size={40} />
           <div>
             <div className="text-sm font-semibold">{m.manager.name}</div>
             <div className="text-xs text-muted">{m.manager.title}</div>

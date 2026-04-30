@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import LabTestMeanHeader from "@/components/LabTestMeanHeader";
 import Gallery from "@/components/Gallery";
+import Avatar from "@/components/Avatar";
 import { getLabTestMean, getLabTestMeans } from "@/lib/labtestmeans";
 import type { LabTestMean, Person } from "@/lib/types";
 
@@ -192,11 +193,7 @@ export default async function LabTestMeanDetailPage({
         <Section title="People">
           {m.manager && (
             <div className="flex items-center gap-3 mb-4 p-3 rounded border border-border">
-              <img
-                src={m.manager.avatar}
-                alt={m.manager.name}
-                className="w-12 h-12 rounded-full object-cover border border-border"
-              />
+              <Avatar name={m.manager.name} seed={m.manager.email} size={48} />
               <div className="min-w-0">
                 <div className="text-sm font-semibold truncate">
                   {m.manager.name}

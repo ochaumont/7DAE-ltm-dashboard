@@ -20,6 +20,11 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
           src={current.url}
           alt={current.alt ?? ""}
           className="w-full h-full object-cover"
+          onError={(e) => {
+            const t = e.currentTarget;
+            if (!t.src.endsWith("/covers/cover-1.svg"))
+              t.src = "/covers/cover-1.svg";
+          }}
         />
       </div>
       {photos.length > 1 && (
@@ -39,6 +44,11 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
                 src={p.url}
                 alt={p.alt ?? ""}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  const t = e.currentTarget;
+                  if (!t.src.endsWith("/covers/cover-1.svg"))
+                    t.src = "/covers/cover-1.svg";
+                }}
               />
             </button>
           ))}

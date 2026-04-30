@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { LabTestMean } from "@/lib/types";
 import ChipType from "./ChipType";
@@ -19,6 +21,11 @@ export default function LabTestMeanCard({
           alt={labTestMean.name}
           className="w-full h-full object-cover"
           loading="lazy"
+          onError={(e) => {
+            const t = e.currentTarget;
+            if (!t.src.endsWith("/covers/cover-1.svg"))
+              t.src = "/covers/cover-1.svg";
+          }}
         />
         <span className="absolute top-3 left-3">
           <BadgeStatus status={labTestMean.status} />

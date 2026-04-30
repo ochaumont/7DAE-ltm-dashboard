@@ -20,7 +20,7 @@ Tous les arbitrages suivants sont **gelés** pour la V1. Ils remplacent les ques
 - **Statut dérivé `mothballed`** : label UI **"Mothballed"** (et non "Maintenance"). Valeur interne renommée `maintenance → mothballed` dans le type `LabTestMeanStatus`.
 - **`testMeanType = "RT"`** : valeur interne `RT`, label UI **"Mean ResearchOnTest"**.
 - **`testMeanType = null`** : valeur interne `NA`, label UI **"NA"**. Les bancs concernés restent affichés (pas d'exclusion).
-- **Photos V1** : **4 images statiques bundled** dans `public/covers/` (`cover-1.jpg`…`cover-4.jpg`), identiques pour tous les bancs. Pas de placeholder procédural, pas de CDN, pas de panorama. Une itération ultérieure remplacera par des photos par banc via un endpoint dédié — hors scope V1.
+- **Photos V1** (initial) : 4 SVG statiques bundled dans `public/covers/` partagés par tous les bancs. **Remplacé en V2** (voir spec `photos-labtestmeans-depuis-api.md`) : chaque banc utilise sa photo `SELECTED` issue de `documentRefs` via le proxy `/api/photo/[id]`. Les SVG `public/covers/cover-1.svg` restent en placeholder de fallback.
 - **Applications installées / linked benches / capabilities / instrumentation / ATA / shared resources** : **retirées de l'UI**. Pas d'implémentation, pas de section masquée à la volée — les composants et les blocs correspondants sortent du code V1.
 - **Type UI** : on **ajoute** les nouveaux champs (complexity, sécurité, rôles étendus, lifecycle) au type existant, et on le **renomme** `Bench → LabTestMean` pour cohérence de domaine. Cascade de renommages sur les fichiers, types, composants, props, slots de route.
 - **Latence chaude** : V1 = `revalidate: 60` côté Next. À mesurer après intégration avant d'arbitrer une stratégie plus longue.
@@ -83,16 +83,17 @@ Couche `lib/labtestmean-adapter.ts` (fonction pure, testable). Règles :
   - `email` ← `externalId` (format email).
   - `name` ← `name`.
   - `title` ← **"Bench Manager"** (label générique, champ absent de l'API).
-  - `avatar` ← `https://i.pravatar.cc/120?u={email}` (fallback déterministe, comme les mocks actuels).
+  - Pas de champ `avatar` côté domaine : `components/Avatar.tsx` rend des initiales déterministes (couleur dérivée du `email`) — aucun appel à un service tiers (pravatar, gravatar, …).
   - Si `managers[]` est vide (6/312) → manager `null`, bloc People masqué ou réduit.
 - **`roles`** : objet exposant les listes `{name, email}` pour chaque rôle non vide : `architects`, `projectManagers`, `workPakageLeaders`, `leadEngineers`, `deputies`, `depts`. Les listes vides sont omises.
 - **`lifecycle`** : objet `{kickoff?, inService?, mothballed?, dismantled?}` avec uniquement les dates renseignées (`inService ← eisdateyear`).
 - **`programs[]`** : `financeAircraftPrograms[].name`.
 - **`projects[]`** : `financeProjects[].name`.
 - **`accreditation[]`** : liste directe depuis l'API.
-- **Photos V1** : couverture et galerie ignorent l'API. Chaque banc reçoit les mêmes 4 photos locales :
-  - `coverPhoto` ← `/covers/cover-1.jpg`.
-  - `photos[]` ← `[{url: "/covers/cover-1.jpg"}, {url: "/covers/cover-2.jpg"}, {url: "/covers/cover-3.jpg"}, {url: "/covers/cover-4.jpg"}]`.
+- **Photos V2** : extraites de `documentRefs` (filtre `documentType.toLowerCase() === "image"`).
+  - SELECTED = celle dont `name.toUpperCase().includes("SELECTED")`. SELECTED en tête de `photos[]`, le reste à la suite, dans l'ordre du backend.
+  - `coverPhoto` ← URL de la SELECTED. À défaut, première image. À défaut, `/covers/cover-1.svg`.
+  - Toutes les URLs pointent vers le proxy Next : `/api/photo/<documentRefId>?u=<encoded url>` — voir spec `photos-labtestmeans-depuis-api.md`.
   - Pas de panorama 360° — la détection `isPanorama` disparaît du type en V1.
 
 #### Type UI `LabTestMean` (après rename + ajouts + retraits)
@@ -226,10 +227,10 @@ Champs **supprimés** par rapport à l'ancien `Bench` : `instrumentation`, `capa
 
 | Gap | Stratégie V1 |
 |-----|--------------|
-| Photos absentes de l'API | 4 images locales identiques pour tous les bancs. API photos = itération future. |
+| Photos | V1: 4 SVG locaux. V2: `documentRefs` (image type) via proxy `/api/photo/[id]`, SELECTED en cover. |
 | Géocoordonnées absentes | Table frontend `site → {lat, lng}` pour les 4 sites (TLS, HMB, FIL, BRE). |
 | Statut opérationnel | Dérivé des dates de cycle de vie (règle 4 cas, `mothballed` préservé tel quel). |
-| Manager enrichi (title, avatar) | Title = "Bench Manager", avatar = pravatar seed email. |
+| Manager enrichi (title, avatar) | Title = "Bench Manager". Pas d'image distante : composant `Avatar` à initiales locales, couleur déterministe (hash de l'email). |
 | Sections sans source (instrumentation, capabilities, applications, linkedBenches, sharedResources, ata) | Retirées de l'UI — non masquées, supprimées du code. |
 | Latence à froid ~9 s | `revalidate: 60` + spinner. Mesure chaude post-intégration. |
 | Cohérence nommage | Rename `Bench → LabTestMean` sur tous les identifiants frontend. |

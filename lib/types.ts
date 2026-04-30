@@ -11,6 +11,7 @@ export type Complexity = "simple" | "medium" | "complex";
 export type Photo = {
   url: string;
   alt?: string;
+  kind?: "selected" | "other";
 };
 
 export type Location = {
@@ -30,7 +31,6 @@ export type Person = {
 
 export type Manager = Person & {
   title: string;
-  avatar: string;
 };
 
 export type Security = {

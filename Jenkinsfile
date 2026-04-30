@@ -92,9 +92,9 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh "BASE_HREF=${BASE_HREF} npm run build"
-                echo "Stashing out/ directory for Docker packaging..."
-                stash includes: 'out/**', name: 'out'
+                sh "npm run build"
+                echo "Stashing standalone server artifacts for Docker packaging..."
+                stash includes: '.next/standalone/**,.next/static/**,public/**', name: 'next-build'
             }
         }
 
@@ -110,10 +110,10 @@ pipeline {
 						passwordVariable: 'ARTIFACTORY_PASSWORD' // On utilisera ceci comme token
 					)
 				]) {
-                    unstash 'out'
+                    unstash 'next-build'
                     script {
                         echo "Building Image: ${env.FULL_IMAGE_NAME}"
-                        sh "docker build --rm --build-arg BASE_HREF=${BASE_HREF} -t ${env.FULL_IMAGE_NAME} ."
+                        sh "docker build --rm -t ${env.FULL_IMAGE_NAME} ."
                         echo "Pushing Image..."
                         sh "docker image push ${env.FULL_IMAGE_NAME}"
                     }

@@ -67,6 +67,11 @@ export default function MapView({
               src={selected.coverPhoto}
               alt={selected.name}
               className="w-full h-28 object-cover rounded"
+              onError={(e) => {
+                const t = e.currentTarget;
+                if (!t.src.endsWith("/covers/cover-1.svg"))
+                  t.src = "/covers/cover-1.svg";
+              }}
             />
             <div className="flex items-center justify-between">
               <ChipType type={selected.type} />

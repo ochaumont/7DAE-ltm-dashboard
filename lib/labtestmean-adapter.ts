@@ -1,4 +1,4 @@
-import type { FactsheetRef, LabTestMeanDto } from "./atom-api";
+import type { DocumentRef, FactsheetRef, LabTestMeanDto } from "./atom-api";
 import type {
   LabTestMean,
   LabTestMeanStatus,
@@ -36,12 +36,31 @@ const TYPE_MAP: Record<string, LabTestMeanType> = {
   RT: "RT",
 };
 
-const COVERS: Photo[] = [
-  { url: "/covers/cover-1.svg", alt: "Lab test mean cover 1" },
-  { url: "/covers/cover-2.svg", alt: "Lab test mean cover 2" },
-  { url: "/covers/cover-3.svg", alt: "Lab test mean cover 3" },
-  { url: "/covers/cover-4.svg", alt: "Lab test mean cover 4" },
-];
+const PLACEHOLDER_COVER = "/covers/cover-1.svg";
+
+function isSelected(name: string | null | undefined): boolean {
+  return !!name && name.toUpperCase().includes("SELECTED");
+}
+
+function toPhotos(
+  refs: DocumentRef[] | null | undefined,
+  fallbackAlt: string,
+): Photo[] {
+  if (!refs || refs.length === 0) return [];
+  const images = refs.filter((r) => r.documentType?.toLowerCase() === "image");
+  const selected: Photo[] = [];
+  const others: Photo[] = [];
+  for (const r of images) {
+    const photo: Photo = {
+      url: `/api/photo/${r.id}?u=${encodeURIComponent(r.url)}`,
+      alt: r.name && r.name.length > 0 ? r.name : fallbackAlt,
+      kind: isSelected(r.name) ? "selected" : "other",
+    };
+    if (photo.kind === "selected") selected.push(photo);
+    else others.push(photo);
+  }
+  return [...selected, ...others];
+}
 
 function toType(raw: LabTestMeanDto["testMeanType"]): LabTestMeanType {
   if (raw == null) return "NA";
@@ -67,12 +86,10 @@ function toPeople(refs: FactsheetRef[] | undefined): Person[] | undefined {
 function toManager(refs: FactsheetRef[] | undefined): Manager | null {
   if (!refs || refs.length === 0) return null;
   const first = refs[0];
-  const email = first.externalId;
   return {
     name: first.name,
-    email,
+    email: first.externalId,
     title: "Bench Manager",
-    avatar: `https://i.pravatar.cc/120?u=${encodeURIComponent(email)}`,
   };
 }
 
@@ -99,6 +116,12 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
   if (dto.dismantled) lifecycle.dismantled = dto.dismantled;
 
   const geo = site ? GEO_MAP[site] : undefined;
+
+  const photos = toPhotos(dto.documentRefs, dto.name);
+  const coverPhoto =
+    photos.find((p) => p.kind === "selected")?.url ??
+    photos[0]?.url ??
+    PLACEHOLDER_COVER;
 
   return {
     id: dto.id,
@@ -129,7 +152,7 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
     lifecycle,
     programs: (dto.financeAircraftPrograms ?? []).map((p) => p.name),
     projects: (dto.financeProjects ?? []).map((p) => p.name),
-    coverPhoto: COVERS[0].url,
-    photos: COVERS,
+    coverPhoto,
+    photos,
   };
 }

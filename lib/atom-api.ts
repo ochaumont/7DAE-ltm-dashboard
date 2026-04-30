@@ -1,4 +1,4 @@
-const BASE =
+export const ATOM_API_BASE_URL =
   process.env.ATOM_API_BASE_URL ??
   "http://localhost:8080/atom-synchronizer-dev";
 
@@ -13,6 +13,13 @@ export type FactsheetRef = {
 export type FinanceRef = {
   id?: string;
   name: string;
+};
+
+export type DocumentRef = {
+  id: string;
+  name: string | null;
+  documentType: string;
+  url: string;
 };
 
 export type LabTestMeanDto = {
@@ -45,6 +52,7 @@ export type LabTestMeanDto = {
   accreditation: string[] | null;
   financeAircraftPrograms: FinanceRef[] | null;
   financeProjects: FinanceRef[] | null;
+  documentRefs: DocumentRef[] | null;
 };
 
 export class AtomApiError extends Error {
@@ -61,14 +69,14 @@ export class AtomApiError extends Error {
 export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}/api/infos/labtestmeans`, {
+    res = await fetch(`${ATOM_API_BASE_URL}/api/infos/labtestmeans`, {
       next: { revalidate: 60 },
     });
   } catch {
     throw new AtomApiError(
       0,
       "Network error",
-      `ATOM API unreachable at ${BASE}`,
+      `ATOM API unreachable at ${ATOM_API_BASE_URL}`,
     );
   }
   if (!res.ok) throw new AtomApiError(res.status, res.statusText);

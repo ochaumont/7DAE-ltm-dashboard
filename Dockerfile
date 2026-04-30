@@ -3,24 +3,23 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --no-audit --no-fund
 COPY . .
-ARG BASE_HREF=""
-ENV BASE_HREF=${BASE_HREF}
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-FROM nginx:1.27-alpine
-ENV SERVER_PORT=8080
-ENV BASE_HREF=/
+FROM node:20-alpine AS runner
+WORKDIR /app
 
-RUN rm -f /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY nginx-custom.conf /etc/nginx/conf.d/default.conf
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=8080
+ENV HOSTNAME=0.0.0.0
 
-COPY --from=builder /app/out/ /usr/share/nginx/html/
+RUN addgroup -g 1000 -S app && adduser -S app -G app -u 1000
 
-RUN addgroup -S app && adduser -S app -G app \
-    && chown -R app:app /usr/share/nginx/html /var/cache/nginx /var/log/nginx /etc/nginx \
-    && touch /var/run/nginx.pid && chown app:app /var/run/nginx.pid
+COPY --from=builder --chown=app:app /app/public ./public
+COPY --from=builder --chown=app:app /app/.next/standalone ./
+COPY --from=builder --chown=app:app /app/.next/static ./.next/static
+
 USER app
-
 EXPOSE 8080
-CMD ["/bin/sh", "-c", "sed -i -e 's/$SERVER_PORT/'\"$SERVER_PORT\"'/g' /etc/nginx/conf.d/default.conf && sed -i -e 's#$BASE_HREF#'\"$BASE_HREF\"'#g' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["node", "server.js"]
