@@ -93,6 +93,22 @@ function toManager(refs: FactsheetRef[] | undefined): Manager | null {
   };
 }
 
+function toBool(
+  raw: unknown,
+  field: string,
+  externalId: string,
+): boolean | null {
+  if (raw === true || raw === false) return raw;
+  if (raw == null) return null;
+  console.warn(
+    `[adapter] ${externalId} · ${field}: unexpected non-boolean value (${typeof raw}) =`,
+    raw,
+  );
+  if (raw === "true" || raw === 1 || raw === "yes") return true;
+  if (raw === "false" || raw === 0 || raw === "no") return false;
+  return null;
+}
+
 export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
   const site = dto.site ?? "";
   const roles: Roles = {};
@@ -144,8 +160,16 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
     roles,
     security: {
       ecLevel: dto.ecLevel,
-      networkSegregated: dto.networkSegregated,
-      accesscontrol: dto.accesscontrol,
+      networkSegregated: toBool(
+        dto.networkSegregated,
+        "networkSegregated",
+        dto.externalId,
+      ),
+      accesscontrol: toBool(
+        dto.accesscontrol,
+        "accesscontrol",
+        dto.externalId,
+      ),
       accesbadge: dto.accesbadge,
       accreditation: dto.accreditation ?? [],
     },

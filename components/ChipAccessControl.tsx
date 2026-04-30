@@ -1,0 +1,19 @@
+import AccessControlIcon from "./icons/AccessControlIcon";
+
+type Props = {
+  enabled: boolean | null;
+};
+
+export default function ChipAccessControl({ enabled }: Props) {
+  if (enabled == null) return null;
+  const label = enabled ? "Access is secured" : "No access control";
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className="inline-flex items-center"
+    >
+      <AccessControlIcon enabled={enabled} size={20} />
+    </span>
+  );
+}

@@ -29,6 +29,9 @@ const config: Config = {
       borderRadius: {
         card: "var(--radius-card)",
       },
+      maxWidth: {
+        "detail-info": "24rem",
+      },
     },
   },
   plugins: [],

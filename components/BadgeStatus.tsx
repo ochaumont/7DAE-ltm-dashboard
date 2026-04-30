@@ -1,5 +1,6 @@
 import type { LabTestMeanStatus } from "@/lib/types";
 import clsx from "clsx";
+import StatusIcon from "./icons/StatusIcon";
 
 const labels: Record<LabTestMeanStatus, string> = {
   operational: "Operational",
@@ -17,8 +18,10 @@ const colors: Record<LabTestMeanStatus, string> = {
 
 export default function BadgeStatus({
   status,
+  withIcon = false,
 }: {
   status: LabTestMeanStatus;
+  withIcon?: boolean;
 }) {
   return (
     <span
@@ -27,7 +30,11 @@ export default function BadgeStatus({
         colors[status]
       )}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5" />
+      {withIcon ? (
+        <StatusIcon status={status} className="mr-1.5" />
+      ) : (
+        <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5" />
+      )}
       {labels[status]}
     </span>
   );

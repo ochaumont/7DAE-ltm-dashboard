@@ -1,7 +1,9 @@
 import type { LabTestMean } from "@/lib/types";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
-import Avatar from "./Avatar";
+import ChipComplexity from "./ChipComplexity";
+import ChipAccessControl from "./ChipAccessControl";
+import ManagerCard from "./ManagerCard";
 
 export default function LabTestMeanHeader({
   labTestMean,
@@ -9,38 +11,59 @@ export default function LabTestMeanHeader({
   labTestMean: LabTestMean;
 }) {
   const m = labTestMean;
+  const projectManager = m.roles.projectManagers?.[0];
+
   return (
     <header className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <ChipType type={m.type} />
-        <BadgeStatus status={m.status} />
-        {m.complexity && (
-          <span className="text-[10px] uppercase tracking-wide text-muted font-mono px-2 py-0.5 rounded bg-surface-2">
-            {m.complexity}
-          </span>
-        )}
-        <span className="text-xs font-mono text-muted">{m.externalId}</span>
-      </div>
       <h1 className="text-3xl md:text-4xl font-bold leading-tight tracking-tight">
         {m.name}
       </h1>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
-        <span className="flex items-center gap-1.5">
-          <span className="opacity-60">Location:</span>
-          <span className="text-fg">
-            {m.location.city}, {m.location.country}
-            {m.location.building ? ` · ${m.location.building}` : ""}
-            {m.location.room ? ` · ${m.location.room}` : ""}
-          </span>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <ChipType type={m.type} withIcon />
+        <BadgeStatus status={m.status} withIcon />
+        <ChipComplexity level={m.complexity} />
+        <ChipAccessControl enabled={m.security.accesscontrol} />
+      </div>
+
+      <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1">
+        <span className="text-xs uppercase tracking-[0.15em] font-mono text-muted">
+          Location
+        </span>
+        <span className="text-sm text-fg">
+          {m.location.city}, {m.location.country}
+          {m.location.building ? ` · ${m.location.building}` : ""}
+          {m.location.room ? ` · ${m.location.room}` : ""}
         </span>
       </div>
-      {m.manager && (
-        <div className="flex items-center gap-3 pt-2">
-          <Avatar name={m.manager.name} seed={m.manager.email} size={40} />
-          <div>
-            <div className="text-sm font-semibold">{m.manager.name}</div>
-            <div className="text-xs text-muted">{m.manager.title}</div>
-          </div>
+
+      {m.externalId && (
+        <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1">
+          <span className="text-xs uppercase tracking-[0.15em] font-mono text-muted">
+            Code
+          </span>
+          <span className="text-sm font-mono text-fg">
+            [{m.externalId}]
+          </span>
+        </div>
+      )}
+
+      {(m.manager || projectManager) && (
+        <div className="flex flex-col gap-3 pt-2 max-w-detail-info">
+          {m.manager && (
+            <ManagerCard
+              name={m.manager.name}
+              email={m.manager.email}
+              roleLabel="Bench Manager"
+            />
+          )}
+          {projectManager && (
+            <ManagerCard
+              name={projectManager.name}
+              email={projectManager.email}
+              roleLabel="Project Manager"
+            />
+          )}
         </div>
       )}
     </header>

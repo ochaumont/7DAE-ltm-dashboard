@@ -4,9 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import LabTestMeanHeader from "@/components/LabTestMeanHeader";
 import Gallery from "@/components/Gallery";
-import Avatar from "@/components/Avatar";
 import { getLabTestMean, getLabTestMeans } from "@/lib/labtestmeans";
-import type { LabTestMean, Person } from "@/lib/types";
+import type { LabTestMean } from "@/lib/types";
 
 export async function generateStaticParams() {
   try {
@@ -50,25 +49,6 @@ function YesNo({ value }: { value: boolean | null }) {
   );
 }
 
-function PeopleList({ label, people }: { label: string; people: Person[] }) {
-  return (
-    <details className="border border-border rounded p-3">
-      <summary className="cursor-pointer text-sm font-semibold">
-        {label}{" "}
-        <span className="text-xs text-muted font-mono">({people.length})</span>
-      </summary>
-      <ul className="mt-3 space-y-1.5">
-        {people.map((p) => (
-          <li key={p.email} className="text-sm">
-            <span className="font-medium">{p.name}</span>
-            <span className="text-xs text-muted font-mono ml-2">{p.email}</span>
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
-
 function LifecycleTimeline({
   lifecycle,
 }: {
@@ -104,18 +84,6 @@ export default async function LabTestMeanDetailPage({
   const m = await getLabTestMean(id);
   if (!m) notFound();
 
-  const roleEntries: { label: string; people: Person[] }[] = [
-    { label: "Architects", people: m.roles.architects ?? [] },
-    { label: "Project managers", people: m.roles.projectManagers ?? [] },
-    {
-      label: "Work package leaders",
-      people: m.roles.workPakageLeaders ?? [],
-    },
-    { label: "Lead engineers", people: m.roles.leadEngineers ?? [] },
-    { label: "Deputies", people: m.roles.deputies ?? [] },
-    { label: "Departments", people: m.roles.depts ?? [] },
-  ].filter((r) => r.people.length > 0);
-
   return (
     <main className="px-4 md:px-8 py-8 max-w-[1400px] mx-auto">
       <Link
@@ -127,12 +95,14 @@ export default async function LabTestMeanDetailPage({
 
       <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8 mb-12">
         <Gallery photos={m.photos} />
-        <div>
+        <div className="space-y-6">
           <LabTestMeanHeader labTestMean={m} />
           {m.description && (
-            <p className="mt-6 text-base leading-relaxed text-fg/90">
-              {m.description}
-            </p>
+            <Section title="Description">
+              <p className="text-base leading-relaxed text-fg/90 max-w-detail-info">
+                {m.description}
+              </p>
+            </Section>
           )}
         </div>
       </div>
@@ -188,40 +158,6 @@ export default async function LabTestMeanDetailPage({
 
         <Section title="Lifecycle">
           <LifecycleTimeline lifecycle={m.lifecycle} />
-        </Section>
-
-        <Section title="People">
-          {m.manager && (
-            <div className="flex items-center gap-3 mb-4 p-3 rounded border border-border">
-              <Avatar name={m.manager.name} seed={m.manager.email} size={48} />
-              <div className="min-w-0">
-                <div className="text-sm font-semibold truncate">
-                  {m.manager.name}
-                </div>
-                <div className="text-xs text-muted">{m.manager.title}</div>
-                <div className="text-xs text-muted font-mono truncate">
-                  {m.manager.email}
-                </div>
-              </div>
-            </div>
-          )}
-          {roleEntries.length > 0 ? (
-            <div className="space-y-2">
-              {roleEntries.map((r) => (
-                <PeopleList
-                  key={r.label}
-                  label={r.label}
-                  people={r.people}
-                />
-              ))}
-            </div>
-          ) : (
-            !m.manager && (
-              <div className="text-sm text-muted">
-                No people registered.
-              </div>
-            )
-          )}
         </Section>
 
         <Section title="Programs · Projects">
