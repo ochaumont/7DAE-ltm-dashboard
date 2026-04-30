@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Photo } from "@/lib/types";
+import PanoramaClient from "./PanoramaClient";
 
 export default function Gallery({ photos }: { photos: Photo[] }) {
   const [active, setActive] = useState(0);
@@ -16,16 +17,20 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
   return (
     <div className="space-y-3">
       <div className="relative aspect-video bg-surface-2 rounded-card overflow-hidden">
-        <img
-          src={current.url}
-          alt={current.alt ?? ""}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            const t = e.currentTarget;
-            if (!t.src.endsWith("/covers/cover-1.svg"))
-              t.src = "/covers/cover-1.svg";
-          }}
-        />
+        {current.is360 ? (
+          <PanoramaClient src={current.url} />
+        ) : (
+          <img
+            src={current.url}
+            alt={current.alt ?? ""}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const t = e.currentTarget;
+              if (!t.src.endsWith("/covers/cover-1.svg"))
+                t.src = "/covers/cover-1.svg";
+            }}
+          />
+        )}
       </div>
       {photos.length > 1 && (
         <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
@@ -33,6 +38,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
             <button
               key={i}
               onClick={() => setActive(i)}
+              title={p.is360 ? "Image 360°" : undefined}
               className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
                 i === active
                   ? "border-accent opacity-100"
@@ -50,6 +56,14 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
                     t.src = "/covers/cover-1.svg";
                 }}
               />
+              {p.is360 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1 right-1 px-1 py-0.5 rounded text-[10px] font-mono bg-accent text-accent-fg leading-none"
+                >
+                  360°
+                </span>
+              )}
             </button>
           ))}
         </div>

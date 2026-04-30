@@ -12,6 +12,7 @@ export type Photo = {
   url: string;
   alt?: string;
   kind?: "selected" | "other";
+  is360?: boolean;
 };
 
 export type Location = {

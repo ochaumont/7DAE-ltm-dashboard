@@ -13,7 +13,7 @@ export default function ChipAccessControl({ enabled }: Props) {
       aria-label={label}
       className="inline-flex items-center"
     >
-      <AccessControlIcon enabled={enabled} size={20} />
+      <AccessControlIcon enabled={enabled} size={24} />
     </span>
   );
 }

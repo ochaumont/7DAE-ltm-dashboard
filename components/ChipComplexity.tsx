@@ -20,7 +20,7 @@ export default function ChipComplexity({
       aria-label={`Complexity: ${label}`}
       className="inline-flex items-center"
     >
-      <ComplexityIcon level={level} size={20} />
+      <ComplexityIcon level={level} size={24} />
     </span>
   );
 }

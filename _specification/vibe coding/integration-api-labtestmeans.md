@@ -94,7 +94,7 @@ Couche `lib/labtestmean-adapter.ts` (fonction pure, testable). Règles :
   - SELECTED = celle dont `name.toUpperCase().includes("SELECTED")`. SELECTED en tête de `photos[]`, le reste à la suite, dans l'ordre du backend.
   - `coverPhoto` ← URL de la SELECTED. À défaut, première image. À défaut, `/covers/cover-1.svg`.
   - Toutes les URLs pointent vers le proxy Next : `/api/photo/<documentRefId>?u=<encoded url>` — voir spec `photos-labtestmeans-depuis-api.md`.
-  - Pas de panorama 360° — la détection `isPanorama` disparaît du type en V1.
+  - **Panorama 360°** : `Photo.is360 = name.toUpperCase().includes("3D")`. Indépendant de SELECTED (les deux flags peuvent coexister). La galerie de la fiche détail bascule sur un viewer interactif quand `is360 === true` — voir spec `visionneuse-360-photos-3d.md`.
 
 #### Type UI `LabTestMean` (après rename + ajouts + retraits)
 ```ts

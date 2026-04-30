@@ -42,6 +42,12 @@ function isSelected(name: string | null | undefined): boolean {
   return !!name && name.toUpperCase().includes("SELECTED");
 }
 
+const RE_3D = /3D\.[A-Za-z0-9]+$/;
+
+function is3D(name: string | null | undefined): boolean {
+  return !!name && RE_3D.test(name);
+}
+
 function toPhotos(
   refs: DocumentRef[] | null | undefined,
   fallbackAlt: string,
@@ -55,6 +61,7 @@ function toPhotos(
       url: `/api/photo/${r.id}?u=${encodeURIComponent(r.url)}`,
       alt: r.name && r.name.length > 0 ? r.name : fallbackAlt,
       kind: isSelected(r.name) ? "selected" : "other",
+      is360: is3D(r.name),
     };
     if (photo.kind === "selected") selected.push(photo);
     else others.push(photo);

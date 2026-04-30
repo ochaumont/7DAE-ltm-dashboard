@@ -27,11 +27,8 @@ export default function LabTestMeanCard({
               t.src = "/covers/cover-1.svg";
           }}
         />
-        <span className="absolute top-3 left-3">
-          <BadgeStatus status={labTestMean.status} />
-        </span>
       </div>
-      <div className="p-4 space-y-2">
+      <div className="px-4 pt-4 pb-3 space-y-2">
         <div className="flex items-center justify-between gap-2">
           <ChipType type={labTestMean.type} />
           {labTestMean.complexity && (
@@ -49,15 +46,8 @@ export default function LabTestMeanCard({
             ? ` · ${labTestMean.location.building}`
             : ""}
         </p>
-        <div className="flex flex-wrap gap-1 pt-1">
-          {labTestMean.programs.map((p) => (
-            <span
-              key={p}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 text-muted font-mono"
-            >
-              {p}
-            </span>
-          ))}
+        <div>
+          <BadgeStatus status={labTestMean.status} />
         </div>
       </div>
     </Link>
