@@ -38,7 +38,7 @@ There is **no** mock JSON, **no** `/bench/` segment, **no** `/d/<direction>` seg
 ### Data flow
 - Pages are server components (`export const dynamic = "force-dynamic"`) that call `getLabTestMeans()` once and pass arrays to client components as props.
 - `lib/atom-api.ts` — `fetch` against `${ATOM_API_BASE_URL}/api/infos/labtestmeans` (defaults to `http://localhost:8080/atom-synchronizer-dev`). Throws `AtomApiError` with `status: 0` on network failure; `app/error.tsx` matches the message to render a backend-down screen.
-- `lib/labtestmean-adapter.ts` — maps the backend `LabTestMeanDto` → frontend `LabTestMean`. Derives `status` from lifecycle dates (`dismantled` → `out-of-service`, `mothballed` → `mothballed`, missing `eisdateyear` → `in-project`, else `operational`). Uppercases the `testMeanType` enum. Hardcodes country/city/geo lookup for the four known sites: **TLS, HMB, FIL, BRE** — anything else falls through to `Unknown` and is silently filtered out of `/map`.
+- `lib/labtestmean-adapter.ts` — maps the backend `LabTestMeanDto` → frontend `LabTestMean`. Derives `status` from lifecycle dates (`dismantled` → `out-of-service`, `mothballed` → `mothballed`, missing `eisdateyear` → `in-project`, else `operational`). Uppercases the `category` enum (formerly `testMeanType` upstream). Hardcodes country/city/geo lookup for the four known sites: **TLS, HMB, FIL, BRE** — anything else falls through to `Unknown` and is silently filtered out of `/map`.
 - All cards/galleries currently use placeholder cover SVGs in `public/covers/` because the DTO has no photo fields. The detail-page gallery shows the same covers.
 - Filtering happens client-side over the array passed from the server component.
 

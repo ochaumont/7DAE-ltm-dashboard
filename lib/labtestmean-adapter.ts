@@ -62,7 +62,7 @@ function toPhotos(
   return [...selected, ...others];
 }
 
-function toType(raw: LabTestMeanDto["testMeanType"]): LabTestMeanType {
+function toType(raw: LabTestMeanDto["category"]): LabTestMeanType {
   if (raw == null) return "NA";
   return TYPE_MAP[raw] ?? "NA";
 }
@@ -143,7 +143,7 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
     id: dto.id,
     externalId: dto.externalId,
     name: dto.name,
-    type: toType(dto.testMeanType),
+    type: toType(dto.category),
     complexity: dto.complexity ?? null,
     description: dto.description ?? "",
     status: toStatus(dto),

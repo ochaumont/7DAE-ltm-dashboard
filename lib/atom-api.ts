@@ -26,7 +26,7 @@ export type LabTestMeanDto = {
   id: string;
   externalId: string;
   name: string;
-  testMeanType: "sib" | "simu" | "fib" | "RT" | null;
+  category: "sib" | "simu" | "fib" | "RT" | null;
   complexity: "simple" | "medium" | "complex" | null;
   country: string | null;
   site: string | null;
