@@ -1,0 +1,51 @@
+{
+  "lastIndexCommit": "11a88ac9c2ba2e202a46bed0a352cc7230da9275",
+  "lastIndexDate": "2026-04-12T21:00:55+02:00",
+  "mode": "full",
+  "manifests": {
+    "backend-entities.md": {
+      "sourceGlobs": ["sweet-backend/src/main/java/**/model/**/*.java"],
+      "entityCount": 22,
+      "enumCount": 18,
+      "lineCount": 450
+    },
+    "backend-api.md": {
+      "sourceGlobs": ["sweet-backend/src/main/java/**/controller/**/*.java", "sweet-backend/src/main/java/**/service/**/*.java", "sweet-backend/src/main/java/**/repository/**/*.java"],
+      "endpointCount": 90,
+      "serviceCount": 20,
+      "lineCount": 600
+    },
+    "frontend-pages.md": {
+      "sourceGlobs": ["sweet-frontend/src/app/**/*.tsx", "sweet-frontend/src/app/**/*.ts"],
+      "pageCount": 13,
+      "tabCount": 18,
+      "lineCount": 800
+    },
+    "frontend-components.md": {
+      "sourceGlobs": ["sweet-frontend/src/components/**/*.tsx", "sweet-frontend/src/components/**/*.ts"],
+      "componentCount": 21,
+      "lineCount": 500
+    },
+    "frontend-hooks.md": {
+      "sourceGlobs": ["sweet-frontend/src/hooks/**/*.ts"],
+      "hookCount": 10,
+      "lineCount": 350
+    },
+    "frontend-lib.md": {
+      "sourceGlobs": ["sweet-frontend/src/lib/**/*.ts", "sweet-frontend/src/lib/**/*.tsx", "sweet-frontend/src/types/**/*.ts", "sweet-frontend/src/i18n/**/*.ts", "sweet-frontend/src/i18n/**/*.tsx"],
+      "exportCount": 120,
+      "lineCount": 600
+    },
+    "packages.md": {
+      "sourceGlobs": ["sweet-gantt/src/**", "sweet-releaseGrid/src/**", "sweet-types/src/**", "sweet-calendar/src/**", "sweet-workload/src/**", "sweet-workloadEngine/src/**"],
+      "packageCount": 5,
+      "lineCount": 400
+    }
+  },
+  "stats": {
+    "sourceFilesScanned": 249,
+    "sourceLinesScanned": 27750,
+    "manifestLinesWritten": 3700,
+    "compressionRatio": "7.5:1"
+  }
+}

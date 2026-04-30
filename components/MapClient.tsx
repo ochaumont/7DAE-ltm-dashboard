@@ -1,0 +1,80 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import FilterBar, { type FilterValue } from "@/components/FilterBar";
+import FilterSheet from "@/components/FilterSheet";
+import { filterLabTestMeans } from "@/lib/labtestmeans";
+import type {
+  Complexity,
+  LabTestMean,
+  LabTestMeanStatus,
+  LabTestMeanType,
+} from "@/lib/types";
+
+const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+
+type Props = {
+  labTestMeans: LabTestMean[];
+  types: LabTestMeanType[];
+  statuses: LabTestMeanStatus[];
+  countries: string[];
+  programs: string[];
+  complexities: Complexity[];
+};
+
+export default function MapClient({
+  labTestMeans,
+  types,
+  statuses,
+  countries,
+  programs,
+  complexities,
+}: Props) {
+  const [filters, setFilters] = useState<FilterValue>({
+    search: "",
+    types: [],
+    statuses: [],
+    countries: [],
+    programs: [],
+    complexities: [],
+  });
+
+  const visible = useMemo(
+    () => filterLabTestMeans(labTestMeans, filters),
+    [labTestMeans, filters]
+  );
+
+  return (
+    <div className="relative h-[calc(100vh-57px)]">
+      <div className="absolute inset-0">
+        <MapView labTestMeans={visible} />
+      </div>
+      <div className="absolute top-4 left-4 w-[340px] max-h-[calc(100vh-100px)] glass-panel p-5 overflow-y-auto z-10 hidden lg:block">
+        <h2 className="text-lg font-bold mb-1">Lab test means by location</h2>
+        <p className="text-xs text-muted mb-4">
+          {visible.length} of {labTestMeans.length} shown on map
+        </p>
+        <FilterBar
+          types={types}
+          statuses={statuses}
+          countries={countries}
+          programs={programs}
+          complexities={complexities}
+          value={filters}
+          onChange={setFilters}
+        />
+      </div>
+      <FilterSheet
+        types={types}
+        statuses={statuses}
+        countries={countries}
+        programs={programs}
+        complexities={complexities}
+        value={filters}
+        onChange={setFilters}
+        count={visible.length}
+      />
+    </div>
+  );
+}
