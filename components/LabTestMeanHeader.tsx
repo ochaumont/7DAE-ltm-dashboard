@@ -6,6 +6,7 @@ import ChipAccessControl from "./ChipAccessControl";
 import ManagerCard from "./ManagerCard";
 import CountryMapIcon from "./icons/CountryMapIcon";
 import AircraftPrograms from "./AircraftPrograms";
+import LifecycleSection from "./detail/LifecycleSection";
 
 export default function LabTestMeanHeader({
   labTestMean,
@@ -15,11 +16,10 @@ export default function LabTestMeanHeader({
   const m = labTestMean;
   const projectManager = m.roles.projectManagers?.[0];
 
-  const localityParts = [
-    m.location.city,
-    m.location.building,
-    m.location.room,
-  ].filter((s): s is string => !!s && s.length > 0);
+  const city = m.location.city?.trim() || null;
+  const subParts = [m.location.building, m.location.room].filter(
+    (s): s is string => !!s && s.length > 0,
+  );
 
   return (
     <header className="space-y-4">
@@ -43,19 +43,31 @@ export default function LabTestMeanHeader({
         <ChipAccessControl enabled={m.security.accesscontrol} />
       </div>
 
-      <div className="flex flex-col lg:flex-row items-start gap-4">
-        <div className="flex flex-col items-center gap-1" style={{ width: 200 }}>
-          <CountryMapIcon
-            country={m.location.country}
-            site={m.location.site}
-          />
-          {localityParts.length > 0 && (
-            <span className="text-sm text-fg text-center">
-              {localityParts.join(" · ")}
-            </span>
-          )}
+      <div className="flex flex-col lg:flex-row items-start gap-6">
+        <div className="flex flex-col items-start gap-3 shrink-0">
+          <div className="flex flex-col items-center gap-1" style={{ width: 200 }}>
+            <CountryMapIcon
+              country={m.location.country}
+              site={m.location.site}
+            />
+            {(city || subParts.length > 0) && (
+              <div className="flex flex-col items-center gap-0.5">
+                {city && (
+                  <span className="text-sm text-fg text-center">{city}</span>
+                )}
+                {subParts.length > 0 && (
+                  <span className="text-xs text-muted text-center">
+                    {subParts.join(" · ")}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <AircraftPrograms programs={m.programs} />
         </div>
-        <AircraftPrograms programs={m.programs} />
+        <div className="flex-1 min-w-0 w-full">
+          <LifecycleSection lifecycle={m.lifecycle} />
+        </div>
       </div>
 
       {(m.manager || projectManager) && (

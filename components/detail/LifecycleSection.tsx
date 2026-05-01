@@ -1,33 +1,122 @@
+import type { ComponentType } from "react";
 import type { Lifecycle } from "@/lib/types";
-import Section from "./Section";
+import {
+  KickoffIcon,
+  InServiceIcon,
+  MothballedIcon,
+  DismantledIcon,
+} from "@/components/icons/LifecycleStepIcon";
+
+type StepKey = "kickoff" | "inService" | "mothballed" | "dismantled";
+
+type StepDef = {
+  key: StepKey;
+  label: string;
+  Icon: ComponentType<{ size?: number; className?: string }>;
+  colorVar: string;
+  reachedDescription: (formattedDate: string) => string;
+  unreachedDescription: string;
+};
+
+const STEPS: StepDef[] = [
+  {
+    key: "kickoff",
+    label: "Kickoff",
+    Icon: KickoffIcon,
+    colorVar: "var(--color-accent)",
+    reachedDescription: (d) => `Project started in ${d}`,
+    unreachedDescription: "Not started",
+  },
+  {
+    key: "inService",
+    label: "In Service",
+    Icon: InServiceIcon,
+    colorVar: "var(--color-success)",
+    reachedDescription: (d) => `Operational since ${d}`,
+    unreachedDescription: "Not yet in service",
+  },
+  {
+    key: "mothballed",
+    label: "Mothballed",
+    Icon: MothballedIcon,
+    colorVar: "var(--color-warning)",
+    reachedDescription: (d) => `Mothballed since ${d}`,
+    unreachedDescription: "Not mothballed",
+  },
+  {
+    key: "dismantled",
+    label: "Dismantled",
+    Icon: DismantledIcon,
+    colorVar: "var(--color-danger)",
+    reachedDescription: (d) => `Dismantled in ${d}`,
+    unreachedDescription: "Still in service",
+  },
+];
+
+function formatLifecycleDate(s?: string): string {
+  if (!s) return "—";
+  if (/^\d{4}$/.test(s)) return s;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s;
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short" });
+}
+
+function StepCard({
+  step,
+  rawDate,
+}: {
+  step: StepDef;
+  rawDate?: string;
+}) {
+  const reached = !!rawDate;
+  const formatted = formatLifecycleDate(rawDate);
+  const description = reached
+    ? step.reachedDescription(formatted)
+    : step.unreachedDescription;
+
+  return (
+    <li
+      className="pl-3 py-1.5 border-l-[3px] flex items-start gap-3"
+      style={{
+        borderLeftColor: reached ? step.colorVar : "var(--color-border)",
+      }}
+    >
+      <div
+        className="flex items-center gap-2 shrink-0"
+        style={{ color: reached ? step.colorVar : "var(--color-muted)" }}
+      >
+        <span
+          className="inline-block w-2 h-2 rounded-full"
+          style={
+            reached
+              ? { backgroundColor: step.colorVar }
+              : {
+                  backgroundColor: "transparent",
+                  boxShadow: "inset 0 0 0 1px var(--color-muted)",
+                }
+          }
+        />
+        <step.Icon size={18} />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-fg">{step.label}</div>
+        <div className="text-xs text-muted mt-0.5">{description}</div>
+      </div>
+    </li>
+  );
+}
 
 export default function LifecycleSection({
   lifecycle,
 }: {
   lifecycle: Lifecycle;
 }) {
-  const steps: { label: string; date: string }[] = [
-    { label: "Kickoff", date: lifecycle.kickoff ?? "" },
-    { label: "In service", date: lifecycle.inService ?? "" },
-    { label: "Mothballed", date: lifecycle.mothballed ?? "" },
-    { label: "Dismantled", date: lifecycle.dismantled ?? "" },
-  ].filter((s) => s.date.length > 0);
-
   return (
-    <Section title="Lifecycle">
-      {steps.length === 0 ? (
-        <div className="text-sm text-muted">No lifecycle data.</div>
-      ) : (
-        <ul className="space-y-2">
-          {steps.map((s) => (
-            <li key={s.label} className="flex items-baseline gap-3 text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
-              <span className="text-muted w-28">{s.label}</span>
-              <span className="font-mono">{s.date}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Section>
+    <ul className="space-y-3">
+      {STEPS.map((s) => (
+        <StepCard key={s.key} step={s} rawDate={lifecycle[s.key]} />
+      ))}
+    </ul>
   );
 }
