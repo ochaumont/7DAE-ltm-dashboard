@@ -38,10 +38,19 @@ const TYPE_MAP: Record<string, LabTestMeanType> = {
 
 const PLACEHOLDER_COVER = "/covers/cover-1.svg";
 
+/**
+ * `documentRefs[].name` containing "SELECTED" (case-insensitive) → cover photo.
+ * Backend convention. Multiple SELECTED is allowed — the first wins for cover.
+ */
 function isSelected(name: string | null | undefined): boolean {
   return !!name && name.toUpperCase().includes("SELECTED");
 }
 
+/**
+ * `documentRefs[].name` ending with `3D.<ext>` (uppercase, anchored to end) →
+ * equirectangular panorama. Strict to avoid false positives from hex inside
+ * UUIDs (e.g. `…e33d…` would otherwise match a loose `includes("3D")`).
+ */
 const RE_3D = /3D\.[A-Za-z0-9]+$/;
 
 function is3D(name: string | null | undefined): boolean {
@@ -74,6 +83,14 @@ function toType(raw: LabTestMeanDto["category"]): LabTestMeanType {
   return TYPE_MAP[raw] ?? "NA";
 }
 
+/**
+ * Status is not stored as an enum on the backend — it's derived from lifecycle
+ * dates with this priority:
+ *   1. `dismantled` set → out-of-service
+ *   2. `mothballed` set → mothballed
+ *   3. no `eisdateyear` (entry-into-service) → in-project
+ *   4. otherwise → operational
+ */
 function toStatus(dto: LabTestMeanDto): LabTestMeanStatus {
   if (dto.dismantled) return "out-of-service";
   if (dto.mothballed) return "mothballed";
@@ -96,7 +113,6 @@ function toManager(refs: FactsheetRef[] | undefined): Manager | null {
   return {
     name: first.name,
     email: first.externalId,
-    title: "Bench Manager",
   };
 }
 

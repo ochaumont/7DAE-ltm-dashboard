@@ -66,19 +66,55 @@ export class AtomApiError extends Error {
   }
 }
 
-export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {
-  let res: Response;
+/** Wall-clock timeout for any single ATOM API call (ms). */
+const FETCH_TIMEOUT_MS = 15_000;
+
+async function atomFetch(
+  url: string,
+  init: RequestInit & { next?: { revalidate?: number } },
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    res = await fetch(`${ATOM_API_BASE_URL}/api/infos/labtestmeans`, {
-      next: { revalidate: 60 },
-    });
-  } catch {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (err) {
+    if ((err as { name?: string })?.name === "AbortError") {
+      throw new AtomApiError(
+        0,
+        "Timeout",
+        // `ATOM_BACKEND_DOWN:` is a machine-readable prefix consumed by
+        // `app/error.tsx` to render the dedicated "API unavailable" screen.
+        // Keep the prefix stable; the human-readable suffix may change.
+        `ATOM_BACKEND_DOWN: timeout after ${FETCH_TIMEOUT_MS}ms at ${ATOM_API_BASE_URL}`,
+      );
+    }
     throw new AtomApiError(
       0,
       "Network error",
-      `ATOM API unreachable at ${ATOM_API_BASE_URL}`,
+      `ATOM_BACKEND_DOWN: unreachable at ${ATOM_API_BASE_URL}`,
     );
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {
+  const res = await atomFetch(
+    `${ATOM_API_BASE_URL}/api/infos/labtestmeans`,
+    { next: { revalidate: 60 } },
+  );
   if (!res.ok) throw new AtomApiError(res.status, res.statusText);
   return (await res.json()) as LabTestMeanDto[];
+}
+
+export async function fetchLabTestMean(
+  externalId: string,
+): Promise<LabTestMeanDto | null> {
+  const res = await atomFetch(
+    `${ATOM_API_BASE_URL}/api/infos/labtestmeans/${encodeURIComponent(externalId)}`,
+    { next: { revalidate: 60 } },
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new AtomApiError(res.status, res.statusText);
+  return (await res.json()) as LabTestMeanDto;
 }

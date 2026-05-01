@@ -62,4 +62,29 @@ a {
   text-decoration: none;
 }
 
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.skeleton-pulse {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+/*
+ * Default focus ring for keyboard navigation. Applies to every interactive
+ * element unless a component overrides it explicitly. Mouse focus stays
+ * untouched (browser default) thanks to `:focus-visible`.
+ */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:wght@300;400;500;600&display=swap");

@@ -6,6 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import Link from "next/link";
 import type { LabTestMean } from "@/lib/types";
 import { useTheme } from "@/lib/useTheme";
+import { placeholderOnError } from "@/lib/photo";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
 
@@ -67,11 +68,7 @@ export default function MapView({
               src={selected.coverPhoto}
               alt={selected.name}
               className="w-full h-28 object-cover rounded"
-              onError={(e) => {
-                const t = e.currentTarget;
-                if (!t.src.endsWith("/covers/cover-1.svg"))
-                  t.src = "/covers/cover-1.svg";
-              }}
+              onError={placeholderOnError}
             />
             <div className="flex items-center justify-between">
               <ChipType type={selected.type} />
@@ -84,7 +81,7 @@ export default function MapView({
               {selected.location.city}, {selected.location.country}
             </div>
             <Link
-              href={`/labtestmean/${selected.id}`}
+              href={`/labtestmean/${selected.externalId}`}
               className="inline-block text-xs font-semibold text-accent mt-1"
             >
               View details →

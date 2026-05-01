@@ -50,6 +50,13 @@ export default function MapClient({
       <div className="absolute inset-0">
         <MapView labTestMeans={visible} />
       </div>
+      {visible.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="px-5 py-3 rounded-card bg-surface/90 border border-border text-sm text-muted backdrop-blur-md pointer-events-auto">
+            No lab test means match these filters.
+          </div>
+        </div>
+      )}
       <div className="absolute top-4 left-4 w-[340px] max-h-[calc(100vh-100px)] glass-panel p-5 overflow-y-auto z-10 hidden lg:block">
         <h2 className="text-lg font-bold mb-1">Lab test means by location</h2>
         <p className="text-xs text-muted mb-4">

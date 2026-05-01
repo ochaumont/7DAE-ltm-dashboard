@@ -13,7 +13,9 @@ export default function GlobalError({
     console.error(error);
   }, [error]);
 
-  const isUnreachable = error.message.includes("unreachable");
+  // `lib/atom-api.ts` prefixes every backend-down error with `ATOM_BACKEND_DOWN:`
+  // (machine-readable). Keep this prefix stable on both sides.
+  const isBackendDown = error.message.startsWith("ATOM_BACKEND_DOWN:");
 
   return (
     <main className="px-4 md:px-6 py-20 max-w-2xl mx-auto text-center">
@@ -35,12 +37,12 @@ export default function GlobalError({
         </svg>
       </div>
       <h1 className="text-2xl font-bold mb-3">
-        {isUnreachable
+        {isBackendDown
           ? "ATOM API unavailable"
           : "Something went wrong"}
       </h1>
       <p className="text-muted mb-6">
-        {isUnreachable
+        {isBackendDown
           ? "The backend that serves lab test means is not responding. Start atom-synchronizer-dev on localhost:8080 or contact support."
           : error.message}
       </p>

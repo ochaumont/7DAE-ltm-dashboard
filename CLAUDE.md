@@ -30,7 +30,7 @@ When a refactor deletes routes or pages, `.next/` often holds stale chunks and d
 ### Routes
 - `/` → catalogue grid (`CatalogueClient`), paginated 6/page, URL-synced via `?page=`.
 - `/map` → MapLibre full-screen view (`MapClient` + `MapView`), with a nested `app/map/layout.tsx` that scopes the `theme-map-first` class.
-- `/labtestmean/[id]` → detail page with photo gallery, security/access, lifecycle timeline, people, programs/projects.
+- `/labtestmean/[externalId]` → detail page with photo gallery, security/access, lifecycle timeline, people, programs/projects.
 - `/health` → static JSON `{ "status": "ok" }`, used by the Helm chart's liveness/readiness probes.
 
 There is **no** mock JSON, **no** `/bench/` segment, **no** `/d/<direction>` segment, and **no** panorama viewer. All three belonged to earlier iterations and have been deleted — do not reintroduce.
@@ -65,7 +65,7 @@ When you change colors, the default is to edit `:root[data-theme="dark"]` / `:ro
 
 ## Conventions to preserve
 
-- **Routing is URL-clean**: `/`, `/map`, `/labtestmean/[id]`, `/health`. No query-string direction parameter, no `/d/` prefix, no `/bench/` segment. If a link needs another view, add a top-level route — don't reintroduce a direction axis.
+- **Routing is URL-clean**: `/`, `/map`, `/labtestmean/[externalId]`, `/health`. No query-string direction parameter, no `/d/` prefix, no `/bench/` segment. If a link needs another view, add a top-level route — don't reintroduce a direction axis.
 - **Airbus logo**: single asset `public/airbus-logo.svg` using `fill="currentColor"`. It auto-inverts via `--color-fg`. Do not add a separate dark/light logo file unless a branded asset is explicitly required.
 - **Header right slot**: reserved for future avatar / global search / notifications. `ThemeToggle` is the only current tenant. Keep the slot dimensioned to avoid reflow when new items are added.
 - **Avatars**: never reach out to third-party avatar services (`pravatar.cc`, `gravatar`, etc.) — `components/Avatar.tsx` renders deterministic initials locally. The same component should be used for any new person/role surface.

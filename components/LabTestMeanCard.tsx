@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { LabTestMean } from "@/lib/types";
+import { placeholderOnError } from "@/lib/photo";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
 
@@ -12,7 +13,7 @@ export default function LabTestMeanCard({
 }) {
   return (
     <Link
-      href={`/labtestmean/${labTestMean.id}`}
+      href={`/labtestmean/${labTestMean.externalId}`}
       className="bench-card group block overflow-hidden rounded-card transition-all duration-200"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
@@ -21,11 +22,7 @@ export default function LabTestMeanCard({
           alt={labTestMean.name}
           className="w-full h-full object-cover"
           loading="lazy"
-          onError={(e) => {
-            const t = e.currentTarget;
-            if (!t.src.endsWith("/covers/cover-1.svg"))
-              t.src = "/covers/cover-1.svg";
-          }}
+          onError={placeholderOnError}
         />
       </div>
       <div className="px-4 pt-4 pb-3 space-y-2">

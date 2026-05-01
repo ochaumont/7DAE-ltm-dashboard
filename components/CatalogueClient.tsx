@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import LabTestMeanCard from "@/components/LabTestMeanCard";
 import FilterBar, { type FilterValue } from "@/components/FilterBar";
 import FilterSheet from "@/components/FilterSheet";
 import Pagination from "@/components/Pagination";
 import { filterLabTestMeans } from "@/lib/labtestmeans";
+import { usePageQuery } from "@/lib/usePageQuery";
 import type {
   Complexity,
   LabTestMean,
@@ -15,12 +15,6 @@ import type {
 } from "@/lib/types";
 
 const PAGE_SIZE = 6;
-
-function parsePage(raw: string | null): number {
-  if (!raw) return 1;
-  const n = Number(raw);
-  return Number.isInteger(n) && n >= 1 ? n : 1;
-}
 
 type Props = {
   labTestMeans: LabTestMean[];
@@ -39,10 +33,6 @@ export default function CatalogueClient({
   programs,
   complexities,
 }: Props) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
-
   const [filters, setFilters] = useState<FilterValue>({
     search: "",
     types: [],
@@ -57,39 +47,12 @@ export default function CatalogueClient({
     [labTestMeans, filters],
   );
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
-  const urlPage = parsePage(searchParams.get("page"));
-  const safePage = Math.min(urlPage, totalPages);
-  const paged = visible.slice(
-    (safePage - 1) * PAGE_SIZE,
-    safePage * PAGE_SIZE,
-  );
-
-  const setPageInUrl = (newPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (newPage === 1) params.delete("page");
-    else params.set("page", String(newPage));
-    const qs = params.toString();
-    const target = qs ? `${pathname}?${qs}` : pathname;
-    const currentQs = searchParams.toString();
-    const current = currentQs ? `${pathname}?${currentQs}` : pathname;
-    if (target !== current) {
-      router.replace(target, { scroll: false });
-    }
-  };
-
-  useEffect(() => {
-    const raw = searchParams.get("page");
-    if (urlPage > totalPages) {
-      setPageInUrl(1);
-    } else if (raw !== null && parsePage(raw) === 1) {
-      setPageInUrl(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlPage, totalPages, searchParams]);
+  const { page, setPage } = usePageQuery(totalPages);
+  const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleFiltersChange = (v: FilterValue) => {
     setFilters(v);
-    setPageInUrl(1);
+    setPage(1);
   };
 
   return (
@@ -124,11 +87,11 @@ export default function CatalogueClient({
             </div>
           )}
           <Pagination
-            page={safePage}
+            page={page}
             totalPages={totalPages}
             pageSize={PAGE_SIZE}
             totalItems={visible.length}
-            onPageChange={setPageInUrl}
+            onPageChange={setPage}
           />
         </section>
       </div>

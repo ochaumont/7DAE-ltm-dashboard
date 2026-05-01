@@ -2,6 +2,15 @@
 
 import { useSyncExternalStore } from "react";
 
+/**
+ * Theme is the user's color preference, stored on `<html data-theme="…">`
+ * before hydration by the inline anti-FOUC script in `app/layout.tsx`.
+ *
+ * Components subscribe through `useTheme()` which uses `useSyncExternalStore`
+ * + a `MutationObserver` on `data-theme` so any external write (e.g. another
+ * tab via storage event, or the toggle on a different component) is reflected
+ * everywhere within a single tick.
+ */
 export type Theme = "light" | "dark";
 
 function subscribe(callback: () => void): () => void {

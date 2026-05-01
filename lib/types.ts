@@ -8,6 +8,19 @@ export type LabTestMeanStatus =
 
 export type Complexity = "simple" | "medium" | "complex";
 
+/**
+ * A photo attached to a lab test mean.
+ *
+ * - `url` always points to the local proxy `/api/photo/[id]?u=<encoded>` —
+ *   the binary is streamed by `app/api/photo/[id]/route.ts`, never directly
+ *   from the upstream host.
+ * - `kind` reflects the `SELECTED` naming convention from the backend
+ *   (`name` contains "SELECTED" → cover photo; otherwise → "other"). The
+ *   adapter sorts SELECTED photos first in the array.
+ * - `is360` is true when the document name ends with `3D.<ext>` in uppercase
+ *   — those are equirectangular panoramas rendered through the
+ *   `react-photo-sphere-viewer` instead of an `<img>`.
+ */
 export type Photo = {
   url: string;
   alt?: string;
@@ -30,9 +43,7 @@ export type Person = {
   email: string;
 };
 
-export type Manager = Person & {
-  title: string;
-};
+export type Manager = Person;
 
 export type Security = {
   ecLevel: string | null;

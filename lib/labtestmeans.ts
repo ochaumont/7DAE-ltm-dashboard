@@ -1,4 +1,5 @@
-import { fetchLabTestMeans } from "./atom-api";
+import { cache } from "react";
+import { fetchLabTestMean, fetchLabTestMeans } from "./atom-api";
 import { toLabTestMean } from "./labtestmean-adapter";
 import type {
   Complexity,
@@ -7,17 +8,17 @@ import type {
   LabTestMeanType,
 } from "./types";
 
-export async function getLabTestMeans(): Promise<LabTestMean[]> {
+export const getLabTestMeans = cache(async (): Promise<LabTestMean[]> => {
   const dtos = await fetchLabTestMeans();
   return dtos.map(toLabTestMean);
-}
+});
 
-export async function getLabTestMean(
-  id: string,
-): Promise<LabTestMean | undefined> {
-  const all = await getLabTestMeans();
-  return all.find((m) => m.id === id);
-}
+export const getLabTestMeanByExternalId = cache(
+  async (externalId: string): Promise<LabTestMean | null> => {
+    const dto = await fetchLabTestMean(externalId);
+    return dto ? toLabTestMean(dto) : null;
+  },
+);
 
 export type Filters = {
   search?: string;

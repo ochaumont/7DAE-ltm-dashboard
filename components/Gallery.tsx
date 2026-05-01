@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Photo } from "@/lib/types";
+import { placeholderOnError } from "@/lib/photo";
 import PanoramaClient from "./PanoramaClient";
 
 export default function Gallery({ photos }: { photos: Photo[] }) {
@@ -24,11 +25,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
             src={current.url}
             alt={current.alt ?? ""}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              const t = e.currentTarget;
-              if (!t.src.endsWith("/covers/cover-1.svg"))
-                t.src = "/covers/cover-1.svg";
-            }}
+            onError={placeholderOnError}
           />
         )}
       </div>
@@ -50,11 +47,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
                 src={p.url}
                 alt={p.alt ?? ""}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  const t = e.currentTarget;
-                  if (!t.src.endsWith("/covers/cover-1.svg"))
-                    t.src = "/covers/cover-1.svg";
-                }}
+                onError={placeholderOnError}
               />
               {p.is360 && (
                 <span

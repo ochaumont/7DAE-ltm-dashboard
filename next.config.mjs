@@ -2,11 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "picsum.photos" },
-    ],
-  },
 };
 
 export default nextConfig;
