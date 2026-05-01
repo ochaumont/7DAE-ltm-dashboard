@@ -3,9 +3,11 @@ import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
 import ChipComplexity from "./ChipComplexity";
 import ChipAccessControl from "./ChipAccessControl";
+import ChipCapabilities from "./ChipCapabilities";
 import ManagerCard from "./ManagerCard";
 import CountryMapIcon from "./icons/CountryMapIcon";
 import AircraftPrograms from "./AircraftPrograms";
+import AtaList from "./AtaList";
 import LifecycleSection from "./detail/LifecycleSection";
 
 export default function LabTestMeanHeader({
@@ -41,6 +43,7 @@ export default function LabTestMeanHeader({
         <ChipType type={m.type} withIcon />
         <ChipComplexity level={m.complexity} />
         <ChipAccessControl enabled={m.security.accesscontrol} />
+        <ChipCapabilities capabilities={m.technicalCapabilities} />
       </div>
 
       <div className="flex flex-col lg:flex-row items-start gap-6">
@@ -64,6 +67,7 @@ export default function LabTestMeanHeader({
             )}
           </div>
           <AircraftPrograms programs={m.programs} />
+          <AtaList atas={m.atas} />
         </div>
         <div className="flex-1 min-w-0 w-full">
           <LifecycleSection lifecycle={m.lifecycle} />

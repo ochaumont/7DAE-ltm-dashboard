@@ -50,6 +50,8 @@ export type LabTestMeanDto = {
   accesscontrol: boolean | null;
   accesbadge: string | null;
   accreditation: string[] | null;
+  atas: string[] | null;
+  technicalCapabilities: string[] | null;
   financeAircraftPrograms: FinanceRef[] | null;
   financeProjects: FinanceRef[] | null;
   documentRefs: DocumentRef[] | null;

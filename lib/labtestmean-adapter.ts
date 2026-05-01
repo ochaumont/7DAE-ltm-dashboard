@@ -7,6 +7,7 @@ import type {
   Person,
   Photo,
   Roles,
+  TechnicalCapability,
 } from "./types";
 
 export const COUNTRY_MAP: Record<string, string> = {
@@ -132,6 +133,35 @@ function toBool(
   return null;
 }
 
+// Maps any case/separator variant of a backend capability code to the
+// canonical frontend value. The lookup key is the input string stripped of
+// non-alphanumerics and lowercased, so "acSimuPackage", "AC_SIMU_PACKAGE",
+// "Aircraft Simulation Package", "aircraft-simulation-package" all collapse
+// to the same key.
+const CAPABILITY_ALIASES: Record<string, TechnicalCapability> = {
+  acsimupackage: "aircraft-simulation-package",
+  aircraftsimulationpackage: "aircraft-simulation-package",
+  autotesting: "automatic-testing",
+  automatictesting: "automatic-testing",
+  remoteaccess: "remote-access",
+  noremoteaccess: "no-remote-access",
+};
+
+function toCapability(
+  raw: unknown,
+  externalId: string,
+): TechnicalCapability | null {
+  if (typeof raw !== "string" || raw.length === 0) return null;
+  const key = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const canonical = CAPABILITY_ALIASES[key];
+  if (canonical) return canonical;
+  console.warn(
+    `[adapter] ${externalId} · technicalCapability: unknown value =`,
+    raw,
+  );
+  return null;
+}
+
 export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
   const site = dto.site ?? "";
   const roles: Roles = {};
@@ -198,6 +228,12 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
     },
     lifecycle,
     programs: (dto.financeAircraftPrograms ?? []).map((p) => p.name),
+    atas: (dto.atas ?? []).filter(
+      (s): s is string => typeof s === "string" && s.length > 0,
+    ),
+    technicalCapabilities: (dto.technicalCapabilities ?? [])
+      .map((c) => toCapability(c, dto.externalId))
+      .filter((c): c is TechnicalCapability => c !== null),
     projects: (dto.financeProjects ?? []).map((p) => p.name),
     coverPhoto,
     photos,

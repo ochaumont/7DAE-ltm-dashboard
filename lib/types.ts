@@ -8,6 +8,12 @@ export type LabTestMeanStatus =
 
 export type Complexity = "simple" | "medium" | "complex";
 
+export type TechnicalCapability =
+  | "aircraft-simulation-package"
+  | "automatic-testing"
+  | "remote-access"
+  | "no-remote-access";
+
 /**
  * A photo attached to a lab test mean.
  *
@@ -83,6 +89,8 @@ export type LabTestMean = {
   security: Security;
   lifecycle: Lifecycle;
   programs: string[];
+  atas: string[];
+  technicalCapabilities: TechnicalCapability[];
   projects: string[];
   coverPhoto: string;
   photos: Photo[];
