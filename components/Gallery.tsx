@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Photo } from "@/lib/types";
-import { placeholderOnError } from "@/lib/photo";
+import { PHOTO_PLACEHOLDER, placeholderOnError } from "@/lib/photo";
 import PanoramaClient from "./PanoramaClient";
 
 export default function Gallery({ photos }: { photos: Photo[] }) {
@@ -10,8 +10,12 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
   const current = photos[active];
   if (!current) {
     return (
-      <div className="aspect-video flex items-center justify-center bg-surface-2 text-muted rounded-card">
-        No photos
+      <div className="relative aspect-video bg-surface-2 rounded-card overflow-hidden">
+        <img
+          src={PHOTO_PLACEHOLDER}
+          alt="No photo available for this lab test mean"
+          className="w-full h-full object-cover"
+        />
       </div>
     );
   }

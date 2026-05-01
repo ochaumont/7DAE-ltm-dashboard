@@ -36,7 +36,7 @@ const TYPE_MAP: Record<string, LabTestMeanType> = {
   RT: "RT",
 };
 
-const PLACEHOLDER_COVER = "/covers/cover-1.svg";
+const PLACEHOLDER_COVER = "/covers/no-ltm-photo.png";
 
 /**
  * `documentRefs[].name` containing "SELECTED" (case-insensitive) → cover photo.
