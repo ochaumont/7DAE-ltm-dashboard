@@ -2,9 +2,9 @@ import type { Complexity } from "@/lib/types";
 import ComplexityIcon from "./icons/ComplexityIcon";
 
 const labels: Record<Complexity, string> = {
-  simple: "Simple",
-  medium: "Medium",
-  complex: "Complex",
+  simple: "Simple complexity",
+  medium: "Medium complexity",
+  complex: "Complex complexity",
 };
 
 export default function ChipComplexity({
@@ -17,7 +17,7 @@ export default function ChipComplexity({
   return (
     <span
       title={label}
-      aria-label={`Complexity: ${label}`}
+      aria-label={label}
       className="inline-flex items-center"
     >
       <ComplexityIcon level={level} size={24} />

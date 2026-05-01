@@ -4,6 +4,8 @@ import BadgeStatus from "./BadgeStatus";
 import ChipComplexity from "./ChipComplexity";
 import ChipAccessControl from "./ChipAccessControl";
 import ManagerCard from "./ManagerCard";
+import CountryMapIcon from "./icons/CountryMapIcon";
+import AircraftPrograms from "./AircraftPrograms";
 
 export default function LabTestMeanHeader({
   labTestMean,
@@ -13,40 +15,48 @@ export default function LabTestMeanHeader({
   const m = labTestMean;
   const projectManager = m.roles.projectManagers?.[0];
 
+  const localityParts = [
+    m.location.city,
+    m.location.building,
+    m.location.room,
+  ].filter((s): s is string => !!s && s.length > 0);
+
   return (
     <header className="space-y-4">
-      <h1 className="text-3xl md:text-4xl font-bold leading-tight tracking-tight">
-        {m.name}
-      </h1>
+      <div className="space-y-1">
+        <h1 className="text-3xl md:text-4xl font-bold leading-tight tracking-tight">
+          {m.name}
+        </h1>
+        <div className="flex items-center flex-wrap gap-3">
+          {m.externalId && (
+            <span className="text-xs font-mono text-fg">
+              [{m.externalId}]
+            </span>
+          )}
+          <BadgeStatus status={m.status} withIcon />
+        </div>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <ChipType type={m.type} withIcon />
-        <BadgeStatus status={m.status} withIcon />
         <ChipComplexity level={m.complexity} />
         <ChipAccessControl enabled={m.security.accesscontrol} />
       </div>
 
-      <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1">
-        <span className="text-xs uppercase tracking-[0.15em] font-mono text-muted">
-          Location
-        </span>
-        <span className="text-sm text-fg">
-          {m.location.city}, {m.location.country}
-          {m.location.building ? ` · ${m.location.building}` : ""}
-          {m.location.room ? ` · ${m.location.room}` : ""}
-        </span>
-      </div>
-
-      {m.externalId && (
-        <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1">
-          <span className="text-xs uppercase tracking-[0.15em] font-mono text-muted">
-            Code
-          </span>
-          <span className="text-sm font-mono text-fg">
-            [{m.externalId}]
-          </span>
+      <div className="flex flex-col lg:flex-row items-start gap-4">
+        <div className="flex flex-col items-center gap-1" style={{ width: 200 }}>
+          <CountryMapIcon
+            country={m.location.country}
+            site={m.location.site}
+          />
+          {localityParts.length > 0 && (
+            <span className="text-sm text-fg text-center">
+              {localityParts.join(" · ")}
+            </span>
+          )}
         </div>
-      )}
+        <AircraftPrograms programs={m.programs} />
+      </div>
 
       {(m.manager || projectManager) && (
         <div className="flex flex-col gap-3 pt-2 max-w-detail-info">

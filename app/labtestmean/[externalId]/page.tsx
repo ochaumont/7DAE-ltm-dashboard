@@ -11,7 +11,7 @@ import Gallery from "@/components/Gallery";
 import Section from "@/components/detail/Section";
 import SecuritySection from "@/components/detail/SecuritySection";
 import LifecycleSection from "@/components/detail/LifecycleSection";
-import ProgramsSection from "@/components/detail/ProgramsSection";
+import ProjectsSection from "@/components/detail/ProjectsSection";
 import {
   getLabTestMeanByExternalId,
   getLabTestMeans,
@@ -63,7 +63,7 @@ export default async function LabTestMeanDetailPage({
       <div className="grid md:grid-cols-2 gap-x-12 gap-y-10">
         <SecuritySection security={m.security} />
         <LifecycleSection lifecycle={m.lifecycle} />
-        <ProgramsSection programs={m.programs} projects={m.projects} />
+        <ProjectsSection projects={m.projects} />
       </div>
     </main>
   );
