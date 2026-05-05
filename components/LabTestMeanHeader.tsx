@@ -6,8 +6,8 @@ import ChipAccessControl from "./ChipAccessControl";
 import ChipCapabilities from "./ChipCapabilities";
 import ManagerCard from "./ManagerCard";
 import CountryMapIcon from "./icons/CountryMapIcon";
-import AircraftPrograms from "./AircraftPrograms";
-import AtaList from "./AtaList";
+import AircraftProgramTile from "./AircraftProgramTile";
+import AtaTile from "./AtaTile";
 import LifecycleSection from "./detail/LifecycleSection";
 
 export default function LabTestMeanHeader({
@@ -66,8 +66,19 @@ export default function LabTestMeanHeader({
               </div>
             )}
           </div>
-          <AircraftPrograms programs={m.programs} />
-          <AtaList atas={m.atas} />
+          {(m.programs.length > 0 || m.atas.length > 0) && (
+            <div
+              className="grid grid-cols-3 gap-3"
+              style={{ width: 200 }}
+            >
+              {m.programs.map((p) => (
+                <AircraftProgramTile key={`prog-${p}`} code={p} />
+              ))}
+              {m.atas.map((code) => (
+                <AtaTile key={`ata-${code}`} code={code} />
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0 w-full">
           <LifecycleSection lifecycle={m.lifecycle} />

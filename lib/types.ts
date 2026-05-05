@@ -82,6 +82,7 @@ export type LabTestMean = {
   type: LabTestMeanType;
   complexity: Complexity | null;
   description: string;
+  instrumentation: string | null;
   status: LabTestMeanStatus;
   location: Location;
   manager: Manager | null;
@@ -90,6 +91,8 @@ export type LabTestMean = {
   lifecycle: Lifecycle;
   programs: string[];
   atas: string[];
+  softwares: string[];
+  dependsOn: { id: string; name: string }[];
   technicalCapabilities: TechnicalCapability[];
   projects: string[];
   coverPhoto: string;

@@ -34,6 +34,17 @@ export default async function LabTestMeanDetailPage({
   const m = await getLabTestMeanByExternalId(externalId);
   if (!m) notFound();
 
+  // Build id → externalId map so dependsOn entries can become real <Link>s.
+  // `getLabTestMeans` is React-cached per request, so this is essentially free
+  // when the dashboard is also rendering the catalogue. Failure → empty map,
+  // dependencies render as plain names.
+  const idToExternalId = new Map<string, string>();
+  try {
+    for (const ltm of await getLabTestMeans()) {
+      if (ltm.externalId) idToExternalId.set(ltm.id, ltm.externalId);
+    }
+  } catch {}
+
   return (
     <main className="px-4 md:px-8 py-8 max-w-[1400px] mx-auto">
       <Link
@@ -51,6 +62,44 @@ export default async function LabTestMeanDetailPage({
             <Section title="Description">
               <p className="text-base leading-relaxed text-fg/90 max-w-detail-info">
                 {m.description}
+              </p>
+            </Section>
+          )}
+          {m.instrumentation && (
+            <Section title="Instrumentation">
+              <p className="text-base leading-relaxed text-fg/90 max-w-detail-info">
+                {m.instrumentation}
+              </p>
+            </Section>
+          )}
+          {m.softwares.length > 0 && (
+            <Section title="Software">
+              <p className="text-base leading-relaxed text-fg/90 max-w-detail-info">
+                {m.softwares.join(" · ")}
+              </p>
+            </Section>
+          )}
+          {m.dependsOn.length > 0 && (
+            <Section title="Depends on">
+              <p className="text-base leading-relaxed text-fg/90 max-w-detail-info">
+                {m.dependsOn.map((dep, i) => {
+                  const xid = idToExternalId.get(dep.id);
+                  return (
+                    <span key={dep.id}>
+                      {i > 0 && " · "}
+                      {xid ? (
+                        <Link
+                          href={`/labtestmean/${encodeURIComponent(xid)}`}
+                          className="text-accent hover:underline"
+                        >
+                          {dep.name}
+                        </Link>
+                      ) : (
+                        dep.name
+                      )}
+                    </span>
+                  );
+                })}
               </p>
             </Section>
           )}

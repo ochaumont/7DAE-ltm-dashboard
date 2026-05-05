@@ -34,6 +34,7 @@ export type LabTestMeanDto = {
   room: string | null;
   description: string | null;
   shortDescription: string | null;
+  instrumentationlink: string | null;
   kickoff: string | null;
   eisdateyear: string | null;
   mothballed: string | null;
@@ -46,11 +47,13 @@ export type LabTestMeanDto = {
   deputies: FactsheetRef[];
   depts: FactsheetRef[];
   ecLevel: string | null;
-  networkSegregated: boolean | null;
-  accesscontrol: boolean | null;
+  networkSegregated: boolean | string | null;
+  accesscontrol: boolean | string | null;
   accesbadge: string | null;
   accreditation: string[] | null;
-  atas: string[] | null;
+  atas: FinanceRef[] | null;
+  softwares: FinanceRef[] | null;
+  LTMDependsOn: FactsheetRef[] | null;
   technicalCapabilities: string[] | null;
   financeAircraftPrograms: FinanceRef[] | null;
   financeProjects: FinanceRef[] | null;

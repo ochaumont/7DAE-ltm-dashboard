@@ -117,6 +117,9 @@ function toManager(refs: FactsheetRef[] | undefined): Manager | null {
   };
 }
 
+// Backend actually returns "yes" / "no" / "unknown" strings here despite the
+// boolean-typed OpenAPI schema. Treat those as the expected wire format and
+// only warn on truly unexpected values.
 function toBool(
   raw: unknown,
   field: string,
@@ -124,12 +127,18 @@ function toBool(
 ): boolean | null {
   if (raw === true || raw === false) return raw;
   if (raw == null) return null;
+  if (typeof raw === "string") {
+    const v = raw.toLowerCase();
+    if (v === "true" || v === "yes") return true;
+    if (v === "false" || v === "no") return false;
+    if (v === "unknown" || v === "") return null;
+  }
+  if (raw === 1) return true;
+  if (raw === 0) return false;
   console.warn(
     `[adapter] ${externalId} · ${field}: unexpected non-boolean value (${typeof raw}) =`,
     raw,
   );
-  if (raw === "true" || raw === 1 || raw === "yes") return true;
-  if (raw === "false" || raw === 0 || raw === "no") return false;
   return null;
 }
 
@@ -160,6 +169,17 @@ function toCapability(
     raw,
   );
   return null;
+}
+
+// Backend ATA names sometimes include a description (e.g. "ATA 7X - POWER
+// PLANT"). The UI tiles only have room for the chapter code, so strip
+// anything past the first whitespace-delimited token after "ATA". Names that
+// don't follow the expected shape are returned as-is.
+const RE_ATA = /^\s*ATA\s+\S+/i;
+
+function toAtaCode(name: string): string {
+  const m = name.match(RE_ATA);
+  return m ? m[0].trim().replace(/\s+/, " ") : name;
 }
 
 export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
@@ -199,6 +219,7 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
     type: toType(dto.category),
     complexity: dto.complexity ?? null,
     description: dto.description ?? "",
+    instrumentation: dto.instrumentationlink ?? null,
     status: toStatus(dto),
     location: {
       country: dto.country ? COUNTRY_MAP[dto.country] ?? dto.country : "Unknown",
@@ -228,9 +249,22 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
     },
     lifecycle,
     programs: (dto.financeAircraftPrograms ?? []).map((p) => p.name),
-    atas: (dto.atas ?? []).filter(
-      (s): s is string => typeof s === "string" && s.length > 0,
-    ),
+    atas: (dto.atas ?? [])
+      .map((a) => a.name)
+      .filter((n): n is string => typeof n === "string" && n.length > 0)
+      .map(toAtaCode),
+    softwares: (dto.softwares ?? [])
+      .map((s) => s.name)
+      .filter((n): n is string => typeof n === "string" && n.length > 0),
+    dependsOn: (dto.LTMDependsOn ?? [])
+      .filter(
+        (d) =>
+          typeof d.id === "string" &&
+          d.id.length > 0 &&
+          typeof d.name === "string" &&
+          d.name.length > 0,
+      )
+      .map((d) => ({ id: d.id, name: d.name })),
     technicalCapabilities: (dto.technicalCapabilities ?? [])
       .map((c) => toCapability(c, dto.externalId))
       .filter((c): c is TechnicalCapability => c !== null),

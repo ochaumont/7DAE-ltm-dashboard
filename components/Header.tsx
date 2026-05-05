@@ -19,16 +19,16 @@ export default function Header() {
     clsx(
       "px-3 py-1.5 rounded text-sm font-medium transition-colors",
       active
-        ? "bg-accent text-accent-fg"
-        : "text-muted hover:text-fg"
+        ? "bg-[#00205B] text-white"
+        : "text-[#00205B]/70 hover:text-[#00205B]"
     );
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-bg/80 backdrop-blur-md">
+    <header className="sticky top-0 z-20 border-b border-[#00205B]/15 bg-white">
       <div className="px-4 md:px-6 py-3 flex items-center gap-6 max-w-[1600px] mx-auto">
         <Link
           href="/"
-          className="flex items-center text-fg hover:opacity-80 transition-opacity"
+          className="flex items-center hover:opacity-80 transition-opacity"
           aria-label="Airbus — go to catalogue"
         >
           {logoFailed ? (
