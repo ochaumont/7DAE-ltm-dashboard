@@ -1,4 +1,9 @@
-import type { DocumentRef, FactsheetRef, LabTestMeanDto } from "./atom-api";
+import type {
+  DocumentRef,
+  FactsheetRef,
+  FinanceRef,
+  LabTestMeanDto,
+} from "./atom-api";
 import type {
   LabTestMean,
   LabTestMeanStatus,
@@ -254,8 +259,14 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
       .filter((n): n is string => typeof n === "string" && n.length > 0)
       .map(toAtaCode),
     softwares: (dto.softwares ?? [])
-      .map((s) => s.name)
-      .filter((n): n is string => typeof n === "string" && n.length > 0),
+      .filter(
+        (s): s is FinanceRef & { id: string } =>
+          typeof s.id === "string" &&
+          s.id.length > 0 &&
+          typeof s.name === "string" &&
+          s.name.length > 0,
+      )
+      .map((s) => ({ id: s.id, name: s.name })),
     dependsOn: (dto.LTMDependsOn ?? [])
       .filter(
         (d) =>
@@ -265,6 +276,14 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
           d.name.length > 0,
       )
       .map((d) => ({ id: d.id, name: d.name })),
+    portfolio:
+      dto.portfolio &&
+      typeof dto.portfolio.id === "string" &&
+      dto.portfolio.id.length > 0 &&
+      typeof dto.portfolio.name === "string" &&
+      dto.portfolio.name.length > 0
+        ? { id: dto.portfolio.id, name: dto.portfolio.name }
+        : null,
     technicalCapabilities: (dto.technicalCapabilities ?? [])
       .map((c) => toCapability(c, dto.externalId))
       .filter((c): c is TechnicalCapability => c !== null),

@@ -21,6 +21,7 @@ type Props = {
   countries: string[];
   programs: string[];
   complexities: Complexity[];
+  portfolios: string[];
 };
 
 export default function MapClient({
@@ -30,6 +31,7 @@ export default function MapClient({
   countries,
   programs,
   complexities,
+  portfolios,
 }: Props) {
   const [filters, setFilters] = useState<FilterValue>({
     search: "",
@@ -38,6 +40,7 @@ export default function MapClient({
     countries: [],
     programs: [],
     complexities: [],
+    portfolios: [],
   });
 
   const visible = useMemo(
@@ -68,6 +71,7 @@ export default function MapClient({
           countries={countries}
           programs={programs}
           complexities={complexities}
+          portfolios={portfolios}
           value={filters}
           onChange={setFilters}
         />
@@ -78,6 +82,7 @@ export default function MapClient({
         countries={countries}
         programs={programs}
         complexities={complexities}
+        portfolios={portfolios}
         value={filters}
         onChange={setFilters}
         count={visible.length}

@@ -74,33 +74,45 @@ export default async function LabTestMeanDetailPage({
           )}
           {m.softwares.length > 0 && (
             <Section title="Software">
-              <p className="text-base leading-relaxed text-fg/90 max-w-detail-info">
-                {m.softwares.join(" · ")}
-              </p>
+              <div className="flex flex-wrap gap-2 max-w-detail-info">
+                {m.softwares.map((s) => (
+                  <a
+                    key={s.id}
+                    href={`https://airbus.leanix.net/airbuslive/factsheet/Application/${s.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-surface-2 text-fg/90 border border-border hover:bg-accent/10 hover:text-accent hover:border-accent/20 transition-colors"
+                  >
+                    {s.name}
+                  </a>
+                ))}
+              </div>
             </Section>
           )}
           {m.dependsOn.length > 0 && (
             <Section title="Depends on">
-              <p className="text-base leading-relaxed text-fg/90 max-w-detail-info">
-                {m.dependsOn.map((dep, i) => {
+              <div className="flex flex-wrap gap-2 max-w-detail-info">
+                {m.dependsOn.map((dep) => {
                   const xid = idToExternalId.get(dep.id);
-                  return (
-                    <span key={dep.id}>
-                      {i > 0 && " · "}
-                      {xid ? (
-                        <Link
-                          href={`/labtestmean/${encodeURIComponent(xid)}`}
-                          className="text-accent hover:underline"
-                        >
-                          {dep.name}
-                        </Link>
-                      ) : (
-                        dep.name
-                      )}
+                  return xid ? (
+                    <Link
+                      key={dep.id}
+                      href={`/labtestmean/${encodeURIComponent(xid)}`}
+                      className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+                    >
+                      {dep.name}
+                    </Link>
+                  ) : (
+                    <span
+                      key={dep.id}
+                      className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-surface-2 text-muted border border-border"
+                      title="lab test mean introuvable"
+                    >
+                      {dep.name}
                     </span>
                   );
                 })}
-              </p>
+              </div>
             </Section>
           )}
         </div>

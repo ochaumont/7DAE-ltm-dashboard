@@ -24,6 +24,7 @@ type Props = {
   countries: string[];
   programs: string[];
   complexities: Complexity[];
+  portfolios: string[];
 };
 
 export default function CatalogueClient({
@@ -33,6 +34,7 @@ export default function CatalogueClient({
   countries,
   programs,
   complexities,
+  portfolios,
 }: Props) {
   const [filters, setFilters] = useState<FilterValue>({
     search: "",
@@ -41,6 +43,7 @@ export default function CatalogueClient({
     countries: [],
     programs: [],
     complexities: [],
+    portfolios: [],
   });
 
   const visible = useMemo(
@@ -106,6 +109,7 @@ export default function CatalogueClient({
               countries={countries}
               programs={programs}
               complexities={complexities}
+              portfolios={portfolios}
               value={filters}
               onChange={handleFiltersChange}
             />
@@ -150,6 +154,7 @@ export default function CatalogueClient({
         countries={countries}
         programs={programs}
         complexities={complexities}
+        portfolios={portfolios}
         value={filters}
         onChange={handleFiltersChange}
         count={visible.length}

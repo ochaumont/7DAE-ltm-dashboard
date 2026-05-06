@@ -1,0 +1,102 @@
+[
+    {
+        "id": "31aa6ba1-ac1c-42fb-aca3-08384a70c75c",
+        "externalId": "PORT_LTM_BREMEN",
+        "name": "LTM_BREMEN",
+        "businessRepresentative": [],
+        "description": null,
+        "documentRefs": [],
+        "etags": [],
+        "portfolioArchitect": [],
+        "portfolioOwner": {
+            "externalId": "kai.ewert@airbus.com",
+            "name": "Kai Ewert",
+            "id": "2508f11d-b934-4f4c-a837-f7abce85c76f",
+            "documentRefs": [],
+            "etags": [],
+            "userSubscriptions": []
+        },
+        "subType": "LTM",
+        "userSubscriptions": []
+    },
+    {
+        "id": "cd1b54e7-1700-4a64-aee1-34e82f166266",
+        "externalId": "PORT_LTM_DEVELOPMENT",
+        "name": "LTM_DEVELOPMENT",
+        "businessRepresentative": [],
+        "description": null,
+        "documentRefs": [],
+        "etags": [],
+        "portfolioArchitect": [],
+        "portfolioOwner": {
+            "externalId": "aurelia.bousquet@airbus.com",
+            "name": "Aurelia Bousquet",
+            "id": "018cdc45-7988-430f-b199-9d90e1f3e0ba",
+            "documentRefs": [],
+            "etags": [],
+            "userSubscriptions": []
+        },
+        "subType": "LTM",
+        "userSubscriptions": []
+    },
+    {
+        "id": "7893ad84-faf9-40ec-aad4-7f8d22cabb55",
+        "externalId": "PORT_LTM_FILTON",
+        "name": "LTM_FILTON",
+        "businessRepresentative": [],
+        "description": null,
+        "documentRefs": [],
+        "etags": [],
+        "portfolioArchitect": [],
+        "portfolioOwner": {
+            "externalId": "ian.thomson@airbus.com",
+            "name": "Ian Thomson",
+            "id": "a7077ad2-dc97-4d51-93ae-95c8ab7e64e4",
+            "documentRefs": [],
+            "etags": [],
+            "userSubscriptions": []
+        },
+        "subType": "LTM",
+        "userSubscriptions": []
+    },
+    {
+        "id": "9949a80e-4000-49ec-a85a-069af1c1082c",
+        "externalId": "PORT_LTM_HAMBOURG",
+        "name": "LTM_HAMBOURG",
+        "businessRepresentative": [],
+        "description": null,
+        "documentRefs": [],
+        "etags": [],
+        "portfolioArchitect": [],
+        "portfolioOwner": {
+            "externalId": "ole.becker@airbus.com",
+            "name": "Ole Becker",
+            "id": "1769bf45-5beb-4b59-99ee-ed4c5da7e3fb",
+            "documentRefs": [],
+            "etags": [],
+            "userSubscriptions": []
+        },
+        "subType": "LTM",
+        "userSubscriptions": []
+    },
+    {
+        "id": "fccaef13-e3c6-40b0-8aab-1ec2f04d2be7",
+        "externalId": "LTM_TOULOUSE",
+        "name": "LTM_TOULOUSE",
+        "businessRepresentative": [],
+        "description": null,
+        "documentRefs": [],
+        "etags": [],
+        "portfolioArchitect": [],
+        "portfolioOwner": {
+            "externalId": "philippe.lacoste@airbus.com",
+            "name": "Philippe Lacoste",
+            "id": "a7aae84a-bb06-433d-8bd9-0da9b6ad7b45",
+            "documentRefs": [],
+            "etags": [],
+            "userSubscriptions": []
+        },
+        "subType": "LTM",
+        "userSubscriptions": []
+    }
+]

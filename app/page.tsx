@@ -9,6 +9,7 @@ import {
   getLabTestMeans,
   uniqueComplexities,
   uniqueCountries,
+  uniquePortfolios,
   uniquePrograms,
   uniqueStatuses,
   uniqueTypes,
@@ -25,6 +26,7 @@ export default async function CataloguePage() {
         countries={uniqueCountries(all)}
         programs={uniquePrograms(all)}
         complexities={uniqueComplexities(all)}
+        portfolios={uniquePortfolios(all)}
       />
     </Suspense>
   );

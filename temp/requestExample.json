@@ -263,6 +263,14 @@
         }
     ],
     "mothballed": "",
+    "portfolio": {
+        "externalId": null,
+        "name": "LTM_TOULOUSE",
+        "id": "fccaef13-e3c6-40b0-8aab-1ec2f04d2be7",
+        "documentRefs": [],
+        "etags": [],
+        "userSubscriptions": []
+    },
     "projectManagers": [],
     "room": "C252 / C166",
     "shortDescription": null,

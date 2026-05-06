@@ -20,6 +20,9 @@ export const getLabTestMeanByExternalId = cache(
   },
 );
 
+/** Sentinel option in the Portfolio filter that matches LTMs with `portfolio === null`. */
+export const PORTFOLIO_NONE = "__none__";
+
 export type Filters = {
   search?: string;
   types?: LabTestMeanType[];
@@ -27,6 +30,7 @@ export type Filters = {
   countries?: string[];
   programs?: string[];
   complexities?: Complexity[];
+  portfolios?: string[];
 };
 
 export function filterLabTestMeans(
@@ -48,6 +52,13 @@ export function filterLabTestMeans(
       (m.complexity == null || !f.complexities.includes(m.complexity))
     )
       return false;
+    if (f.portfolios?.length) {
+      if (m.portfolio == null) {
+        if (!f.portfolios.includes(PORTFOLIO_NONE)) return false;
+      } else if (!f.portfolios.includes(m.portfolio.name)) {
+        return false;
+      }
+    }
     if (f.search) {
       const q = f.search.toLowerCase();
       const hay = [
@@ -82,4 +93,15 @@ export function uniqueComplexities(list: LabTestMean[]): Complexity[] {
   const out = new Set<Complexity>();
   for (const m of list) if (m.complexity) out.add(m.complexity);
   return Array.from(out);
+}
+export function uniquePortfolios(list: LabTestMean[]): string[] {
+  const names = new Set<string>();
+  let hasNone = false;
+  for (const m of list) {
+    if (m.portfolio) names.add(m.portfolio.name);
+    else hasNone = true;
+  }
+  const sorted = Array.from(names).sort();
+  if (hasNone) sorted.push(PORTFOLIO_NONE);
+  return sorted;
 }

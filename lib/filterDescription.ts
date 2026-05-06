@@ -1,4 +1,5 @@
 import type { FilterValue } from "@/components/FilterBar";
+import { PORTFOLIO_NONE } from "@/lib/labtestmeans";
 
 const STATUS_LABELS: Record<string, string> = {
   operational: "Operational",
@@ -32,6 +33,11 @@ export function serializeFilters(filters: FilterValue): string {
   if (filters.complexities.length > 0) {
     lines.push(
       `Complexity: ${filters.complexities.map((c) => COMPLEXITY_LABELS[c] ?? c).join(", ")}`,
+    );
+  }
+  if (filters.portfolios.length > 0) {
+    lines.push(
+      `Portfolio: ${filters.portfolios.map((p) => (p === PORTFOLIO_NONE ? "None" : p)).join(", ")}`,
     );
   }
 

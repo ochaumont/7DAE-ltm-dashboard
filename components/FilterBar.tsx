@@ -6,6 +6,7 @@ import type {
   LabTestMeanStatus,
   LabTestMeanType,
 } from "@/lib/types";
+import { PORTFOLIO_NONE } from "@/lib/labtestmeans";
 import clsx from "clsx";
 
 const STATUS_LABELS: Record<LabTestMeanStatus, string> = {
@@ -30,6 +31,7 @@ export type FilterValue = {
   countries: string[];
   programs: string[];
   complexities: Complexity[];
+  portfolios: string[];
 };
 
 type Props = {
@@ -38,6 +40,7 @@ type Props = {
   countries: string[];
   programs: string[];
   complexities: Complexity[];
+  portfolios: string[];
   value: FilterValue;
   onChange: (v: FilterValue) => void;
 };
@@ -85,6 +88,7 @@ export default function FilterBar({
   countries,
   programs,
   complexities,
+  portfolios,
   value,
   onChange,
 }: Props) {
@@ -120,20 +124,29 @@ export default function FilterBar({
         />
       </div>
       <div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Country</div>
+        <Toggle
+          options={countries}
+          value={value.countries}
+          onChange={(v) => onChange({ ...value, countries: v })}
+        />
+      </div>
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Portfolio</div>
+        <Toggle
+          options={portfolios}
+          value={value.portfolios}
+          onChange={(v) => onChange({ ...value, portfolios: v })}
+          renderLabel={(p) => (p === PORTFOLIO_NONE ? "None" : p)}
+        />
+      </div>
+      <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Complexity</div>
         <Toggle
           options={complexities}
           value={value.complexities}
           onChange={(v) => onChange({ ...value, complexities: v })}
           renderLabel={(c) => c.charAt(0).toUpperCase() + c.slice(1)}
-        />
-      </div>
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Country</div>
-        <Toggle
-          options={countries}
-          value={value.countries}
-          onChange={(v) => onChange({ ...value, countries: v })}
         />
       </div>
       <div>

@@ -15,6 +15,7 @@ type Props = {
   countries: string[];
   programs: string[];
   complexities: Complexity[];
+  portfolios: string[];
   value: FilterValue;
   onChange: (v: FilterValue) => void;
   count: number;
@@ -26,6 +27,7 @@ export default function FilterSheet({
   countries,
   programs,
   complexities,
+  portfolios,
   value,
   onChange,
   count,
@@ -37,6 +39,7 @@ export default function FilterSheet({
     value.countries.length +
     value.programs.length +
     value.complexities.length +
+    value.portfolios.length +
     (value.search ? 1 : 0);
   return (
     <>
@@ -86,6 +89,7 @@ export default function FilterSheet({
                 countries={countries}
                 programs={programs}
                 complexities={complexities}
+                portfolios={portfolios}
                 value={value}
                 onChange={onChange}
               />

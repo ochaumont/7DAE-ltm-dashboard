@@ -91,8 +91,9 @@ export type LabTestMean = {
   lifecycle: Lifecycle;
   programs: string[];
   atas: string[];
-  softwares: string[];
+  softwares: { id: string; name: string }[];
   dependsOn: { id: string; name: string }[];
+  portfolio: { id: string; name: string } | null;
   technicalCapabilities: TechnicalCapability[];
   projects: string[];
   coverPhoto: string;
