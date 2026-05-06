@@ -5,6 +5,7 @@ import type { LabTestMean } from "@/lib/types";
 import { placeholderOnError } from "@/lib/photo";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
+import ChipAccessControl from "./ChipAccessControl";
 
 export default function LabTestMeanCard({
   labTestMean,
@@ -27,12 +28,15 @@ export default function LabTestMeanCard({
       </div>
       <div className="px-4 pt-4 pb-3 space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <ChipType type={labTestMean.type} />
-          {labTestMean.complexity && (
-            <span className="text-[10px] uppercase tracking-wide text-muted font-mono">
-              {labTestMean.complexity}
-            </span>
-          )}
+          <ChipType type={labTestMean.type} withIcon />
+          <div className="flex items-center gap-2">
+            {labTestMean.complexity && (
+              <span className="text-[10px] uppercase tracking-wide text-muted font-mono">
+                {labTestMean.complexity}
+              </span>
+            )}
+            <ChipAccessControl enabled={labTestMean.security.accesscontrol} />
+          </div>
         </div>
         <h3 className="font-semibold leading-tight line-clamp-2">
           {labTestMean.name}

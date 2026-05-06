@@ -6,10 +6,11 @@ import FilterBar, { type FilterValue } from "@/components/FilterBar";
 import FilterSheet from "@/components/FilterSheet";
 import Pagination from "@/components/Pagination";
 import { filterLabTestMeans } from "@/lib/labtestmeans";
+import { expandSelection } from "@/lib/aircraftStructure";
 import { usePageQuery } from "@/lib/usePageQuery";
 import { serializeFilters } from "@/lib/filterDescription";
 import type {
-  Complexity,
+  AircraftStructureNode,
   LabTestMean,
   LabTestMeanStatus,
   LabTestMeanType,
@@ -22,8 +23,10 @@ type Props = {
   types: LabTestMeanType[];
   statuses: LabTestMeanStatus[];
   countries: string[];
-  programs: string[];
-  complexities: Complexity[];
+  tree: AircraftStructureNode[];
+  programCounts: Map<string, number>;
+  hasUnassignedPrograms: boolean;
+  complexities: string[];
   portfolios: string[];
 };
 
@@ -32,7 +35,9 @@ export default function CatalogueClient({
   types,
   statuses,
   countries,
-  programs,
+  tree,
+  programCounts,
+  hasUnassignedPrograms,
   complexities,
   portfolios,
 }: Props) {
@@ -41,15 +46,22 @@ export default function CatalogueClient({
     types: [],
     statuses: [],
     countries: [],
-    programs: [],
+    programNodeIds: [],
     complexities: [],
     portfolios: [],
   });
 
-  const visible = useMemo(
-    () => filterLabTestMeans(labTestMeans, filters),
-    [labTestMeans, filters],
-  );
+  const visible = useMemo(() => {
+    const { names, includeUnassigned } = expandSelection(
+      tree,
+      filters.programNodeIds,
+    );
+    return filterLabTestMeans(labTestMeans, {
+      ...filters,
+      programNodeNames: names,
+      includeUnassignedPrograms: includeUnassigned,
+    });
+  }, [labTestMeans, tree, filters]);
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const { page, setPage } = usePageQuery(totalPages);
   const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -76,7 +88,7 @@ export default function CatalogueClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           benches: visible,
-          filtersDescription: serializeFilters(filters),
+          filtersDescription: serializeFilters(filters, tree),
         }),
       });
       if (!res.ok) {
@@ -107,7 +119,9 @@ export default function CatalogueClient({
               types={types}
               statuses={statuses}
               countries={countries}
-              programs={programs}
+              tree={tree}
+              programCounts={programCounts}
+              hasUnassignedPrograms={hasUnassignedPrograms}
               complexities={complexities}
               portfolios={portfolios}
               value={filters}
@@ -152,7 +166,9 @@ export default function CatalogueClient({
         types={types}
         statuses={statuses}
         countries={countries}
-        programs={programs}
+        tree={tree}
+        programCounts={programCounts}
+        hasUnassignedPrograms={hasUnassignedPrograms}
         complexities={complexities}
         portfolios={portfolios}
         value={filters}

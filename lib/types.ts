@@ -75,6 +75,23 @@ export type Lifecycle = {
   dismantled?: string;
 };
 
+export type AircraftStructureCategory =
+  | "programFamily"
+  | "aircraftType"
+  | "aircraftSeries"
+  | "aircraftModel"
+  | "aircraftProject";
+
+export type AircraftStructureNode = {
+  id: string;
+  name: string;
+  category: AircraftStructureCategory;
+  code: string;
+  parentId?: string;
+  parentName?: string;
+  children?: AircraftStructureNode[];
+};
+
 export type LabTestMean = {
   id: string;
   externalId: string;

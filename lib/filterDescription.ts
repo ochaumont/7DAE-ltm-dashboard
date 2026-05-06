@@ -1,5 +1,7 @@
 import type { FilterValue } from "@/components/FilterBar";
-import { PORTFOLIO_NONE } from "@/lib/labtestmeans";
+import { COMPLEXITY_NA, PORTFOLIO_NONE } from "@/lib/labtestmeans";
+import { UNASSIGNED_NODE_ID } from "@/lib/aircraftStructure";
+import type { AircraftStructureNode } from "@/lib/types";
 
 const STATUS_LABELS: Record<string, string> = {
   operational: "Operational",
@@ -12,9 +14,13 @@ const COMPLEXITY_LABELS: Record<string, string> = {
   simple: "Simple",
   medium: "Medium",
   complex: "Complex",
+  [COMPLEXITY_NA]: "NA",
 };
 
-export function serializeFilters(filters: FilterValue): string {
+export function serializeFilters(
+  filters: FilterValue,
+  tree?: AircraftStructureNode[],
+): string {
   const lines: string[] = [];
 
   if (filters.search.trim()) lines.push(`Search: "${filters.search.trim()}"`);
@@ -27,8 +33,17 @@ export function serializeFilters(filters: FilterValue): string {
   if (filters.countries.length > 0) {
     lines.push(`Country: ${filters.countries.join(", ")}`);
   }
-  if (filters.programs.length > 0) {
-    lines.push(`Programs: ${filters.programs.join(", ")}`);
+  if (filters.programNodeIds.length > 0) {
+    const idToName = new Map<string, string>();
+    const walk = (n: AircraftStructureNode) => {
+      idToName.set(n.id, n.name);
+      n.children?.forEach(walk);
+    };
+    (tree ?? []).forEach(walk);
+    const labels = filters.programNodeIds.map((id) =>
+      id === UNASSIGNED_NODE_ID ? "Unassigned" : (idToName.get(id) ?? id),
+    );
+    lines.push(`Aircraft programs: ${labels.join(", ")}`);
   }
   if (filters.complexities.length > 0) {
     lines.push(

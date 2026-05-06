@@ -5,8 +5,9 @@ import dynamic from "next/dynamic";
 import FilterBar, { type FilterValue } from "@/components/FilterBar";
 import FilterSheet from "@/components/FilterSheet";
 import { filterLabTestMeans } from "@/lib/labtestmeans";
+import { expandSelection } from "@/lib/aircraftStructure";
 import type {
-  Complexity,
+  AircraftStructureNode,
   LabTestMean,
   LabTestMeanStatus,
   LabTestMeanType,
@@ -19,8 +20,10 @@ type Props = {
   types: LabTestMeanType[];
   statuses: LabTestMeanStatus[];
   countries: string[];
-  programs: string[];
-  complexities: Complexity[];
+  tree: AircraftStructureNode[];
+  programCounts: Map<string, number>;
+  hasUnassignedPrograms: boolean;
+  complexities: string[];
   portfolios: string[];
 };
 
@@ -29,7 +32,9 @@ export default function MapClient({
   types,
   statuses,
   countries,
-  programs,
+  tree,
+  programCounts,
+  hasUnassignedPrograms,
   complexities,
   portfolios,
 }: Props) {
@@ -38,15 +43,22 @@ export default function MapClient({
     types: [],
     statuses: [],
     countries: [],
-    programs: [],
+    programNodeIds: [],
     complexities: [],
     portfolios: [],
   });
 
-  const visible = useMemo(
-    () => filterLabTestMeans(labTestMeans, filters),
-    [labTestMeans, filters]
-  );
+  const visible = useMemo(() => {
+    const { names, includeUnassigned } = expandSelection(
+      tree,
+      filters.programNodeIds,
+    );
+    return filterLabTestMeans(labTestMeans, {
+      ...filters,
+      programNodeNames: names,
+      includeUnassignedPrograms: includeUnassigned,
+    });
+  }, [labTestMeans, tree, filters]);
 
   return (
     <div className="relative h-[calc(100vh-57px)]">
@@ -69,7 +81,9 @@ export default function MapClient({
           types={types}
           statuses={statuses}
           countries={countries}
-          programs={programs}
+          tree={tree}
+          programCounts={programCounts}
+          hasUnassignedPrograms={hasUnassignedPrograms}
           complexities={complexities}
           portfolios={portfolios}
           value={filters}
@@ -80,7 +94,9 @@ export default function MapClient({
         types={types}
         statuses={statuses}
         countries={countries}
-        programs={programs}
+        tree={tree}
+        programCounts={programCounts}
+        hasUnassignedPrograms={hasUnassignedPrograms}
         complexities={complexities}
         portfolios={portfolios}
         value={filters}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type {
-  Complexity,
+  AircraftStructureNode,
   LabTestMeanStatus,
   LabTestMeanType,
 } from "@/lib/types";
-import { PORTFOLIO_NONE } from "@/lib/labtestmeans";
+import { COMPLEXITY_NA, PORTFOLIO_NONE } from "@/lib/labtestmeans";
+import TreeFilter from "@/components/TreeFilter";
 import clsx from "clsx";
 
 const STATUS_LABELS: Record<LabTestMeanStatus, string> = {
@@ -15,6 +16,13 @@ const STATUS_LABELS: Record<LabTestMeanStatus, string> = {
   "out-of-service": "Out of Service",
   "in-project": "In Project",
 };
+
+const STATUS_ORDER: LabTestMeanStatus[] = [
+  "in-project",
+  "operational",
+  "mothballed",
+  "out-of-service",
+];
 
 const TYPE_LABELS: Record<LabTestMeanType, string> = {
   SIB: "SIB",
@@ -29,8 +37,8 @@ export type FilterValue = {
   types: LabTestMeanType[];
   statuses: LabTestMeanStatus[];
   countries: string[];
-  programs: string[];
-  complexities: Complexity[];
+  programNodeIds: string[];
+  complexities: string[];
   portfolios: string[];
 };
 
@@ -38,8 +46,10 @@ type Props = {
   types: LabTestMeanType[];
   statuses: LabTestMeanStatus[];
   countries: string[];
-  programs: string[];
-  complexities: Complexity[];
+  tree: AircraftStructureNode[];
+  programCounts: Map<string, number>;
+  hasUnassignedPrograms: boolean;
+  complexities: string[];
   portfolios: string[];
   value: FilterValue;
   onChange: (v: FilterValue) => void;
@@ -50,14 +60,20 @@ function Toggle<T extends string>({
   value,
   onChange,
   renderLabel,
+  cols,
 }: {
   options: T[];
   value: T[];
   onChange: (v: T[]) => void;
   renderLabel?: (o: T) => string;
+  cols?: number;
 }) {
+  const containerClass = cols ? "grid gap-1" : "flex flex-wrap gap-1";
+  const containerStyle = cols
+    ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }
+    : undefined;
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className={containerClass} style={containerStyle}>
       {options.map((o) => {
         const active = value.includes(o);
         return (
@@ -68,7 +84,7 @@ function Toggle<T extends string>({
               onChange(active ? value.filter((v) => v !== o) : [...value, o])
             }
             className={clsx(
-              "px-2.5 py-1 rounded text-xs font-medium border transition-colors",
+              "px-2.5 py-1 rounded text-xs font-medium border transition-colors truncate",
               active
                 ? "bg-accent text-accent-fg border-accent"
                 : "bg-surface text-fg border-border hover:border-accent/50"
@@ -86,13 +102,34 @@ export default function FilterBar({
   types,
   statuses,
   countries,
-  programs,
+  tree,
+  programCounts,
+  hasUnassignedPrograms,
   complexities,
   portfolios,
   value,
   onChange,
 }: Props) {
   const [search, setSearch] = useState(value.search);
+  const sortedTypes = useMemo(
+    () => types.filter((t) => t !== "NA"),
+    [types],
+  );
+  const sortedCountries = useMemo(
+    () => countries.filter((c) => c !== "Unknown"),
+    [countries],
+  );
+  const sortedComplexities = useMemo(
+    () => complexities.filter((c) => c !== COMPLEXITY_NA),
+    [complexities],
+  );
+  const sortedStatuses = useMemo(
+    () =>
+      [...statuses].sort(
+        (a, b) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b),
+      ),
+    [statuses],
+  );
   return (
     <div className="space-y-4">
       <input
@@ -108,27 +145,30 @@ export default function FilterBar({
       <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Type</div>
         <Toggle
-          options={types}
+          options={sortedTypes}
           value={value.types}
           onChange={(v) => onChange({ ...value, types: v })}
           renderLabel={(t) => TYPE_LABELS[t]}
+          cols={sortedTypes.length || 1}
         />
       </div>
       <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Status</div>
         <Toggle
-          options={statuses}
+          options={sortedStatuses}
           value={value.statuses}
           onChange={(v) => onChange({ ...value, statuses: v })}
           renderLabel={(s) => STATUS_LABELS[s]}
+          cols={2}
         />
       </div>
       <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Country</div>
         <Toggle
-          options={countries}
+          options={sortedCountries}
           value={value.countries}
           onChange={(v) => onChange({ ...value, countries: v })}
+          cols={2}
         />
       </div>
       <div>
@@ -138,25 +178,31 @@ export default function FilterBar({
           value={value.portfolios}
           onChange={(v) => onChange({ ...value, portfolios: v })}
           renderLabel={(p) => (p === PORTFOLIO_NONE ? "None" : p)}
+          cols={2}
         />
       </div>
       <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Complexity</div>
         <Toggle
-          options={complexities}
+          options={sortedComplexities}
           value={value.complexities}
           onChange={(v) => onChange({ ...value, complexities: v })}
           renderLabel={(c) => c.charAt(0).toUpperCase() + c.slice(1)}
+          cols={sortedComplexities.length || 1}
         />
       </div>
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Program</div>
-        <Toggle
-          options={programs}
-          value={value.programs}
-          onChange={(v) => onChange({ ...value, programs: v })}
-        />
-      </div>
+      {(tree.length > 0 || hasUnassignedPrograms) && (
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Aircraft programs</div>
+          <TreeFilter
+            tree={tree}
+            hasUnassigned={hasUnassignedPrograms}
+            selectedIds={value.programNodeIds}
+            counts={programCounts}
+            onChange={(v) => onChange({ ...value, programNodeIds: v })}
+          />
+        </div>
+      )}
     </div>
   );
 }

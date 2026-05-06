@@ -10,13 +10,22 @@ import {
   uniqueComplexities,
   uniqueCountries,
   uniquePortfolios,
-  uniquePrograms,
   uniqueStatuses,
   uniqueTypes,
 } from "@/lib/labtestmeans";
+import {
+  computeProgramCounts,
+  getAircraftTreeCached,
+  hasUnassignedLabTestMeans,
+} from "@/lib/aircraftStructure";
 
 export default async function CataloguePage() {
-  const all = await getLabTestMeans();
+  const [all, tree] = await Promise.all([
+    getLabTestMeans(),
+    getAircraftTreeCached(),
+  ]);
+  const programCounts = computeProgramCounts(tree, all);
+  const hasUnassignedPrograms = hasUnassignedLabTestMeans(all);
   return (
     <Suspense>
       <CatalogueClient
@@ -24,7 +33,9 @@ export default async function CataloguePage() {
         types={uniqueTypes(all)}
         statuses={uniqueStatuses(all)}
         countries={uniqueCountries(all)}
-        programs={uniquePrograms(all)}
+        tree={tree}
+        programCounts={programCounts}
+        hasUnassignedPrograms={hasUnassignedPrograms}
         complexities={uniqueComplexities(all)}
         portfolios={uniquePortfolios(all)}
       />

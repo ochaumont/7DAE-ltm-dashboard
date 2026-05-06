@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import FilterBar, { type FilterValue } from "./FilterBar";
 import type {
-  Complexity,
+  AircraftStructureNode,
   LabTestMeanStatus,
   LabTestMeanType,
 } from "@/lib/types";
@@ -13,8 +13,10 @@ type Props = {
   types: LabTestMeanType[];
   statuses: LabTestMeanStatus[];
   countries: string[];
-  programs: string[];
-  complexities: Complexity[];
+  tree: AircraftStructureNode[];
+  programCounts: Map<string, number>;
+  hasUnassignedPrograms: boolean;
+  complexities: string[];
   portfolios: string[];
   value: FilterValue;
   onChange: (v: FilterValue) => void;
@@ -25,7 +27,9 @@ export default function FilterSheet({
   types,
   statuses,
   countries,
-  programs,
+  tree,
+  programCounts,
+  hasUnassignedPrograms,
   complexities,
   portfolios,
   value,
@@ -37,7 +41,7 @@ export default function FilterSheet({
     value.types.length +
     value.statuses.length +
     value.countries.length +
-    value.programs.length +
+    value.programNodeIds.length +
     value.complexities.length +
     value.portfolios.length +
     (value.search ? 1 : 0);
@@ -87,7 +91,9 @@ export default function FilterSheet({
                 types={types}
                 statuses={statuses}
                 countries={countries}
-                programs={programs}
+                tree={tree}
+                programCounts={programCounts}
+                hasUnassignedPrograms={hasUnassignedPrograms}
                 complexities={complexities}
                 portfolios={portfolios}
                 value={value}

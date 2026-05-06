@@ -140,7 +140,7 @@ export default function MapView({
             <ul className="max-h-72 overflow-y-auto divide-y divide-border -mx-3 px-3">
               {selectedGroup.members.map((m) => (
                 <li key={m.id} className="py-2 flex items-center gap-2">
-                  <ChipType type={m.type} />
+                  <ChipType type={m.type} withIcon />
                   <Link
                     href={`/labtestmean/${encodeURIComponent(m.externalId)}`}
                     className="flex-1 min-w-0 text-sm font-medium truncate hover:text-accent transition-colors"

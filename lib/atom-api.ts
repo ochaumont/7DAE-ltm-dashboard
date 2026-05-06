@@ -1,3 +1,5 @@
+import type { AircraftStructureNode } from "./types";
+
 export const ATOM_API_BASE_URL =
   process.env.ATOM_API_BASE_URL ??
   "http://localhost:8080/atom-synchronizer-dev";
@@ -111,6 +113,17 @@ export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {
   );
   if (!res.ok) throw new AtomApiError(res.status, res.statusText);
   return (await res.json()) as LabTestMeanDto[];
+}
+
+export async function fetchAircraftStructureTree(): Promise<
+  AircraftStructureNode[]
+> {
+  const res = await atomFetch(
+    `${ATOM_API_BASE_URL}/api/infos/aircraftStructures/tree`,
+    { next: { revalidate: 60 } },
+  );
+  if (!res.ok) throw new AtomApiError(res.status, res.statusText);
+  return (await res.json()) as AircraftStructureNode[];
 }
 
 export async function fetchLabTestMean(
