@@ -68,7 +68,10 @@ function toPhotos(
   fallbackAlt: string,
 ): Photo[] {
   if (!refs || refs.length === 0) return [];
-  const images = refs.filter((r) => r.documentType?.toLowerCase() === "image");
+  const PHOTO_TYPES = ["image", "photo"];
+  const images = refs.filter((r) =>
+    PHOTO_TYPES.includes(r.documentType?.toLowerCase() ?? ""),
+  );
   const selected: Photo[] = [];
   const others: Photo[] = [];
   for (const r of images) {
