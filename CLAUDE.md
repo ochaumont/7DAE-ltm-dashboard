@@ -20,7 +20,7 @@ Plain Next.js project, no test or lint script defined.
 npm install
 npm run dev        # dev server on 3001
 npm run build      # production build (output: "standalone")
-npm start          # serve the build on 3001
+npm start          # serve the build on 3001 c
 ```
 
 When a refactor deletes routes or pages, `.next/` often holds stale chunks and dev/build will throw `Cannot find module './<hash>.js'`. Fix by removing `.next/` before rebuilding: `rm -rf .next`.
