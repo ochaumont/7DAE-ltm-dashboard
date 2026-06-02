@@ -42,7 +42,6 @@ const TYPE_MAP: Record<string, LabTestMeanType> = {
   RT: "RT",
 };
 
-const PLACEHOLDER_COVER = `${process.env.NEXT_PUBLIC_BASE_HREF ?? ""}/covers/no-ltm-photo.png`;
 
 /**
  * `documentRefs[].name` containing "SELECTED" (case-insensitive) → cover photo.
@@ -76,7 +75,8 @@ function toPhotos(
   const others: Photo[] = [];
   for (const r of images) {
     const photo: Photo = {
-      url: `/api/photo/${r.id}?u=${encodeURIComponent(r.url)}`,
+      resourceId: r.id,
+      resourceUri: r.url,
       alt: r.name && r.name.length > 0 ? r.name : fallbackAlt,
       kind: isSelected(r.name) ? "selected" : "other",
       is360: is3D(r.name),
@@ -215,10 +215,10 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
   const geo = site ? GEO_MAP[site] : undefined;
 
   const photos = toPhotos(dto.documentRefs, dto.name);
-  const coverPhoto =
-    photos.find((p) => p.kind === "selected")?.url ??
-    photos[0]?.url ??
-    PLACEHOLDER_COVER;
+  const coverSrc = photos.find((p) => p.kind === "selected") ?? photos[0];
+  const coverPhoto = coverSrc
+    ? { id: coverSrc.resourceId, uri: coverSrc.resourceUri }
+    : null;
 
   return {
     id: dto.id,

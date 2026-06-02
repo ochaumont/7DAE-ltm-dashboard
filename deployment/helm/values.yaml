@@ -15,7 +15,6 @@ app:
     port: 8080
 
   baseHref: /
-  atomApiBaseUrl: "http://atom-synchronizer-dev/atom-synchronizer-dev"
 
   requests:
     memory: "64Mi"

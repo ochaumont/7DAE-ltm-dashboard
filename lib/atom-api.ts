@@ -1,7 +1,7 @@
 import type { AircraftStructureNode } from "./types";
 
-export const ATOM_API_BASE_URL =
-  process.env.ATOM_API_BASE_URL ??
+export const NEXT_PUBLIC_ATOM_API_BASE_URL =
+  process.env.NEXT_PUBLIC_ATOM_API_BASE_URL ??
   "http://localhost:8080/atom-synchronizer-dev";
 
 export type FactsheetRef = {
@@ -93,13 +93,13 @@ async function atomFetch(
         // `ATOM_BACKEND_DOWN:` is a machine-readable prefix consumed by
         // `app/error.tsx` to render the dedicated "API unavailable" screen.
         // Keep the prefix stable; the human-readable suffix may change.
-        `ATOM_BACKEND_DOWN: timeout after ${FETCH_TIMEOUT_MS}ms at ${ATOM_API_BASE_URL}`,
+        `ATOM_BACKEND_DOWN: timeout after ${FETCH_TIMEOUT_MS}ms at ${NEXT_PUBLIC_ATOM_API_BASE_URL}`,
       );
     }
     throw new AtomApiError(
       0,
       "Network error",
-      `ATOM_BACKEND_DOWN: unreachable at ${ATOM_API_BASE_URL}`,
+      `ATOM_BACKEND_DOWN: unreachable at ${NEXT_PUBLIC_ATOM_API_BASE_URL}`,
     );
   } finally {
     clearTimeout(timer);
@@ -108,7 +108,7 @@ async function atomFetch(
 
 export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {
   const res = await atomFetch(
-    `${ATOM_API_BASE_URL}/api/infos/labtestmeans`,
+    `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/labtestmeans`,
     { next: { revalidate: 60 } },
   );
   if (!res.ok) throw new AtomApiError(res.status, res.statusText);
@@ -119,7 +119,7 @@ export async function fetchAircraftStructureTree(): Promise<
   AircraftStructureNode[]
 > {
   const res = await atomFetch(
-    `${ATOM_API_BASE_URL}/api/infos/aircraftStructures/tree`,
+    `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/aircraftStructures/tree`,
     { next: { revalidate: 60 } },
   );
   if (!res.ok) throw new AtomApiError(res.status, res.statusText);
@@ -130,7 +130,7 @@ export async function fetchLabTestMean(
   externalId: string,
 ): Promise<LabTestMeanDto | null> {
   const res = await atomFetch(
-    `${ATOM_API_BASE_URL}/api/infos/labtestmeans/${encodeURIComponent(externalId)}`,
+    `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/labtestmeans/${encodeURIComponent(externalId)}`,
     { next: { revalidate: 60 } },
   );
   if (res.status === 404) return null;

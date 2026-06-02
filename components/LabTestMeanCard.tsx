@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import type { LabTestMean } from "@/lib/types";
-import { placeholderOnError, withBasePath } from "@/lib/photo";
+import { PHOTO_PLACEHOLDER } from "@/lib/photo";
+import { usePhoto } from "@/lib/usePhoto";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
 import ChipAccessControl from "./ChipAccessControl";
@@ -12,6 +13,11 @@ export default function LabTestMeanCard({
 }: {
   labTestMean: LabTestMean;
 }) {
+  const coverSrc = usePhoto(
+    labTestMean.coverPhoto?.id ?? "",
+    labTestMean.coverPhoto?.uri ?? "",
+  );
+
   return (
     <Link
       href={`/labtestmean/${labTestMean.externalId}`}
@@ -19,11 +25,10 @@ export default function LabTestMeanCard({
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
         <img
-          src={withBasePath(labTestMean.coverPhoto)}
+          src={coverSrc}
           alt={labTestMean.name}
           className="w-full h-full object-cover"
           loading="lazy"
-          onError={placeholderOnError}
         />
       </div>
       <div className="px-4 pt-4 pb-3 space-y-2">

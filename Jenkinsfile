@@ -28,7 +28,9 @@ pipeline {
         ARTIFACTORY_HOST    = "r-2k77-devops-docker-releases-local.artifactory.fr.eu.airbus.corp"
         NPMRC_PATH          = 'config/.npmrc'
 
-        BASE_HREF           = "/atom-ltm-dashboard"
+        BASE_HREF               = "/atom-ltm-dashboard"
+        ATOM_API_URL_VAL        = "https://gateway2-val.after-val.eu.airbus.corp/atom-synchronizer-val"
+        ATOM_API_URL_PROD       = "https://gateway.after.eu.airbus.corp/atom-synchronizer-prod"
     }
 
     stages {
@@ -90,9 +92,12 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh "BASE_HREF=${BASE_HREF} NEXT_PUBLIC_BASE_HREF=${BASE_HREF} npm run build"
-                echo "Stashing standalone server artifacts for Docker packaging..."
-                stash includes: '.next/standalone/**,.next/static/**,public/**', name: 'next-build'
+                script {
+                    def atomApiUrl = TARGET_ENV == 'prod' ? ATOM_API_URL_PROD : ATOM_API_URL_VAL
+                    sh "BASE_HREF=${BASE_HREF} NEXT_PUBLIC_BASE_HREF=${BASE_HREF} NEXT_PUBLIC_ATOM_API_BASE_URL=${atomApiUrl} npm run build"
+                }
+                echo "Stashing static export for Docker packaging..."
+                stash includes: 'out/**', name: 'next-build'
             }
         }
 

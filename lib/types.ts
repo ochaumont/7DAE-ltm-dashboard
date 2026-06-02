@@ -17,22 +17,20 @@ export type TechnicalCapability =
 /**
  * A photo attached to a lab test mean.
  *
- * - `url` always points to the local proxy `/api/photo/[id]?u=<encoded>` —
- *   the binary is streamed by `app/api/photo/[id]/route.ts`, never directly
- *   from the upstream host.
- * - `kind` reflects the `SELECTED` naming convention from the backend
- *   (`name` contains "SELECTED" → cover photo; otherwise → "other"). The
- *   adapter sorts SELECTED photos first in the array.
- * - `is360` is true when the document name ends with `3D.<ext>` in uppercase
- *   — those are equirectangular panoramas rendered through the
- *   `react-photo-sphere-viewer` instead of an `<img>`.
+ * - `resourceId` / `resourceUri` are passed directly to the ATOM backend
+ *   `POST /api/infos/resource` from the browser (CORS enabled).
+ * - `kind` reflects the `SELECTED` naming convention from the backend.
+ * - `is360` is true when the document name ends with `3D.<ext>` — equirectangular panoramas.
  */
 export type Photo = {
-  url: string;
+  resourceId: string;
+  resourceUri: string;
   alt?: string;
   kind?: "selected" | "other";
   is360?: boolean;
 };
+
+export type CoverPhoto = { id: string; uri: string };
 
 export type Location = {
   country: string;
@@ -113,6 +111,6 @@ export type LabTestMean = {
   portfolio: { id: string; name: string } | null;
   technicalCapabilities: TechnicalCapability[];
   projects: string[];
-  coverPhoto: string;
+  coverPhoto: CoverPhoto | null;
   photos: Photo[];
 };

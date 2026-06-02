@@ -1,8 +1,3 @@
-// Backend may be unreachable at build time (dev ATOM is flaky). Forcing
-// dynamic rendering avoids killing the build; the in-fetch `revalidate: 60`
-// still caches per-request once the page renders.
-export const dynamic = "force-dynamic";
-
 import { Suspense } from "react";
 import CatalogueClient from "@/components/CatalogueClient";
 import {

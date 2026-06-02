@@ -13,8 +13,7 @@ app:
   service:
     port: 8080
 
-  baseHref: /app-f1fd/nextjs-hello/
-  atomApiBaseUrl: "http://atom-synchronizer-dev.7dae-atom-prod.svc.cluster.local/atom-synchronizer-dev"
+  baseHref: /atom-ltm-dashboard
 
   requests:
     memory: "256Mi"

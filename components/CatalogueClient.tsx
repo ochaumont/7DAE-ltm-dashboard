@@ -9,8 +9,10 @@ import { filterLabTestMeans } from "@/lib/labtestmeans";
 import { expandSelection } from "@/lib/aircraftStructure";
 import { usePageQuery } from "@/lib/usePageQuery";
 import { serializeFilters } from "@/lib/filterDescription";
+import { NEXT_PUBLIC_ATOM_API_BASE_URL } from "@/lib/atom-api";
 import type {
   AircraftStructureNode,
+  CoverPhoto,
   LabTestMean,
   LabTestMeanStatus,
   LabTestMeanType,
@@ -73,6 +75,24 @@ export default function CatalogueClient({
 
   const [isExporting, setIsExporting] = useState(false);
 
+  const fetchPhotoDataUrl = async (cover: CoverPhoto): Promise<string | null> => {
+    try {
+      const res = await fetch(`${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/resource`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: cover.id, uri: cover.uri }),
+      });
+      if (!res.ok) return null;
+      const buf = new Uint8Array(await res.arrayBuffer());
+      const fmt = buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpeg" : null;
+      if (!fmt) return null;
+      const binary = Array.from(buf).map((b) => String.fromCharCode(b)).join("");
+      return `data:image/${fmt};base64,${btoa(binary)}`;
+    } catch {
+      return null;
+    }
+  };
+
   const handleExportPdf = async () => {
     if (visible.length === 0 || isExporting) return;
     if (
@@ -83,18 +103,21 @@ export default function CatalogueClient({
     }
     setIsExporting(true);
     try {
-      const res = await fetch("/api/export/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          benches: visible,
+      const resolved = await Promise.all(
+        visible.map(async (b) => ({
+          ...b,
+          resolvedCover: b.coverPhoto ? await fetchPhotoDataUrl(b.coverPhoto) : null,
+        })),
+      );
+      const { pdf } = await import("@react-pdf/renderer");
+      const CatalogueExport = (await import("@/components/pdf/CatalogueExport")).default;
+      const blob = await pdf(
+        CatalogueExport({
+          benches: resolved,
           filtersDescription: serializeFilters(filters, tree),
+          baseUrl: window.location.origin,
         }),
-      });
-      if (!res.ok) {
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-      }
-      const blob = await res.blob();
+      ).toBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

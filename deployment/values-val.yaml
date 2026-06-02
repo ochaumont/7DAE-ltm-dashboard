@@ -14,7 +14,6 @@ app:
     port: 8080
 
   baseHref: /atom-ltm-dashboard
-  atomApiBaseUrl: "https://gateway2-val.after-val.eu.airbus.corp/atom-synchronizer-val"
 
   requests:
     memory: "128Mi"

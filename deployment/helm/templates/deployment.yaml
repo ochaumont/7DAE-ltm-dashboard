@@ -56,8 +56,6 @@ spec:
           env:
             - name: SERVER_PORT
               value: {{ .Values.app.service.port | quote }}
-            - name: ATOM_API_BASE_URL
-              value: {{ .Values.app.atomApiBaseUrl | quote }}
           resources:
             requests:
               memory: {{ .Values.app.requests.memory }}

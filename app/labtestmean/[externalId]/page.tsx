@@ -1,18 +1,24 @@
-// Backend ATOM dev is flaky — SSG-prerendering 314 detail pages would fail the
-// build whenever a single fetch times out. Force dynamic + per-fetch
-// `revalidate: 60` gives effectively the same UX with build resilience.
-// Switch back when the backend is reliable enough for build-time SSG.
-export const dynamic = "force-dynamic";
+// Only pre-render pages for known externalIds. Unknown params → 404.
+export const dynamicParams = false;
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import LabTestMeanHeader from "@/components/LabTestMeanHeader";
 import Gallery from "@/components/Gallery";
 import Section from "@/components/detail/Section";
-import {
-  getLabTestMeanByExternalId,
-  getLabTestMeans,
-} from "@/lib/labtestmeans";
+import { getLabTestMeans } from "@/lib/labtestmeans";
+
+export async function generateStaticParams() {
+  try {
+    const all = await getLabTestMeans();
+    return all
+      .filter((m) => typeof m.externalId === "string" && m.externalId.length > 0)
+      .map((m) => ({ externalId: m.externalId }));
+  } catch {
+    // If the backend is unreachable at build time, skip pre-rendering detail pages.
+    return [];
+  }
+}
 
 export default async function LabTestMeanDetailPage({
   params,
@@ -20,19 +26,24 @@ export default async function LabTestMeanDetailPage({
   params: Promise<{ externalId: string }>;
 }) {
   const { externalId } = await params;
-  const m = await getLabTestMeanByExternalId(externalId);
+
+  // Use the full list (same source as generateStaticParams) to avoid redundant
+  // per-LTM HTTP calls. React cache() deduplicates within the same render.
+  let all;
+  try {
+    all = await getLabTestMeans();
+  } catch {
+    notFound();
+  }
+
+  const m = all.find((ltm) => ltm.externalId === externalId) ?? null;
   if (!m) notFound();
 
-  // Build id → externalId map so dependsOn entries can become real <Link>s.
-  // `getLabTestMeans` is React-cached per request, so this is essentially free
-  // when the dashboard is also rendering the catalogue. Failure → empty map,
-  // dependencies render as plain names.
-  const idToExternalId = new Map<string, string>();
-  try {
-    for (const ltm of await getLabTestMeans()) {
-      if (ltm.externalId) idToExternalId.set(ltm.id, ltm.externalId);
-    }
-  } catch {}
+  const idToExternalId = new Map(
+    all
+      .filter((ltm) => ltm.externalId)
+      .map((ltm) => [ltm.id, ltm.externalId]),
+  );
 
   return (
     <main className="px-4 md:px-8 py-8 max-w-[1400px] mx-auto">
