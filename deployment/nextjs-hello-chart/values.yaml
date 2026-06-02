@@ -25,8 +25,8 @@ podLabels: {}
 
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 1000
-  fsGroup: 1000
+  runAsUser: 101
+  fsGroup: 101
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -85,5 +85,18 @@ probes:
 nodeSelector: {}
 tolerations: []
 affinity: {}
-volumes: []
-volumeMounts: []
+volumes:
+  - name: nginx-conf-d
+    emptyDir: {}
+  - name: nginx-cache
+    emptyDir: {}
+  - name: nginx-run
+    emptyDir: {}
+
+volumeMounts:
+  - name: nginx-conf-d
+    mountPath: /etc/nginx/conf.d
+  - name: nginx-cache
+    mountPath: /var/cache/nginx
+  - name: nginx-run
+    mountPath: /var/run

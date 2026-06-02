@@ -92,7 +92,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh "npm run build"
+                sh "BASE_HREF=${BASE_HREF} NEXT_PUBLIC_BASE_HREF=${BASE_HREF} npm run build"
                 echo "Stashing standalone server artifacts for Docker packaging..."
                 stash includes: '.next/standalone/**,.next/static/**,public/**', name: 'next-build'
             }
@@ -132,14 +132,14 @@ pipeline {
                 sh "git config --global http.sslVerify false"
                 checkout scm
                 dir("deployment") {
-                    sh "helm repo update"
-                    echo "Deploying ${APP_NAME} to namespace: ${AFTER_APP_NAMESPACE} using values-${TARGET_ENV}.yaml with tag: ${env.DOCKER_IMAGE_TAG}"
+                    echo "Deploying ${APP_NAME} to namespace: ${AFTER_APP_NAMESPACE} using values-${TARGET_ENV}.yaml with tag: ${env.PROJECT_VERSION}"
                     sh """
-                        helm upgrade --install ${APP_NAME} ${HELM_CHART_NAME} \
+                        helm upgrade --install ${APP_NAME} ./${HELM_CHART_NAME} \
                         --namespace ${AFTER_APP_NAMESPACE} \
                         -f ${HELM_CHART_NAME}/values-${TARGET_ENV}.yaml \
-                        --set image.tag=${env.DOCKER_IMAGE_TAG} \
+                        --set image.tag=${env.PROJECT_VERSION} \
                         --set environment=${TARGET_ENV} \
+                        --atomic \
                         --wait
                     """
                     echo "Helm chart deployed successfully."

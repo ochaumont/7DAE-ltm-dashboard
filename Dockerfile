@@ -6,20 +6,19 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-FROM node:20-alpine AS runner
-WORKDIR /app
+FROM nginx:1.27-alpine AS runner
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=8080
-ENV HOSTNAME=0.0.0.0
+RUN apk add --no-cache nodejs
 
-RUN addgroup -g 1000 -S app && adduser -S app -G app -u 1000
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx-custom.conf /etc/nginx/templates/default.conf.template
+COPY app/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
-COPY --from=builder --chown=app:app /app/public ./public
-COPY --from=builder --chown=app:app /app/.next/standalone ./
-COPY --from=builder --chown=app:app /app/.next/static ./.next/static
+COPY --from=builder --chown=101:101 /app/public /app/public
+COPY --from=builder --chown=101:101 /app/.next/standalone /app
+COPY --from=builder --chown=101:101 /app/.next/static /app/.next/static
 
-USER app
+USER 101
 EXPOSE 8080
-CMD ["node", "server.js"]
+CMD ["/app/start.sh"]
