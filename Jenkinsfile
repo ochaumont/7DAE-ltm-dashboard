@@ -105,15 +105,37 @@ pipeline {
 					usernamePassword(
 						credentialsId: 'artifactory-atom-credentials', 
 						usernameVariable: 'ARTIFACTORY_USERNAME', 
-						passwordVariable: 'ARTIFACTORY_PASSWORD' // On utilisera ceci comme token
+						passwordVariable: 'ARTIFACTORY_PASSWORD'
 					)
 				]) {
-                    unstash 'next-build'
                     script {
-                        echo "Building Image: ${env.FULL_IMAGE_NAME}"
-                        sh "docker build --rm -t ${env.FULL_IMAGE_NAME} ."
-                        echo "Pushing Image..."
-                        sh "docker image push ${env.FULL_IMAGE_NAME}"
+                        // 1. On extrait les fichiers générés par le build
+                        unstash 'next-build'
+                        
+                        // 2. RESTRUCTURATION : On déplace les assets statiques à l'intérieur du dossier standalone
+                        // afin que le serveur node autonome de Next.js puisse les servir nativement.
+                        sh """
+                            cp -r public/ .next/standalone/public/
+                            mkdir -p .next/standalone/.next/
+                            cp -r .next/static/ .next/standalone/.next/static/
+                        """
+                        
+                        // 3. On se place dans le dossier standalone pour lancer le build Docker, 
+                        // ainsi le contexte Docker "." ne contiendra QUE l'application épurée.
+                        dir('.next/standalone') {
+                            // On rapatrie les fichiers de configuration requis par le Dockerfile
+                            sh """
+                                cp ../../Dockerfile .
+                                cp ../../nginx.conf .
+                                cp ../../nginx-custom.conf .
+                                cp ../../start.sh .
+                            """
+                            
+                            echo "Building Image: ${env.FULL_IMAGE_NAME}"
+                            sh "docker build --rm -t ${env.FULL_IMAGE_NAME} ."
+                            echo "Pushing Image..."
+                            sh "docker image push ${env.FULL_IMAGE_NAME}"
+                        }
                     }
                 }
             }
