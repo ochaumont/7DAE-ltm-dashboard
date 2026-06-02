@@ -43,10 +43,3 @@
   font-size: 0.7rem;
   letter-spacing: 0.05em;
 }
-
-.theme-industrial-premium .grid-bg {
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--color-accent) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 5%, transparent) 1px, transparent 1px);
-  background-size: 32px 32px;
-}

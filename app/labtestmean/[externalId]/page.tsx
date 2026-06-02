@@ -14,17 +14,6 @@ import {
   getLabTestMeans,
 } from "@/lib/labtestmeans";
 
-export async function generateStaticParams() {
-  try {
-    const all = await getLabTestMeans();
-    return all
-      .filter((m) => typeof m.externalId === "string" && m.externalId.length > 0)
-      .map((m) => ({ externalId: m.externalId }));
-  } catch {
-    return [];
-  }
-}
-
 export default async function LabTestMeanDetailPage({
   params,
 }: {

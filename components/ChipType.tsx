@@ -1,13 +1,6 @@
 import type { LabTestMeanType } from "@/lib/types";
 import TypeIcon from "./icons/TypeIcon";
-
-const labels: Record<LabTestMeanType, string> = {
-  SIB: "SIB",
-  SIMU: "SIMU",
-  FIB: "FIB",
-  RT: "Mean ResearchOnTest",
-  NA: "NA",
-};
+import { TYPE_LABELS } from "@/lib/labels";
 
 export default function ChipType({
   type,
@@ -19,7 +12,7 @@ export default function ChipType({
   return (
     <span className="chip-type inline-flex items-center px-2 py-0.5 rounded">
       {withIcon && <TypeIcon type={type} className="mr-1.5" />}
-      {labels[type]}
+      {TYPE_LABELS[type]}
     </span>
   );
 }

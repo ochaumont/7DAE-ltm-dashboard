@@ -1,6 +1,8 @@
 import { Page, Text, View, Link, Image } from "@react-pdf/renderer";
 import type { LabTestMean } from "@/lib/types";
 import { styles, colors, statusColor } from "./styles";
+import { STATUS_LABELS, COMPLEXITY_LABELS } from "@/lib/labels";
+import { formatDate } from "@/lib/format-date";
 
 type ResolvedBench = LabTestMean & { resolvedCover: string | null };
 
@@ -9,33 +11,12 @@ type Props = {
   baseUrl: string;
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  operational: "Operational",
-  mothballed: "Mothballed",
-  "out-of-service": "Out of Service",
-  "in-project": "In Project",
-};
-
-const COMPLEXITY_LABELS: Record<string, string> = {
-  simple: "Simple",
-  medium: "Medium",
-  complex: "Complex",
-};
-
 const CAPABILITY_LABELS: Record<string, string> = {
   "aircraft-simulation-package": "Aircraft Simulation Package",
   "automatic-testing": "Automatic Testing",
   "remote-access": "Remote Access",
   "no-remote-access": "No Remote Access",
 };
-
-function fmtDate(s: string | undefined): string {
-  if (!s) return "—";
-  if (/^\d{4}$/.test(s)) return s;
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return s;
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short" });
-}
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -182,18 +163,18 @@ export default function BenchDetailPage({ banc, baseUrl }: Props) {
 
         <View style={{ flex: 1 }}>
           <Section title="Lifecycle">
-            <Field label="Kickoff" value={fmtDate(banc.lifecycle.kickoff)} />
+            <Field label="Kickoff" value={formatDate(banc.lifecycle.kickoff)} />
             <Field
               label="In Service"
-              value={fmtDate(banc.lifecycle.inService)}
+              value={formatDate(banc.lifecycle.inService)}
             />
             <Field
               label="Mothballed"
-              value={fmtDate(banc.lifecycle.mothballed)}
+              value={formatDate(banc.lifecycle.mothballed)}
             />
             <Field
               label="Dismantled"
-              value={fmtDate(banc.lifecycle.dismantled)}
+              value={formatDate(banc.lifecycle.dismantled)}
             />
           </Section>
 

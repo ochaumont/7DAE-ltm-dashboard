@@ -7,15 +7,9 @@ import type {
   LabTestMeanType,
 } from "@/lib/types";
 import { COMPLEXITY_NA, PORTFOLIO_NONE } from "@/lib/labtestmeans";
+import { STATUS_LABELS, TYPE_LABELS } from "@/lib/labels";
 import TreeFilter from "@/components/TreeFilter";
 import clsx from "clsx";
-
-const STATUS_LABELS: Record<LabTestMeanStatus, string> = {
-  operational: "Operational",
-  mothballed: "Mothballed",
-  "out-of-service": "Out of Service",
-  "in-project": "In Project",
-};
 
 const STATUS_ORDER: LabTestMeanStatus[] = [
   "in-project",
@@ -23,14 +17,6 @@ const STATUS_ORDER: LabTestMeanStatus[] = [
   "mothballed",
   "out-of-service",
 ];
-
-const TYPE_LABELS: Record<LabTestMeanType, string> = {
-  SIB: "SIB",
-  SIMU: "SIMU",
-  FIB: "FIB",
-  RT: "Mean ResearchOnTest",
-  NA: "NA",
-};
 
 export type FilterValue = {
   search: string;

@@ -6,6 +6,7 @@ import {
   MothballedIcon,
   DismantledIcon,
 } from "@/components/icons/LifecycleStepIcon";
+import { formatDate } from "@/lib/format-date";
 
 type StepKey = "kickoff" | "inService" | "mothballed" | "dismantled";
 
@@ -53,14 +54,6 @@ const STEPS: StepDef[] = [
   },
 ];
 
-function formatLifecycleDate(s?: string): string {
-  if (!s) return "—";
-  if (/^\d{4}$/.test(s)) return s;
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return s;
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short" });
-}
-
 function StepCard({
   step,
   rawDate,
@@ -69,7 +62,7 @@ function StepCard({
   rawDate?: string;
 }) {
   const reached = !!rawDate;
-  const formatted = formatLifecycleDate(rawDate);
+  const formatted = formatDate(rawDate);
   const description = reached
     ? step.reachedDescription(formatted)
     : step.unreachedDescription;

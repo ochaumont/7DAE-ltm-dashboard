@@ -1,21 +1,8 @@
 import type { FilterValue } from "@/components/FilterBar";
-import { COMPLEXITY_NA, PORTFOLIO_NONE } from "@/lib/labtestmeans";
+import { PORTFOLIO_NONE } from "@/lib/labtestmeans";
 import { UNASSIGNED_NODE_ID } from "@/lib/aircraftStructure";
 import type { AircraftStructureNode } from "@/lib/types";
-
-const STATUS_LABELS: Record<string, string> = {
-  operational: "Operational",
-  mothballed: "Mothballed",
-  "out-of-service": "Out of Service",
-  "in-project": "In Project",
-};
-
-const COMPLEXITY_LABELS: Record<string, string> = {
-  simple: "Simple",
-  medium: "Medium",
-  complex: "Complex",
-  [COMPLEXITY_NA]: "NA",
-};
+import { STATUS_LABELS, COMPLEXITY_LABELS } from "@/lib/labels";
 
 export function serializeFilters(
   filters: FilterValue,
