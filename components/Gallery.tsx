@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Photo } from "@/lib/types";
-import { PHOTO_PLACEHOLDER, placeholderOnError } from "@/lib/photo";
+import { PHOTO_PLACEHOLDER, placeholderOnError, withBasePath } from "@/lib/photo";
 import PanoramaClient from "./PanoramaClient";
 
 export default function Gallery({ photos }: { photos: Photo[] }) {
@@ -23,10 +23,10 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
     <div className="space-y-3">
       <div className="relative aspect-video bg-surface-2 rounded-card overflow-hidden">
         {current.is360 ? (
-          <PanoramaClient src={current.url} />
+          <PanoramaClient src={withBasePath(current.url)} />
         ) : (
           <img
-            src={current.url}
+            src={withBasePath(current.url)}
             alt={current.alt ?? ""}
             className="w-full h-full object-cover"
             onError={placeholderOnError}
@@ -48,7 +48,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
               type="button"
             >
               <img
-                src={p.url}
+                src={withBasePath(p.url)}
                 alt={p.alt ?? ""}
                 className="w-full h-full object-cover"
                 onError={placeholderOnError}

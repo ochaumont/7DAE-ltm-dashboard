@@ -1,10 +1,23 @@
 import type { SyntheticEvent } from "react";
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_HREF ?? "";
+
+/**
+ * Prepends the Next.js basePath to any absolute path that doesn't already
+ * include it. Safe to call on paths that already carry the prefix, on http(s)
+ * URLs, and when BASE_PATH is empty (no-op).
+ */
+export function withBasePath(url: string): string {
+  if (!BASE_PATH || url.startsWith("http") || url.startsWith(BASE_PATH))
+    return url;
+  return `${BASE_PATH}${url}`;
+}
+
 /**
  * Local SVG fallback used whenever a photo fails to load (404 from the photo
  * proxy, broken upstream, etc). Bundled in `public/`, always available.
  */
-export const PHOTO_PLACEHOLDER = `${process.env.NEXT_PUBLIC_BASE_HREF ?? ""}/covers/no-ltm-photo.png`;
+export const PHOTO_PLACEHOLDER = `${BASE_PATH}/covers/no-ltm-photo.png`;
 
 /**
  * `onError` handler that swaps a broken `<img>` `src` to the local placeholder.
