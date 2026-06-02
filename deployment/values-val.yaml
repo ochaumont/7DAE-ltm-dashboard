@@ -39,7 +39,7 @@ app:
       failureThreshold: 3
       periodSeconds: 10
 
-ingress:
+  ingress:
     enabled: true
     hosts: "gateway-val.after-val.eu.airbus.corp"
     gateways: "istio-system/gateway-val"

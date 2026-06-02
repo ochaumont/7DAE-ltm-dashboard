@@ -28,7 +28,7 @@ pipeline {
         ARTIFACTORY_HOST    = "r-2k77-devops-docker-releases-local.artifactory.fr.eu.airbus.corp"
         NPMRC_PATH          = 'config/.npmrc'
 
-        BASE_HREF           = "/app-f1fd/nextjs-hello/"
+        BASE_HREF           = "/atom-ltm-dashboard"
     }
 
     stages {
@@ -140,8 +140,7 @@ pipeline {
                         --set app.image.tag=${env.PROJECT_VERSION} \
                         --kubeconfig=${KUBECONFIG} \
                         --atomic \
-                        --wait \
-                        --install
+                        --wait
                     """
                     echo "Helm chart deployed successfully."
                 }
