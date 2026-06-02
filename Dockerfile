@@ -1,4 +1,5 @@
-FROM node:20-alpine AS builder
+FROM docker-airbus-virtual.artifactory.2b82.aws.cloud.airbus.corp/nginx:1.27-alpine
+
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --no-audit --no-fund

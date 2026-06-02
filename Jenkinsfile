@@ -72,6 +72,7 @@ pipeline {
 							writeFile(file: '.npmrc', text: npmrcContent)
 							echo "Updated .npmrc using password/API key from artifactory-atom-credentials"
 						}
+                        
 						
 						// On définit les variables pour les étapes suivantes (Docker/Helm)
 						env.FULL_IMAGE_NAME = "${env.ARTIFACTORY_HOST}/transversal/${env.APP_NAME}:${env.PROJECT_VERSION}"
@@ -83,9 +84,7 @@ pipeline {
         stage('NPM Install') {
             steps {
                 sh 'rm -rf package-lock.json'
-                withCredentials([file(credentialsId: 'npmrc', variable: 'NPMRC_FILE')]) {
-		sh 'npm install --userconfig=${NPMRC_FILE} --verbose'
-	       }
+                sh 'npm install'
             }
         }
 
