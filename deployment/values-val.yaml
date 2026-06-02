@@ -1,0 +1,48 @@
+app:
+  env: val
+  replicaCount: 2
+
+  image:
+    name: "r-2k77-devops-docker-releases-local.artifactory.fr.eu.airbus.corp/transversal/ltm-dashboard"
+    tag: "0.1.0"
+    pullPolicy: Always
+    pullSecret:
+      enabled: false
+      secret: ""
+
+  service:
+    port: 8080
+
+  baseHref: /atom-ltm-dashboard
+  atomApiBaseUrl: "http://atom-synchronizer-dev.7dae-atom-val.svc.cluster.local/atom-synchronizer-dev"
+
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "300m"
+
+  probes:
+    liveness:
+      enabled: true
+      url: /atom-ltm-dashboard/health
+      initialDelaySeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3
+      periodSeconds: 10
+    readiness:
+      enabled: true
+      url: /atom-ltm-dashboard/health
+      initialDelaySeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 3
+      periodSeconds: 10
+
+ingress:
+    enabled: true
+    hosts: "gateway-val.after-val.eu.airbus.corp"
+    gateways: "istio-system/gateway-val"
+
+serviceaccount:
+  create: false

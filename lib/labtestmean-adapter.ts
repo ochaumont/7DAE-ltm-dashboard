@@ -42,7 +42,7 @@ const TYPE_MAP: Record<string, LabTestMeanType> = {
   RT: "RT",
 };
 
-const PLACEHOLDER_COVER = "/covers/no-ltm-photo.png";
+const PLACEHOLDER_COVER = `${process.env.NEXT_PUBLIC_BASE_HREF ?? ""}/covers/no-ltm-photo.png`;
 
 /**
  * `documentRefs[].name` containing "SELECTED" (case-insensitive) → cover photo.

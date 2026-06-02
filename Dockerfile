@@ -12,7 +12,7 @@ RUN apk add --no-cache nodejs
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx-custom.conf /etc/nginx/templates/default.conf.template
-COPY app/start.sh /app/start.sh
+COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
 COPY --from=builder --chown=101:101 /app/public /app/public

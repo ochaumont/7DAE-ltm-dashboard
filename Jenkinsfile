@@ -23,8 +23,7 @@ pipeline {
         TARGET_ENV          = "${params.targetEnv ?: 'val'}"
 
         APP_NAME            = "ltm-dashboard"
-        HELM_CHART_NAME     = "ltm-dashboard"       
-		AFTER_APP_NAMESPACE = "7dae-atom-${TARGET_ENV}"     
+		AFTER_APP_NAMESPACE = "7dae-atom-${TARGET_ENV}"
 
         ARTIFACTORY_HOST    = "r-2k77-devops-docker-releases-local.artifactory.fr.eu.airbus.corp"
         NPMRC_PATH          = 'config/.npmrc'
@@ -134,13 +133,15 @@ pipeline {
                 dir("deployment") {
                     echo "Deploying ${APP_NAME} to namespace: ${AFTER_APP_NAMESPACE} using values-${TARGET_ENV}.yaml with tag: ${env.PROJECT_VERSION}"
                     sh """
-                        helm upgrade --install ${APP_NAME} ./${HELM_CHART_NAME} \
+                        helm upgrade --install ${APP_NAME} ./helm \
                         --namespace ${AFTER_APP_NAMESPACE} \
-                        -f ${HELM_CHART_NAME}/values-${TARGET_ENV}.yaml \
-                        --set image.tag=${env.PROJECT_VERSION} \
-                        --set environment=${TARGET_ENV} \
+                        --values ./values-${TARGET_ENV}.yaml \
+                        --set app.image.name=${env.ARTIFACTORY_HOST}/transversal/${env.APP_NAME} \
+                        --set app.image.tag=${env.PROJECT_VERSION} \
+                        --kubeconfig=${KUBECONFIG} \
                         --atomic \
-                        --wait
+                        --wait \
+                        --install
                     """
                     echo "Helm chart deployed successfully."
                 }

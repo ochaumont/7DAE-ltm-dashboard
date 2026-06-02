@@ -35,7 +35,7 @@ export default function Header() {
             <span className="text-lg font-bold tracking-tight">Airbus</span>
           ) : (
             <img
-              src="/airbus-logo.svg"
+              src={`${process.env.NEXT_PUBLIC_BASE_HREF ?? ""}/airbus-logo.svg`}
               alt="Airbus"
               className="h-6 w-auto"
               onError={() => setLogoFailed(true)}

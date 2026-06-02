@@ -1,0 +1,48 @@
+app:
+  env: prod
+  replicaCount: 3
+
+  image:
+    name: "r-2k77-devops-docker-releases-local.artifactory.fr.eu.airbus.corp/transversal/ltm-dashboard"
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+    pullSecret:
+      enabled: false
+      secret: ""
+
+  service:
+    port: 8080
+
+  baseHref: /app-f1fd/nextjs-hello/
+  atomApiBaseUrl: "http://atom-synchronizer-dev.7dae-atom-prod.svc.cluster.local/atom-synchronizer-dev"
+
+  requests:
+    memory: "256Mi"
+    cpu: "200m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+  probes:
+    liveness:
+      enabled: true
+      url: /app-f1fd/nextjs-hello/health
+      initialDelaySeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3
+      periodSeconds: 10
+    readiness:
+      enabled: true
+      url: /app-f1fd/nextjs-hello/health
+      initialDelaySeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 3
+      periodSeconds: 10
+
+  ingress:
+    enabled: true
+    hosts: "nextjs-hello.f1fd-fits.airbus.corp"
+    gateways: "istio-system/gateway-prod"
+
+serviceaccount:
+  create: false
