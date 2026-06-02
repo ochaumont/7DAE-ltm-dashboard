@@ -96,8 +96,8 @@ pipeline {
                     def atomApiUrl = TARGET_ENV == 'prod' ? ATOM_API_URL_PROD : ATOM_API_URL_VAL
                     sh "BASE_HREF=${BASE_HREF} NEXT_PUBLIC_BASE_HREF=${BASE_HREF} NEXT_PUBLIC_ATOM_API_BASE_URL=${atomApiUrl} npm run build"
                 }
-                echo "Stashing static export for Docker packaging..."
-                stash includes: 'out/**', name: 'next-build'
+                echo "Stashing static export and Docker config for packaging..."
+                stash includes: 'out/**,Dockerfile,nginx.conf,nginx-custom.conf', name: 'next-build'
             }
         }
 
@@ -114,33 +114,12 @@ pipeline {
 					)
 				]) {
                     script {
-                        // 1. On extrait les fichiers générés par le build
+                        // out/ (static export) + Dockerfile/nginx configs (from checkout)
                         unstash 'next-build'
-                        
-                        // 2. RESTRUCTURATION : On déplace les assets statiques à l'intérieur du dossier standalone
-                        // afin que le serveur node autonome de Next.js puisse les servir nativement.
-                        sh """
-                            cp -r public/ .next/standalone/public/
-                            mkdir -p .next/standalone/.next/
-                            cp -r .next/static/ .next/standalone/.next/static/
-                        """
-                        
-                        // 3. On se place dans le dossier standalone pour lancer le build Docker, 
-                        // ainsi le contexte Docker "." ne contiendra QUE l'application épurée.
-                        dir('.next/standalone') {
-                            // On rapatrie les fichiers de configuration requis par le Dockerfile
-                            sh """
-                                cp ../../Dockerfile .
-                                cp ../../nginx.conf .
-                                cp ../../nginx-custom.conf .
-                                cp ../../start.sh .
-                            """
-                            
-                            echo "Building Image: ${env.FULL_IMAGE_NAME}"
-                            sh "docker build --rm -t ${env.FULL_IMAGE_NAME} ."
-                            echo "Pushing Image..."
-                            sh "docker image push ${env.FULL_IMAGE_NAME}"
-                        }
+                        echo "Building Image: ${env.FULL_IMAGE_NAME}"
+                        sh "docker build --rm -t ${env.FULL_IMAGE_NAME} ."
+                        echo "Pushing Image..."
+                        sh "docker image push ${env.FULL_IMAGE_NAME}"
                     }
                 }
             }
