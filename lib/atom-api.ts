@@ -109,7 +109,7 @@ async function atomFetch(
 export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {
   const res = await atomFetch(
     `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/labtestmeans`,
-    { next: { revalidate: 60 } },
+    {},
   );
   if (!res.ok) throw new AtomApiError(res.status, res.statusText);
   return (await res.json()) as LabTestMeanDto[];
@@ -120,7 +120,7 @@ export async function fetchAircraftStructureTree(): Promise<
 > {
   const res = await atomFetch(
     `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/aircraftStructures/tree`,
-    { next: { revalidate: 60 } },
+    {},
   );
   if (!res.ok) throw new AtomApiError(res.status, res.statusText);
   return (await res.json()) as AircraftStructureNode[];

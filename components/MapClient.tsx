@@ -6,38 +6,74 @@ import FilterBar, { type FilterValue } from "@/components/FilterBar";
 import FilterSheet from "@/components/FilterSheet";
 import { filterLabTestMeans } from "@/lib/labtestmeans";
 import { expandSelection } from "@/lib/aircraftStructure";
-import type {
-  AircraftStructureNode,
-  LabTestMean,
-  LabTestMeanStatus,
-  LabTestMeanType,
-} from "@/lib/types";
+import { useLabTestMeans } from "@/lib/useLabTestMeans";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
-type Props = {
-  labTestMeans: LabTestMean[];
-  types: LabTestMeanType[];
-  statuses: LabTestMeanStatus[];
-  countries: string[];
-  tree: AircraftStructureNode[];
-  programCounts: Map<string, number>;
+function MapSkeleton() {
+  return (
+    <div className="relative h-[calc(100vh-57px)] bg-surface-2 skeleton-pulse flex items-center justify-center">
+      <span className="text-sm text-muted font-mono">Loading map…</span>
+    </div>
+  );
+}
+
+export default function MapClient() {
+  const {
+    labTestMeans,
+    tree,
+    programCounts,
+    hasUnassignedPrograms,
+    types,
+    statuses,
+    countries,
+    complexities,
+    portfolios,
+    loading,
+    error,
+  } = useLabTestMeans();
+
+  if (error) throw error;
+  if (loading) return <MapSkeleton />;
+
+  return (
+    <MapLoaded
+      labTestMeans={labTestMeans}
+      tree={tree}
+      programCounts={programCounts}
+      hasUnassignedPrograms={hasUnassignedPrograms}
+      types={types}
+      statuses={statuses}
+      countries={countries}
+      complexities={complexities}
+      portfolios={portfolios}
+    />
+  );
+}
+
+type LoadedProps = {
+  labTestMeans: ReturnType<typeof useLabTestMeans>["labTestMeans"];
+  tree: ReturnType<typeof useLabTestMeans>["tree"];
+  programCounts: ReturnType<typeof useLabTestMeans>["programCounts"];
   hasUnassignedPrograms: boolean;
-  complexities: string[];
-  portfolios: string[];
+  types: ReturnType<typeof useLabTestMeans>["types"];
+  statuses: ReturnType<typeof useLabTestMeans>["statuses"];
+  countries: ReturnType<typeof useLabTestMeans>["countries"];
+  complexities: ReturnType<typeof useLabTestMeans>["complexities"];
+  portfolios: ReturnType<typeof useLabTestMeans>["portfolios"];
 };
 
-export default function MapClient({
+function MapLoaded({
   labTestMeans,
-  types,
-  statuses,
-  countries,
   tree,
   programCounts,
   hasUnassignedPrograms,
+  types,
+  statuses,
+  countries,
   complexities,
   portfolios,
-}: Props) {
+}: LoadedProps) {
   const [filters, setFilters] = useState<FilterValue>({
     search: "",
     types: [],

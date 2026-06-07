@@ -1,18 +1,15 @@
-import { cache } from "react";
 import { fetchAircraftStructureTree } from "./atom-api";
 import type { AircraftStructureNode, LabTestMean } from "./types";
 
 export const UNASSIGNED_NODE_ID = "__unassigned__";
 
-export const getAircraftTreeCached = cache(
-  async (): Promise<AircraftStructureNode[]> => {
-    try {
-      return await fetchAircraftStructureTree();
-    } catch {
-      return [];
-    }
-  },
-);
+export async function getAircraftTree(): Promise<AircraftStructureNode[]> {
+  try {
+    return await fetchAircraftStructureTree();
+  } catch {
+    return [];
+  }
+}
 
 export function flattenDescendantNames(
   node: AircraftStructureNode,

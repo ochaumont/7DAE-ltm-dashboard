@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { fetchLabTestMean, fetchLabTestMeans } from "./atom-api";
 import { toLabTestMean } from "./labtestmean-adapter";
 import type {
@@ -8,17 +7,17 @@ import type {
   LabTestMeanType,
 } from "./types";
 
-export const getLabTestMeans = cache(async (): Promise<LabTestMean[]> => {
+export async function getLabTestMeans(): Promise<LabTestMean[]> {
   const dtos = await fetchLabTestMeans();
   return dtos.map(toLabTestMean);
-});
+}
 
-export const getLabTestMeanByExternalId = cache(
-  async (externalId: string): Promise<LabTestMean | null> => {
-    const dto = await fetchLabTestMean(externalId);
-    return dto ? toLabTestMean(dto) : null;
-  },
-);
+export async function getLabTestMeanByExternalId(
+  externalId: string,
+): Promise<LabTestMean | null> {
+  const dto = await fetchLabTestMean(externalId);
+  return dto ? toLabTestMean(dto) : null;
+}
 
 /** Sentinel option in the Portfolio filter that matches LTMs with `portfolio === null`. */
 export const PORTFOLIO_NONE = "__none__";
