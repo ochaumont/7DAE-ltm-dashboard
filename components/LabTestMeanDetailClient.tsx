@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import LabTestMeanHeader from "@/components/LabTestMeanHeader";
@@ -27,8 +27,8 @@ function DetailSkeleton() {
 }
 
 export default function LabTestMeanDetailClient() {
-  const params = useParams();
-  const externalId = decodeURIComponent(params.externalId as string);
+  const searchParams = useSearchParams();
+  const externalId = searchParams.get("id") ?? "";
 
   const [ltm, setLtm] = useState<LabTestMean | null | undefined>(undefined);
   const [idToExternalId, setIdToExternalId] = useState<Map<string, string>>(new Map());
@@ -114,7 +114,7 @@ export default function LabTestMeanDetailClient() {
                   return xid ? (
                     <Link
                       key={dep.id}
-                      href={`/labtestmean/${encodeURIComponent(xid)}`}
+                      href={`/labtestmean?id=${encodeURIComponent(xid)}`}
                       className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
                     >
                       {dep.name}

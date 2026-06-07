@@ -11,7 +11,7 @@ export default function Header() {
   const [logoFailed, setLogoFailed] = useState(false);
 
   const catalogueActive =
-    pathname === "/" || pathname.startsWith("/labtestmean/");
+    pathname === "/" || pathname.startsWith("/labtestmean");
   const mapActive =
     pathname === "/map" || pathname.startsWith("/map/");
 

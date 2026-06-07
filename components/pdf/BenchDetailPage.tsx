@@ -221,7 +221,7 @@ export default function BenchDetailPage({ banc, baseUrl }: Props) {
         fixed
       >
         <Link
-          src={`${baseUrl}/labtestmean/${banc.externalId}`}
+          src={`${baseUrl}/labtestmean?id=${encodeURIComponent(banc.externalId)}`}
           style={{ ...styles.small, color: colors.accent }}
         >
           <Text>View on dashboard ↗</Text>
