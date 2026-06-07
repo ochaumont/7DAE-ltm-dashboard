@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import CatalogueClient from "@/components/CatalogueClient";
 import {

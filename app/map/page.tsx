@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import MapClient from "@/components/MapClient";
 import {
   getLabTestMeans,

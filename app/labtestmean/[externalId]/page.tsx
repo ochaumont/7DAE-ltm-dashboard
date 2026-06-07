@@ -1,5 +1,4 @@
-// Only pre-render pages for known externalIds. Unknown params → 404.
-export const dynamicParams = false;
+export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,18 +7,6 @@ import Gallery from "@/components/Gallery";
 import Section from "@/components/detail/Section";
 import { getLabTestMeans } from "@/lib/labtestmeans";
 
-export async function generateStaticParams() {
-  try {
-    const all = await getLabTestMeans();
-    return all
-      .filter((m) => typeof m.externalId === "string" && m.externalId.length > 0)
-      .map((m) => ({ externalId: m.externalId }));
-  } catch {
-    // If the backend is unreachable at build time, skip pre-rendering detail pages.
-    return [];
-  }
-}
-
 export default async function LabTestMeanDetailPage({
   params,
 }: {
@@ -27,8 +14,6 @@ export default async function LabTestMeanDetailPage({
 }) {
   const { externalId } = await params;
 
-  // Use the full list (same source as generateStaticParams) to avoid redundant
-  // per-LTM HTTP calls. React cache() deduplicates within the same render.
   let all;
   try {
     all = await getLabTestMeans();
