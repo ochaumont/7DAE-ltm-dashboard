@@ -16,6 +16,13 @@ app:
 
   baseHref: /
 
+  # Basic Auth for the ATOM API. Credentials are injected at deploy time by
+  # Jenkins (--set-string app.auth.username/password); keep them empty here.
+  auth:
+    enabled: false
+    username: ""
+    password: ""
+
   requests:
     memory: "64Mi"
     cpu: "50m"

@@ -1,4 +1,5 @@
 import type { AircraftStructureNode } from "./types";
+import { getAtomAuthorization } from "./runtimeConfig";
 
 export const NEXT_PUBLIC_ATOM_API_BASE_URL =
   process.env.NEXT_PUBLIC_ATOM_API_BASE_URL ??
@@ -83,8 +84,19 @@ async function atomFetch(
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  // Auth header is added only when configured (runtime/dev). Without it, the
+  // request is identical to before — no header, no CORS preflight.
+  const auth = getAtomAuthorization();
+  let res: Response;
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    res = await fetch(url, {
+      ...init,
+      headers: {
+        ...init.headers,
+        ...(auth ? { Authorization: auth } : {}),
+      },
+      signal: controller.signal,
+    });
   } catch (err) {
     if ((err as { name?: string })?.name === "AbortError") {
       throw new AtomApiError(
@@ -104,6 +116,16 @@ async function atomFetch(
   } finally {
     clearTimeout(timer);
   }
+  // 401/403 → dedicated "not authorized" screen. `ATOM_UNAUTHORIZED:` is a
+  // machine-readable prefix consumed by `app/error.tsx` (like ATOM_BACKEND_DOWN).
+  if (res.status === 401 || res.status === 403) {
+    throw new AtomApiError(
+      res.status,
+      res.statusText,
+      `ATOM_UNAUTHORIZED: ${res.status} on ${url}`,
+    );
+  }
+  return res;
 }
 
 export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {

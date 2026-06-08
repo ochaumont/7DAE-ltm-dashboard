@@ -137,16 +137,29 @@ pipeline {
                 checkout scm
                 dir("deployment") {
                     echo "Deploying ${APP_NAME} to namespace: ${AFTER_APP_NAMESPACE} using values-${TARGET_ENV}.yaml with tag: ${env.PROJECT_VERSION}"
-                    sh """
-                        helm upgrade --install ${APP_NAME} ./helm \
-                        --namespace ${AFTER_APP_NAMESPACE} \
-                        --values ./values-${TARGET_ENV}.yaml \
-                        --set app.image.name=${env.ARTIFACTORY_HOST}/transversal/${env.APP_NAME} \
-                        --set app.image.tag=${env.PROJECT_VERSION} \
-                        --kubeconfig=${KUBECONFIG} \
-                        --atomic \
-                        --wait
-                    """
+                    // ATOM API Basic Auth credentials injected at deploy time (never committed).
+                    // Helm templates the Secret + the deployment reads it via secretKeyRef.
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: "atom-api-basic-${TARGET_ENV}",
+                            usernameVariable: 'ATOM_API_USERNAME',
+                            passwordVariable: 'ATOM_API_PASSWORD'
+                        )
+                    ]) {
+                        sh """
+                            helm upgrade --install ${APP_NAME} ./helm \
+                            --namespace ${AFTER_APP_NAMESPACE} \
+                            --values ./values-${TARGET_ENV}.yaml \
+                            --set app.image.name=${env.ARTIFACTORY_HOST}/transversal/${env.APP_NAME} \
+                            --set app.image.tag=${env.PROJECT_VERSION} \
+                            --set app.auth.enabled=true \
+                            --set-string app.auth.username="\$ATOM_API_USERNAME" \
+                            --set-string app.auth.password="\$ATOM_API_PASSWORD" \
+                            --kubeconfig=${KUBECONFIG} \
+                            --atomic \
+                            --wait
+                        """
+                    }
                     echo "Helm chart deployed successfully."
                 }
             }

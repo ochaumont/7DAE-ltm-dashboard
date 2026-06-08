@@ -56,6 +56,18 @@ spec:
           env:
             - name: SERVER_PORT
               value: {{ .Values.app.service.port | quote }}
+{{- if .Values.app.auth.enabled }}
+            - name: ATOM_API_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Release.Name }}-{{ .Values.app.env }}-api-auth"
+                  key: username
+            - name: ATOM_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Release.Name }}-{{ .Values.app.env }}-api-auth"
+                  key: password
+{{- end }}
           resources:
             requests:
               memory: {{ .Values.app.requests.memory }}

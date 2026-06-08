@@ -13,9 +13,10 @@ export default function GlobalError({
     console.error(error);
   }, [error]);
 
-  // `lib/atom-api.ts` prefixes every backend-down error with `ATOM_BACKEND_DOWN:`
-  // (machine-readable). Keep this prefix stable on both sides.
+  // `lib/atom-api.ts` prefixes backend errors with machine-readable markers.
+  // Keep these prefixes stable on both sides.
   const isBackendDown = error.message.startsWith("ATOM_BACKEND_DOWN:");
+  const isUnauthorized = error.message.startsWith("ATOM_UNAUTHORIZED:");
 
   return (
     <main className="px-4 md:px-6 py-20 max-w-2xl mx-auto text-center">
@@ -39,12 +40,16 @@ export default function GlobalError({
       <h1 className="text-2xl font-bold mb-3">
         {isBackendDown
           ? "ATOM API unavailable"
-          : "Something went wrong"}
+          : isUnauthorized
+            ? "Access not authorized"
+            : "Something went wrong"}
       </h1>
       <p className="text-muted mb-6">
         {isBackendDown
           ? "The backend that serves lab test means is not responding. Start atom-synchronizer-dev on localhost:8080 or contact support."
-          : error.message}
+          : isUnauthorized
+            ? "The dashboard is not authorized to reach the ATOM API. Check the API credentials configuration or contact support."
+            : error.message}
       </p>
       {error.digest && (
         <p className="text-xs font-mono text-muted mb-6">

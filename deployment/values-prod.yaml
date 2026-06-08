@@ -15,6 +15,13 @@ app:
 
   baseHref: /atom-ltm-dashboard
 
+  # Basic Auth for the ATOM API. Enabled here; credentials injected by Jenkins
+  # (--set-string app.auth.username/password) from Jenkins credentials.
+  auth:
+    enabled: true
+    username: ""
+    password: ""
+
   requests:
     memory: "256Mi"
     cpu: "200m"

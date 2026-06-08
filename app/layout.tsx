@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import Header from "@/components/Header";
 import "./globals.css";
 
@@ -18,6 +19,14 @@ export default function RootLayout({
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* Runtime config (window.__ENV__): served statically in dev, overwritten
+            by the container entrypoint in prod. `beforeInteractive` guarantees it
+            runs before the app bundle, so the auth header is available to the
+            first API call. */}
+        <Script
+          src={`${process.env.NEXT_PUBLIC_BASE_HREF ?? ""}/env-config.js`}
+          strategy="beforeInteractive"
+        />
       </head>
       <body className="theme-industrial-premium">
         <Header />
