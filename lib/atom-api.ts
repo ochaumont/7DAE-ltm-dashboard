@@ -1,5 +1,4 @@
 import type { AircraftStructureNode } from "./types";
-import { getAtomAuthorization } from "./runtimeConfig";
 
 export const NEXT_PUBLIC_ATOM_API_BASE_URL =
   process.env.NEXT_PUBLIC_ATOM_API_BASE_URL ??
@@ -84,9 +83,13 @@ async function atomFetch(
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  // Auth header is added only when configured (runtime/dev). Without it, the
-  // request is identical to before — no header, no CORS preflight.
-  const auth = getAtomAuthorization();
+  // Auth header is DEV-ONLY: in production the app is served same-origin behind
+  // the AFTER Istio gateway, which injects the user's `Authorization: Bearer`
+  // from the session cookies — the SPA adds nothing. In dev there is no gateway,
+  // so a test JWT can be supplied via NEXT_PUBLIC_DEV_JWT (.env.local). When
+  // unset, no header is added and behaviour is unchanged.
+  const devJwt = process.env.NEXT_PUBLIC_DEV_JWT;
+  const auth = devJwt ? `Bearer ${devJwt}` : "";
   let res: Response;
   try {
     res = await fetch(url, {
