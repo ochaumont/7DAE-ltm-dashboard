@@ -41,9 +41,17 @@ const nextConfig = {
   // sets NODE_ENV=production, so Jenkins / `npm run build` still produce `out/`.
   // In dev we keep the full Next.js server.
   output: isProd ? "export" : undefined,
-  // No trailingSlash: the backend (Spring Boot 4) 404s on a trailing slash, and
-  // nginx `try_files $uri $uri/ $uri.html` serves the static export fine without
-  // it. basePath/assetPrefix come from BASE_HREF, set by Jenkins for prod only.
+  // trailingSlash makes every generated link and exported page use the
+  // slash-terminated form (`/atom-ltm-dashboard/`, `/atom-ltm-dashboard/map/`).
+  // Behind the AFTER gateway, the bare basePath (`/atom-ltm-dashboard`, no slash)
+  // triggers an upstream directory redirect that wrongly carries the backend port
+  // (`https://host:8080/…`) and fails; the slash form works. Forcing the slash
+  // means the logo/nav and any reload land on the working URL.
+  // Safe here (it was removed earlier only because it forced a slash onto the now
+  // -deleted backend proxy/rewrite): it affects ONLY Next page routes and <Link>,
+  // never the hand-built API calls in lib/atom-api.ts.
+  trailingSlash: true,
+  // basePath/assetPrefix come from BASE_HREF, set by Jenkins for prod only.
   basePath: process.env.BASE_HREF || "",
   assetPrefix: process.env.BASE_HREF || "",
   // Inlined into the client bundle at build time (the App is a static export,

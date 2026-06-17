@@ -21,6 +21,11 @@ export default function LabTestMeanCard({
   return (
     <Link
       href={`/labtestmean?id=${encodeURIComponent(labTestMean.externalId)}`}
+      // No prefetch: every detail link resolves to the SAME static page
+      // (/labtestmean, the ?id= is read client-side), so Next's viewport
+      // prefetch would just refetch the same shell per card and spam the gateway
+      // with 301/403 on load. Navigation still works on click.
+      prefetch={false}
       className="bench-card group block overflow-hidden rounded-card transition-all duration-200"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">

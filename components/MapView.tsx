@@ -143,6 +143,9 @@ export default function MapView({
                   <ChipType type={m.type} withIcon />
                   <Link
                     href={`/labtestmean?id=${encodeURIComponent(m.externalId)}`}
+                    // See LabTestMeanCard: all detail links hit the same static
+                    // page, so prefetch is wasteful and triggers 301/403 noise.
+                    prefetch={false}
                     className="flex-1 min-w-0 text-sm font-medium truncate hover:text-accent transition-colors"
                     title={m.name}
                   >

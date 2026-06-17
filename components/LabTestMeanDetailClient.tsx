@@ -115,6 +115,9 @@ export default function LabTestMeanDetailClient() {
                     <Link
                       key={dep.id}
                       href={`/labtestmean?id=${encodeURIComponent(xid)}`}
+                      // Same static page as every other detail link → no prefetch
+                      // (avoids redundant fetches and gateway 301/403 noise).
+                      prefetch={false}
                       className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
                     >
                       {dep.name}
