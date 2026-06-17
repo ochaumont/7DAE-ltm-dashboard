@@ -27,11 +27,14 @@ const TYPE_ROWS: LabTestMeanType[][] = [
   ["SIMU", "SHARE"],
 ];
 
-const PHOTO_OPTIONS: { value: PhotoFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "with", label: "With photo" },
-  { value: "without", label: "Without photo" },
-];
+// Tri-state sliding switch, left → right. The knob is green for "with"/"all"
+// and red for "without" (see the requested toggle.gif visual).
+const PHOTO_STATES: { value: PhotoFilter; label: string; tone: "on" | "off" }[] =
+  [
+    { value: "with", label: "With photo", tone: "on" },
+    { value: "all", label: "All", tone: "on" },
+    { value: "without", label: "Without photo", tone: "off" },
+  ];
 
 export type FilterValue = {
   search: string;
@@ -116,6 +119,11 @@ export default function FilterBar({
   onChange,
 }: Props) {
   const [search, setSearch] = useState(value.search);
+  const photoIndex = Math.max(
+    0,
+    PHOTO_STATES.findIndex((s) => s.value === value.photo),
+  );
+  const currentPhoto = PHOTO_STATES[photoIndex];
   const typeRows = useMemo(() => {
     const present = new Set(types);
     return TYPE_ROWS.map((row) => row.filter((t) => present.has(t))).filter(
@@ -151,29 +159,37 @@ export default function FilterBar({
       />
       <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Photo</div>
-        <div
-          className="grid gap-1"
-          style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
-        >
-          {PHOTO_OPTIONS.map((o) => {
-            const active = value.photo === o.value;
-            return (
+        <div className="flex items-center gap-2.5">
+          <div
+            role="radiogroup"
+            aria-label="Photo filter"
+            className="relative inline-flex h-[26px] w-16 shrink-0 rounded-full bg-[#00205B] p-[3px] shadow-inner"
+          >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute top-[3px] left-[3px] z-20 h-5 w-5 rounded-full shadow transition-transform duration-200 ease-out"
+              style={{
+                transform: `translateX(${photoIndex * 19}px)`,
+                backgroundColor:
+                  currentPhoto.tone === "off"
+                    ? "var(--color-danger)"
+                    : "var(--color-success)",
+              }}
+            />
+            {PHOTO_STATES.map((s) => (
               <button
-                key={o.value}
+                key={s.value}
                 type="button"
-                aria-pressed={active}
-                onClick={() => onChange({ ...value, photo: o.value })}
-                className={clsx(
-                  "px-2.5 py-1 rounded text-xs font-medium border transition-colors truncate",
-                  active
-                    ? "bg-accent text-accent-fg border-accent"
-                    : "bg-surface text-fg border-border hover:border-accent/50",
-                )}
-              >
-                {o.label}
-              </button>
-            );
-          })}
+                role="radio"
+                aria-checked={value.photo === s.value}
+                aria-label={s.label}
+                title={s.label}
+                onClick={() => onChange({ ...value, photo: s.value })}
+                className="relative z-10 flex-1 rounded-full bg-transparent focus:outline-none"
+              />
+            ))}
+          </div>
+          <span className="text-xs font-medium text-fg">{currentPhoto.label}</span>
         </div>
       </div>
       <div>
