@@ -170,10 +170,7 @@ export default function FilterBar({
               className="pointer-events-none absolute top-[3px] left-[3px] z-20 h-5 w-5 rounded-full shadow transition-transform duration-200 ease-out"
               style={{
                 transform: `translateX(${photoIndex * 19}px)`,
-                backgroundColor:
-                  currentPhoto.tone === "off"
-                    ? "var(--color-danger)"
-                    : "var(--color-success)",
+                backgroundColor: "var(--color-bg)",
               }}
             />
             {PHOTO_STATES.map((s) => (
