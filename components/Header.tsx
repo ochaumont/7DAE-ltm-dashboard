@@ -8,7 +8,10 @@ import ThemeToggle from "./ThemeToggle";
 import AboutDialog from "./AboutDialog";
 
 export default function Header() {
-  const pathname = usePathname();
+  // usePathname() is typed `string | null` in some Next versions (e.g. 16.2.9)
+  // and `string` in others (16.2.7) — coalesce so the strict null check passes
+  // regardless of the installed patch.
+  const pathname = usePathname() ?? "";
   const [logoFailed, setLogoFailed] = useState(false);
 
   const catalogueActive =
