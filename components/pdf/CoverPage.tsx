@@ -1,5 +1,6 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 import { styles, colors } from "./styles";
+import { PdfAirbusLogo } from "./icons";
 
 type Props = {
   benchCount: number;
@@ -15,23 +16,22 @@ export default function CoverPage({ benchCount, filtersDescription }: Props) {
 
   return (
     <Page size="A4" style={styles.page}>
+      {/* Header band with the Airbus logo */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          paddingBottom: 12,
+        }}
+      >
+        <PdfAirbusLogo width={120} />
+        <Text style={{ ...styles.small, letterSpacing: 2 }}>ATOM</Text>
+      </View>
+
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text
-          style={{
-            fontSize: 32,
-            fontFamily: "Helvetica-Bold",
-            letterSpacing: 4,
-            color: colors.accent,
-          }}
-        >
-          AIRBUS
-        </Text>
-        <Text style={{ ...styles.small, marginTop: 4, letterSpacing: 2 }}>
-          ATOM
-        </Text>
-
-        <View style={{ height: 40 }} />
-
         <Text style={{ ...styles.h1, textAlign: "center" }}>
           Lab Test Means
         </Text>
@@ -43,7 +43,7 @@ export default function CoverPage({ benchCount, filtersDescription }: Props) {
 
         <Text style={{ ...styles.body, color: colors.muted }}>{today}</Text>
         <Text style={{ ...styles.h2, marginTop: 12, color: colors.fg }}>
-          {benchCount} {benchCount === 1 ? "bench" : "benches"} included
+          {benchCount} Lab Test Mean{benchCount === 1 ? "" : "s"} included
         </Text>
       </View>
 
