@@ -5,13 +5,17 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
 import ThemeToggle from "./ThemeToggle";
+import AboutDialog from "./AboutDialog";
 
 export default function Header() {
-  const pathname = usePathname();
+  // usePathname() is typed `string | null` in some Next versions (e.g. 16.2.9)
+  // and `string` in others (16.2.7) — coalesce so the strict null check passes
+  // regardless of the installed patch.
+  const pathname = usePathname() ?? "";
   const [logoFailed, setLogoFailed] = useState(false);
 
   const catalogueActive =
-    pathname === "/" || pathname.startsWith("/labtestmean/");
+    pathname === "/" || pathname.startsWith("/labtestmean");
   const mapActive =
     pathname === "/map" || pathname.startsWith("/map/");
 
@@ -54,6 +58,7 @@ export default function Header() {
 
         <div className="ml-auto flex items-center gap-2 min-h-[32px]">
           {/* RESERVED: avatar, global search, notifications (V2) */}
+          <AboutDialog />
           <ThemeToggle />
         </div>
       </div>

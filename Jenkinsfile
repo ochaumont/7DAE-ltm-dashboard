@@ -30,7 +30,7 @@ pipeline {
 
         BASE_HREF               = "/atom-ltm-dashboard"
         ATOM_API_URL_VAL        = "https://gateway2-val.after-val.eu.airbus.corp/atom-synchronizer-val"
-        ATOM_API_URL_PROD       = "https://gateway.after.eu.airbus.corp/atom-synchronizer-prod"
+        ATOM_API_URL_PROD       = "https://gateway2.after.eu.airbus.corp/atom-synchronizer-prod"
     }
 
     stages {
@@ -130,22 +130,25 @@ pipeline {
             when { expression { return EXEC_DEPLOY == "true" } }
             agent { node "2.4_helm-3.8.2" }
             environment {
-                KUBECONFIG = credentials('KUBECONFIG-AFTER-APPS-VAL')
+                KUBECONFIG = credentials("atom-after-credentials-${TARGET_ENV}")
             }
             steps {
                 sh "git config --global http.sslVerify false"
                 checkout scm
                 dir("deployment") {
+                    sh "helm repo update"
                     echo "Deploying ${APP_NAME} to namespace: ${AFTER_APP_NAMESPACE} using values-${TARGET_ENV}.yaml with tag: ${env.PROJECT_VERSION}"
                     sh """
-                        helm upgrade --install ${APP_NAME} ./helm \
-                        --namespace ${AFTER_APP_NAMESPACE} \
+                        helm upgrade ${APP_NAME} ./helm \
                         --values ./values-${TARGET_ENV}.yaml \
-                        --set app.image.name=${env.ARTIFACTORY_HOST}/transversal/${env.APP_NAME} \
+                        --set app.image.name=${env.ARTIFACTORY_HOST}/transversal/ltm-dashboard \
                         --set app.image.tag=${env.PROJECT_VERSION} \
                         --kubeconfig=${KUBECONFIG} \
+                        --namespace ${AFTER_APP_NAMESPACE} \
+                        --kubeconfig=${KUBECONFIG} \
+                        --wait \
                         --atomic \
-                        --wait
+                        --install
                     """
                     echo "Helm chart deployed successfully."
                 }

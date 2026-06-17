@@ -52,7 +52,7 @@ export default function TableOfContents({ benches, baseUrl }: Props) {
               {b.externalId}
             </Text>
             <Link
-              src={`${baseUrl}/labtestmean/${b.externalId}`}
+              src={`${baseUrl}/labtestmean?id=${encodeURIComponent(b.externalId)}`}
               style={{ width: 18, textAlign: "right" }}
             >
               <Text style={{ ...styles.small, color: colors.accent }}>↗</Text>

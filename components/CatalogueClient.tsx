@@ -7,42 +7,96 @@ import FilterSheet from "@/components/FilterSheet";
 import Pagination from "@/components/Pagination";
 import { filterLabTestMeans } from "@/lib/labtestmeans";
 import { expandSelection } from "@/lib/aircraftStructure";
+import { useLabTestMeans } from "@/lib/useLabTestMeans";
 import { usePageQuery } from "@/lib/usePageQuery";
 import { serializeFilters } from "@/lib/filterDescription";
 import { NEXT_PUBLIC_ATOM_API_BASE_URL } from "@/lib/atom-api";
-import type {
-  AircraftStructureNode,
-  CoverPhoto,
-  LabTestMean,
-  LabTestMeanStatus,
-  LabTestMeanType,
-} from "@/lib/types";
+import type { CoverPhoto } from "@/lib/types";
 
 const PAGE_SIZE = 6;
 
-type Props = {
-  labTestMeans: LabTestMean[];
-  types: LabTestMeanType[];
-  statuses: LabTestMeanStatus[];
-  countries: string[];
-  tree: AircraftStructureNode[];
-  programCounts: Map<string, number>;
+function CatalogueSkeleton() {
+  return (
+    <main className="px-4 md:px-6 py-8 max-w-[1600px] mx-auto">
+      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+        <aside className="hidden lg:block">
+          <div className="h-[400px] rounded-card bg-surface-2 skeleton-pulse" />
+        </aside>
+        <section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-card overflow-hidden">
+                <div className="aspect-[4/3] bg-surface-2 skeleton-pulse" />
+                <div className="px-4 pt-4 pb-3 space-y-2">
+                  <div className="h-4 w-24 rounded bg-surface-2 skeleton-pulse" />
+                  <div className="h-5 w-3/4 rounded bg-surface-2 skeleton-pulse" />
+                  <div className="h-4 w-1/2 rounded bg-surface-2 skeleton-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+export default function CatalogueClient() {
+  const {
+    labTestMeans,
+    tree,
+    programCounts,
+    hasUnassignedPrograms,
+    types,
+    statuses,
+    countries,
+    complexities,
+    portfolios,
+    loading,
+    error,
+  } = useLabTestMeans();
+
+  if (error) throw error;
+  if (loading) return <CatalogueSkeleton />;
+
+  return (
+    <CatalogueLoaded
+      labTestMeans={labTestMeans}
+      tree={tree}
+      programCounts={programCounts}
+      hasUnassignedPrograms={hasUnassignedPrograms}
+      types={types}
+      statuses={statuses}
+      countries={countries}
+      complexities={complexities}
+      portfolios={portfolios}
+    />
+  );
+}
+
+type LoadedProps = {
+  labTestMeans: ReturnType<typeof useLabTestMeans>["labTestMeans"];
+  tree: ReturnType<typeof useLabTestMeans>["tree"];
+  programCounts: ReturnType<typeof useLabTestMeans>["programCounts"];
   hasUnassignedPrograms: boolean;
-  complexities: string[];
-  portfolios: string[];
+  types: ReturnType<typeof useLabTestMeans>["types"];
+  statuses: ReturnType<typeof useLabTestMeans>["statuses"];
+  countries: ReturnType<typeof useLabTestMeans>["countries"];
+  complexities: ReturnType<typeof useLabTestMeans>["complexities"];
+  portfolios: ReturnType<typeof useLabTestMeans>["portfolios"];
 };
 
-export default function CatalogueClient({
+function CatalogueLoaded({
   labTestMeans,
-  types,
-  statuses,
-  countries,
   tree,
   programCounts,
   hasUnassignedPrograms,
+  types,
+  statuses,
+  countries,
   complexities,
   portfolios,
-}: Props) {
+}: LoadedProps) {
   const [filters, setFilters] = useState<FilterValue>({
     search: "",
     types: [],
@@ -64,6 +118,7 @@ export default function CatalogueClient({
       includeUnassignedPrograms: includeUnassigned,
     });
   }, [labTestMeans, tree, filters]);
+
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const { page, setPage } = usePageQuery(totalPages);
   const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
