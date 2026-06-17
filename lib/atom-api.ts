@@ -28,7 +28,7 @@ export type LabTestMeanDto = {
   id: string;
   externalId: string;
   name: string;
-  category: "sib" | "simu" | "fib" | "RT" | null;
+  category: "sib" | "simu" | "fib" | "rt" | "RT" | "share" | null;
   complexity: "simple" | "medium" | "complex" | null;
   country: string | null;
   site: string | null;

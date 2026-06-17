@@ -5,6 +5,7 @@ import type {
   AircraftStructureNode,
   LabTestMeanStatus,
   LabTestMeanType,
+  PhotoFilter,
 } from "@/lib/types";
 import { COMPLEXITY_NA, PORTFOLIO_NONE } from "@/lib/labtestmeans";
 import { STATUS_LABELS, TYPE_LABELS } from "@/lib/labels";
@@ -18,8 +19,23 @@ const STATUS_ORDER: LabTestMeanStatus[] = [
   "out-of-service",
 ];
 
+// Type filter laid out on two rows: short labels together on row 1, the long
+// ones (SIMULATOR, SHARED RESOURCE) on row 2 where they get half-width each and
+// stay readable instead of being truncated.
+const TYPE_ROWS: LabTestMeanType[][] = [
+  ["SIB", "FIB", "RT"],
+  ["SIMU", "SHARE"],
+];
+
+const PHOTO_OPTIONS: { value: PhotoFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "with", label: "With photo" },
+  { value: "without", label: "Without photo" },
+];
+
 export type FilterValue = {
   search: string;
+  photo: PhotoFilter;
   types: LabTestMeanType[];
   statuses: LabTestMeanStatus[];
   countries: string[];
@@ -46,12 +62,14 @@ function Toggle<T extends string>({
   value,
   onChange,
   renderLabel,
+  optionClassName,
   cols,
 }: {
   options: T[];
   value: T[];
   onChange: (v: T[]) => void;
   renderLabel?: (o: T) => string;
+  optionClassName?: (o: T) => string | undefined;
   cols?: number;
 }) {
   const containerClass = cols ? "grid gap-1" : "flex flex-wrap gap-1";
@@ -73,7 +91,8 @@ function Toggle<T extends string>({
               "px-2.5 py-1 rounded text-xs font-medium border transition-colors truncate",
               active
                 ? "bg-accent text-accent-fg border-accent"
-                : "bg-surface text-fg border-border hover:border-accent/50"
+                : "bg-surface text-fg border-border hover:border-accent/50",
+              optionClassName?.(o)
             )}
           >
             {renderLabel ? renderLabel(o) : o}
@@ -97,10 +116,12 @@ export default function FilterBar({
   onChange,
 }: Props) {
   const [search, setSearch] = useState(value.search);
-  const sortedTypes = useMemo(
-    () => types.filter((t) => t !== "NA"),
-    [types],
-  );
+  const typeRows = useMemo(() => {
+    const present = new Set(types);
+    return TYPE_ROWS.map((row) => row.filter((t) => present.has(t))).filter(
+      (row) => row.length > 0,
+    );
+  }, [types]);
   const sortedCountries = useMemo(
     () => countries.filter((c) => c !== "Unknown"),
     [countries],
@@ -129,14 +150,47 @@ export default function FilterBar({
         className="w-full px-3 py-2 rounded bg-surface border border-border text-fg placeholder:text-muted focus:outline-none focus:border-accent"
       />
       <div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Photo</div>
+        <div
+          className="grid gap-1"
+          style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
+        >
+          {PHOTO_OPTIONS.map((o) => {
+            const active = value.photo === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onChange({ ...value, photo: o.value })}
+                className={clsx(
+                  "px-2.5 py-1 rounded text-xs font-medium border transition-colors truncate",
+                  active
+                    ? "bg-accent text-accent-fg border-accent"
+                    : "bg-surface text-fg border-border hover:border-accent/50",
+                )}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Type</div>
-        <Toggle
-          options={sortedTypes}
-          value={value.types}
-          onChange={(v) => onChange({ ...value, types: v })}
-          renderLabel={(t) => TYPE_LABELS[t]}
-          cols={sortedTypes.length || 1}
-        />
+        <div className="space-y-1">
+          {typeRows.map((row, i) => (
+            <Toggle
+              key={i}
+              options={row}
+              value={value.types}
+              onChange={(v) => onChange({ ...value, types: v })}
+              renderLabel={(t) => TYPE_LABELS[t]}
+              optionClassName={(t) => (t === "SHARE" ? "!text-[10px]" : undefined)}
+              cols={row.length}
+            />
+          ))}
+        </div>
       </div>
       <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Status</div>

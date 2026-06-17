@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig, unstable_serialize } from "swr";
 import LabTestMeanCard from "@/components/LabTestMeanCard";
 import FilterBar, { type FilterValue } from "@/components/FilterBar";
@@ -10,6 +10,11 @@ import { filterLabTestMeans } from "@/lib/labtestmeans";
 import { expandSelection } from "@/lib/aircraftStructure";
 import { useLabTestMeans } from "@/lib/useLabTestMeans";
 import { usePageQuery } from "@/lib/usePageQuery";
+import {
+  useCatalogueFilters,
+  setCatalogueFilters,
+  setCataloguePage,
+} from "@/lib/catalogueFilters";
 import { serializeFilters } from "@/lib/filterDescription";
 import { NEXT_PUBLIC_ATOM_API_BASE_URL } from "@/lib/atom-api";
 import { photoKey, type CachedPhoto } from "@/lib/usePhoto";
@@ -99,15 +104,10 @@ function CatalogueLoaded({
   complexities,
   portfolios,
 }: LoadedProps) {
-  const [filters, setFilters] = useState<FilterValue>({
-    search: "",
-    types: [],
-    statuses: [],
-    countries: [],
-    programNodeIds: [],
-    complexities: [],
-    portfolios: [],
-  });
+  // Filters live in an in-memory store (see lib/catalogueFilters) so they
+  // survive catalogue → detail → catalogue ("Back to catalog") and can be reset
+  // by the "Catalogue" menu, while being lost on reload.
+  const { filters } = useCatalogueFilters();
 
   const visible = useMemo(() => {
     const { names, includeUnassigned } = expandSelection(
@@ -125,8 +125,14 @@ function CatalogueLoaded({
   const { page, setPage } = usePageQuery(totalPages);
   const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Mirror the (URL-driven, clamped) page into the store so the detail page's
+  // "Back to catalog" link can restore it via ?page=N.
+  useEffect(() => {
+    setCataloguePage(page);
+  }, [page]);
+
   const handleFiltersChange = (v: FilterValue) => {
-    setFilters(v);
+    setCatalogueFilters(v);
     setPage(1);
   };
 

@@ -11,6 +11,8 @@ export function serializeFilters(
   const lines: string[] = [];
 
   if (filters.search.trim()) lines.push(`Search: "${filters.search.trim()}"`);
+  if (filters.photo === "with") lines.push("With photo only");
+  if (filters.photo === "without") lines.push("Without photo only");
   if (filters.types.length > 0) lines.push(`Type: ${filters.types.join(", ")}`);
   if (filters.statuses.length > 0) {
     lines.push(

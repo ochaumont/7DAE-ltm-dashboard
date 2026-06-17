@@ -9,6 +9,7 @@ import Gallery from "@/components/Gallery";
 import Section from "@/components/detail/Section";
 import { getLabTestMeans, getLabTestMeanByExternalId } from "@/lib/labtestmeans";
 import { SWR_KEY_LTM } from "@/lib/useLabTestMeans";
+import { getCatalogueState } from "@/lib/catalogueFilters";
 import type { LabTestMean } from "@/lib/types";
 
 function DetailSkeleton() {
@@ -63,10 +64,15 @@ export default function LabTestMeanDetailClient() {
   if (ltm === undefined) return <DetailSkeleton />;
   if (ltm === null) return notFound();
 
+  // Restore the catalogue with its remembered page (filters live in the store
+  // and are reapplied on mount). The "Catalogue" menu, by contrast, resets them.
+  const backPage = getCatalogueState().page;
+  const backHref = backPage > 1 ? `/?page=${backPage}` : "/";
+
   return (
     <main className="px-4 md:px-8 py-8 max-w-[1400px] mx-auto">
       <Link
-        href="/"
+        href={backHref}
         className="inline-block text-xs font-mono text-muted hover:text-fg mb-6"
       >
         ← Back to catalog

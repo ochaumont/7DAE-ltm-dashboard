@@ -35,11 +35,14 @@ export const GEO_MAP: Record<string, { lat: number; lng: number }> = {
   BRE: { lat: 53.07, lng: 8.8 },
 };
 
+// Keyed by the backend category lowercased (see `toType`) so casing variants
+// like "RT"/"rt" or "SHARE"/"share" all resolve.
 const TYPE_MAP: Record<string, LabTestMeanType> = {
   sib: "SIB",
   simu: "SIMU",
   fib: "FIB",
-  RT: "RT",
+  rt: "RT",
+  share: "SHARE",
 };
 
 
@@ -89,7 +92,7 @@ function toPhotos(
 
 function toType(raw: LabTestMeanDto["category"]): LabTestMeanType {
   if (raw == null) return "NA";
-  return TYPE_MAP[raw] ?? "NA";
+  return TYPE_MAP[raw.toLowerCase()] ?? "NA";
 }
 
 /**

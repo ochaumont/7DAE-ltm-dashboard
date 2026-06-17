@@ -1,4 +1,4 @@
-export type LabTestMeanType = "SIB" | "SIMU" | "FIB" | "RT" | "NA";
+export type LabTestMeanType = "SIB" | "SIMU" | "FIB" | "RT" | "SHARE" | "NA";
 
 export type LabTestMeanStatus =
   | "operational"
@@ -7,6 +7,9 @@ export type LabTestMeanStatus =
   | "in-project";
 
 export type Complexity = "simple" | "medium" | "complex";
+
+/** Tri-state photo filter: any LTM / only with ≥1 photo / only without photos. */
+export type PhotoFilter = "all" | "with" | "without";
 
 export type TechnicalCapability =
   | "aircraft-simulation-package"
