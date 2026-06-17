@@ -34,6 +34,7 @@ export default function LabTestMeanCard({
           alt={labTestMean.name}
           className="w-full h-full object-cover"
           loading="lazy"
+          decoding="async"
         />
       </div>
       <div className="px-4 pt-4 pb-3 space-y-2">

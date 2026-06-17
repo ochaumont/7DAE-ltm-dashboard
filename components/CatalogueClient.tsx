@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSWRConfig, unstable_serialize } from "swr";
 import LabTestMeanCard from "@/components/LabTestMeanCard";
 import FilterBar, { type FilterValue } from "@/components/FilterBar";
 import FilterSheet from "@/components/FilterSheet";
@@ -11,6 +12,7 @@ import { useLabTestMeans } from "@/lib/useLabTestMeans";
 import { usePageQuery } from "@/lib/usePageQuery";
 import { serializeFilters } from "@/lib/filterDescription";
 import { NEXT_PUBLIC_ATOM_API_BASE_URL } from "@/lib/atom-api";
+import { photoKey, type CachedPhoto } from "@/lib/usePhoto";
 import type { CoverPhoto } from "@/lib/types";
 
 const PAGE_SIZE = 6;
@@ -129,8 +131,23 @@ function CatalogueLoaded({
   };
 
   const [isExporting, setIsExporting] = useState(false);
+  const { cache } = useSWRConfig();
+
+  const blobToDataUrl = async (blob: Blob): Promise<string | null> => {
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const fmt = buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpeg" : null;
+    if (!fmt) return null;
+    const binary = Array.from(buf).map((b) => String.fromCharCode(b)).join("");
+    return `data:image/${fmt};base64,${btoa(binary)}`;
+  };
 
   const fetchPhotoDataUrl = async (cover: CoverPhoto): Promise<string | null> => {
+    // Reuse the Blob already cached by `usePhoto` if this cover was displayed
+    // (same SWR key) — no extra POST for already-shown covers.
+    const cached = cache.get(unstable_serialize(photoKey(cover.id)))?.data as
+      | CachedPhoto
+      | undefined;
+    if (cached?.blob) return blobToDataUrl(cached.blob);
     try {
       const res = await fetch(`${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/resource`, {
         method: "POST",
@@ -138,11 +155,7 @@ function CatalogueLoaded({
         body: JSON.stringify({ id: cover.id, uri: cover.uri }),
       });
       if (!res.ok) return null;
-      const buf = new Uint8Array(await res.arrayBuffer());
-      const fmt = buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpeg" : null;
-      if (!fmt) return null;
-      const binary = Array.from(buf).map((b) => String.fromCharCode(b)).join("");
-      return `data:image/${fmt};base64,${btoa(binary)}`;
+      return blobToDataUrl(await res.blob());
     } catch {
       return null;
     }

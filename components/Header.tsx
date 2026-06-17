@@ -6,6 +6,7 @@ import { useState } from "react";
 import clsx from "clsx";
 import ThemeToggle from "./ThemeToggle";
 import AboutDialog from "./AboutDialog";
+import RefreshButton from "./RefreshButton";
 
 export default function Header() {
   // usePathname() is typed `string | null` in some Next versions (e.g. 16.2.9)
@@ -58,6 +59,7 @@ export default function Header() {
 
         <div className="ml-auto flex items-center gap-2 min-h-[32px]">
           {/* RESERVED: avatar, global search, notifications (V2) */}
+          <RefreshButton />
           <AboutDialog />
           <ThemeToggle />
         </div>
