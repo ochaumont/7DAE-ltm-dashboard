@@ -1,11 +1,11 @@
 app:
   env: prod
-  replicaCount: 3
+  replicaCount: 1
 
   image:
     name: "r-2k77-devops-docker-releases-local.artifactory.fr.eu.airbus.corp/transversal/ltm-dashboard"
     tag: "0.1.0"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     pullSecret:
       enabled: false
       secret: ""
@@ -25,14 +25,14 @@ app:
   probes:
     liveness:
       enabled: true
-      url: /app-f1fd/nextjs-hello/health
+      url: /atom-ltm-dashboard/health
       initialDelaySeconds: 10
       timeoutSeconds: 2
       failureThreshold: 3
       periodSeconds: 10
     readiness:
       enabled: true
-      url: /app-f1fd/nextjs-hello/health
+      url: /atom-ltm-dashboard/health
       initialDelaySeconds: 5
       timeoutSeconds: 2
       failureThreshold: 3
@@ -40,8 +40,8 @@ app:
 
   ingress:
     enabled: true
-    hosts: "nextjs-hello.f1fd-fits.airbus.corp"
-    gateways: "istio-system/gateway-prod"
+    hosts: "gateway2.after.eu.airbus.corp"
+    gateways: "istio-system/gateway"
 
 serviceaccount:
   create: false

@@ -30,7 +30,7 @@ pipeline {
 
         BASE_HREF               = "/atom-ltm-dashboard"
         ATOM_API_URL_VAL        = "https://gateway2-val.after-val.eu.airbus.corp/atom-synchronizer-val"
-        ATOM_API_URL_PROD       = "https://gateway.after.eu.airbus.corp/atom-synchronizer-prod"
+        ATOM_API_URL_PROD       = "https://gateway2.after.eu.airbus.corp/atom-synchronizer-prod"
     }
 
     stages {
@@ -144,7 +144,7 @@ pipeline {
                         --set app.image.name=${env.ARTIFACTORY_HOST}/transversal/ltm-dashboard \
                         --set app.image.tag=${env.PROJECT_VERSION} \
                         --kubeconfig=${KUBECONFIG} \
-                        --namespace ${AFTER_APP_NAMESPACE} \                        
+                        --namespace ${AFTER_APP_NAMESPACE} \
                         --kubeconfig=${KUBECONFIG} \
                         --wait \
                         --atomic \

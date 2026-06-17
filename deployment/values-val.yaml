@@ -1,6 +1,6 @@
 app:
   env: val
-  replicaCount: 2
+  replicaCount: 1
 
   image:
     name: "atom-ltm-dashboard"
