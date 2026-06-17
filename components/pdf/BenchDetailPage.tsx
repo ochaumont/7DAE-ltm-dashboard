@@ -315,8 +315,9 @@ export default function BenchDetailPage({ banc, baseUrl }: Props) {
       </View>
 
       {/* Zone 4 — Full-width sections */}
-      <Section title="Lab Test Mean Manager">
-        {banc.manager ? (
+      {/* Manager — no chapter title: the role is already shown under the name */}
+      {banc.manager && (
+        <View style={styles.section}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <View
               style={{
@@ -348,10 +349,8 @@ export default function BenchDetailPage({ banc, baseUrl }: Props) {
               )}
             </View>
           </View>
-        ) : (
-          <Text style={styles.body}>—</Text>
-        )}
-      </Section>
+        </View>
+      )}
 
       <Section title="Description">
         <Text style={styles.body}>{banc.description || "—"}</Text>
