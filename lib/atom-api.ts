@@ -104,7 +104,9 @@ export class AtomApiError extends Error {
 
 /** Did the build actually inject NEXT_PUBLIC_ATOM_API_BASE_URL? When false the
  * fallback above is in use — a very common deploy misconfiguration. */
-const BASE_URL_FROM_ENV = Boolean(process.env.NEXT_PUBLIC_ATOM_API_BASE_URL);
+export const BASE_URL_FROM_ENV = Boolean(
+  process.env.NEXT_PUBLIC_ATOM_API_BASE_URL,
+);
 
 /** Compares the API origin to the page origin (browser only) to surface
  * cross-origin calls, which break the same-origin gateway-injection model. */

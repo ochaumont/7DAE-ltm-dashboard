@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
 import ThemeToggle from "./ThemeToggle";
+import AboutDialog from "./AboutDialog";
 
 export default function Header() {
   const pathname = usePathname();
@@ -54,6 +55,7 @@ export default function Header() {
 
         <div className="ml-auto flex items-center gap-2 min-h-[32px]">
           {/* RESERVED: avatar, global search, notifications (V2) */}
+          <AboutDialog />
           <ThemeToggle />
         </div>
       </div>
