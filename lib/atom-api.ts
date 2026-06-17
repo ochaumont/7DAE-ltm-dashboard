@@ -63,14 +63,63 @@ export type LabTestMeanDto = {
   documentRefs: DocumentRef[] | null;
 };
 
+export type AtomErrorKind = "backend-down" | "unauthorized" | "http-error";
+
+/** Structured diagnostics carried on every AtomApiError so the error screen can
+ * show the REAL parameters used (full URL, configured base, auth mode, cause)
+ * without anyone having to read server/browser logs. */
+export type AtomErrorDetails = {
+  kind: AtomErrorKind;
+  /** The full URL actually requested (the real value, after env resolution). */
+  url: string;
+  /** The configured base URL = process.env.NEXT_PUBLIC_ATOM_API_BASE_URL or the
+   * hardcoded fallback when the env var was not injected at build time. */
+  baseUrl: string;
+  /** Whether the env var was set at build time (false → fallback in use). */
+  baseUrlFromEnv: boolean;
+  /** Whether the page origin matches the API origin (cross-origin → CORS risk). */
+  sameOrigin: boolean | null;
+  /** The page origin the call was made from (browser only). */
+  pageOrigin: string | null;
+  /** "bearer-dev" when NEXT_PUBLIC_DEV_JWT was attached, else "none". */
+  auth: "bearer-dev" | "none";
+  /** HTTP status (0 for network/timeout failures). */
+  status: number;
+  statusText: string;
+  /** Underlying fetch rejection for network failures (name: message). */
+  cause?: string;
+};
+
 export class AtomApiError extends Error {
   constructor(
     public status: number,
     public statusText: string,
     message?: string,
+    public details?: AtomErrorDetails,
   ) {
     super(message ?? `ATOM API error ${status} ${statusText}`);
     this.name = "AtomApiError";
+  }
+}
+
+/** Did the build actually inject NEXT_PUBLIC_ATOM_API_BASE_URL? When false the
+ * fallback above is in use — a very common deploy misconfiguration. */
+const BASE_URL_FROM_ENV = Boolean(process.env.NEXT_PUBLIC_ATOM_API_BASE_URL);
+
+/** Compares the API origin to the page origin (browser only) to surface
+ * cross-origin calls, which break the same-origin gateway-injection model. */
+function originInfo(url: string): {
+  sameOrigin: boolean | null;
+  pageOrigin: string | null;
+} {
+  if (typeof window === "undefined") {
+    return { sameOrigin: null, pageOrigin: null };
+  }
+  const pageOrigin = window.location.origin;
+  try {
+    return { sameOrigin: new URL(url).origin === pageOrigin, pageOrigin };
+  } catch {
+    return { sameOrigin: null, pageOrigin };
   }
 }
 
@@ -90,6 +139,17 @@ async function atomFetch(
   // unset, no header is added and behaviour is unchanged.
   const devJwt = process.env.NEXT_PUBLIC_DEV_JWT;
   const auth = devJwt ? `Bearer ${devJwt}` : "";
+  const { sameOrigin, pageOrigin } = originInfo(url);
+  // Shared diagnostics baked into every error so the page can show the REAL
+  // parameters (full URL, base, origin, auth) without anyone reading logs.
+  const baseDetails = {
+    url,
+    baseUrl: NEXT_PUBLIC_ATOM_API_BASE_URL,
+    baseUrlFromEnv: BASE_URL_FROM_ENV,
+    sameOrigin,
+    pageOrigin,
+    auth: (auth ? "bearer-dev" : "none") as "bearer-dev" | "none",
+  };
   let res: Response;
   try {
     res = await fetch(url, {
@@ -101,20 +161,27 @@ async function atomFetch(
       signal: controller.signal,
     });
   } catch (err) {
-    if ((err as { name?: string })?.name === "AbortError") {
+    const e = err as { name?: string; message?: string };
+    const cause = `${e?.name ?? "Error"}: ${e?.message ?? String(err)}`;
+    if (e?.name === "AbortError") {
       throw new AtomApiError(
         0,
         "Timeout",
         // `ATOM_BACKEND_DOWN:` is a machine-readable prefix consumed by
         // `app/error.tsx` to render the dedicated "API unavailable" screen.
         // Keep the prefix stable; the human-readable suffix may change.
-        `ATOM_BACKEND_DOWN: timeout after ${FETCH_TIMEOUT_MS}ms at ${NEXT_PUBLIC_ATOM_API_BASE_URL}`,
+        `ATOM_BACKEND_DOWN: timeout after ${FETCH_TIMEOUT_MS}ms at ${url}`,
+        { kind: "backend-down", status: 0, statusText: "Timeout", cause, ...baseDetails },
       );
     }
+    // A browser fetch that rejects (vs returning a 4xx/5xx) means the request
+    // never completed: DNS/connection refused, CORS preflight blocked, or
+    // mixed-content (https page → http URL). The `cause` text disambiguates.
     throw new AtomApiError(
       0,
       "Network error",
-      `ATOM_BACKEND_DOWN: unreachable at ${NEXT_PUBLIC_ATOM_API_BASE_URL}`,
+      `ATOM_BACKEND_DOWN: ${cause} at ${url}`,
+      { kind: "backend-down", status: 0, statusText: "Network error", cause, ...baseDetails },
     );
   } finally {
     clearTimeout(timer);
@@ -125,10 +192,38 @@ async function atomFetch(
     throw new AtomApiError(
       res.status,
       res.statusText,
-      `ATOM_UNAUTHORIZED: ${res.status} on ${url}`,
+      `ATOM_UNAUTHORIZED: ${res.status} ${res.statusText} on ${url}`,
+      {
+        kind: "unauthorized",
+        status: res.status,
+        statusText: res.statusText,
+        ...baseDetails,
+      },
     );
   }
   return res;
+}
+
+/** Throws a diagnostics-rich AtomApiError for a non-OK HTTP response. The fetch
+ * helpers call this so the error screen gets the URL + status, not a bare code. */
+function httpError(res: Response, url: string): never {
+  const { sameOrigin, pageOrigin } = originInfo(url);
+  throw new AtomApiError(
+    res.status,
+    res.statusText,
+    `ATOM_HTTP_ERROR: ${res.status} ${res.statusText} on ${url}`,
+    {
+      kind: "http-error",
+      url,
+      baseUrl: NEXT_PUBLIC_ATOM_API_BASE_URL,
+      baseUrlFromEnv: BASE_URL_FROM_ENV,
+      sameOrigin,
+      pageOrigin,
+      auth: process.env.NEXT_PUBLIC_DEV_JWT ? "bearer-dev" : "none",
+      status: res.status,
+      statusText: res.statusText,
+    },
+  );
 }
 
 export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {
@@ -136,7 +231,8 @@ export async function fetchLabTestMeans(): Promise<LabTestMeanDto[]> {
     `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/labtestmeans`,
     {},
   );
-  if (!res.ok) throw new AtomApiError(res.status, res.statusText);
+  if (!res.ok)
+    httpError(res, `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/labtestmeans`);
   return (await res.json()) as LabTestMeanDto[];
 }
 
@@ -147,7 +243,11 @@ export async function fetchAircraftStructureTree(): Promise<
     `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/aircraftStructures/tree`,
     {},
   );
-  if (!res.ok) throw new AtomApiError(res.status, res.statusText);
+  if (!res.ok)
+    httpError(
+      res,
+      `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/aircraftStructures/tree`,
+    );
   return (await res.json()) as AircraftStructureNode[];
 }
 
@@ -159,6 +259,10 @@ export async function fetchLabTestMean(
     { next: { revalidate: 60 } },
   );
   if (res.status === 404) return null;
-  if (!res.ok) throw new AtomApiError(res.status, res.statusText);
+  if (!res.ok)
+    httpError(
+      res,
+      `${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/labtestmeans/${encodeURIComponent(externalId)}`,
+    );
   return (await res.json()) as LabTestMeanDto;
 }
