@@ -56,6 +56,8 @@ export type LabTestMeanDto = {
   atas: FinanceRef[] | null;
   softwares: FinanceRef[] | null;
   LTMDependsOn: FactsheetRef[] | null;
+  LTMSupports?: FactsheetRef[] | null;
+  SharedResourcesDependsOn?: FactsheetRef[] | null;
   portfolio?: FactsheetRef | null;
   technicalCapabilities: string[] | null;
   financeAircraftPrograms: FinanceRef[] | null;

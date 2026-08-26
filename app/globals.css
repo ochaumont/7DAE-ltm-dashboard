@@ -25,6 +25,11 @@
   --color-success: #34d399;
   --color-warning: #fbbf24;
   --color-danger: #f87171;
+  --color-graph-depends-on: #5b8def;
+  --color-graph-supports: #34d399;
+  --color-graph-shared-resource: #c084fc;
+  --color-radar-out: #f59e0b;
+  --color-radar-in: #22d3ee;
 }
 
 :root[data-theme="light"] {
@@ -39,6 +44,68 @@
   --color-success: #047857;
   --color-warning: #b45309;
   --color-danger: #b91c1c;
+  --color-graph-depends-on: #2563eb;
+  --color-graph-supports: #047857;
+  --color-graph-shared-resource: #9333ea;
+  --color-radar-out: #b45309;
+  --color-radar-in: #0e7490;
+}
+
+/* Dependency graph hover trace — toggled imperatively on the DOM (not via
+   React state) so it never forces React Flow to re-measure node sizes. */
+.react-flow__node,
+.react-flow__edge {
+  transition: opacity 150ms ease;
+}
+.react-flow__node.rf-dim {
+  opacity: 0.25;
+}
+.react-flow__edge.rf-dim {
+  opacity: 0.15;
+}
+.react-flow__edge.rf-emph .react-flow__edge-path {
+  stroke-width: 3px;
+  transition: stroke-width 150ms ease;
+}
+
+/* Radar page hover trace — same DOM-class-toggle technique as above, adapted
+   for plain SVG (no React Flow here). Namespaced with radar- / rd- prefixes
+   to avoid any collision with the react-flow selectors used by /interaction. */
+.radar-node,
+.radar-label,
+.radar-edge {
+  transition: opacity 150ms ease, stroke 150ms ease;
+}
+.radar-node {
+  fill: var(--color-muted);
+}
+.radar-label {
+  fill: var(--color-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.radar-edge {
+  fill: none;
+  stroke: var(--color-muted);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.radar-node.rd-dim,
+.radar-label.rd-dim {
+  opacity: 0.25;
+}
+.radar-edge.rd-dim {
+  opacity: 0.08;
+}
+.radar-edge.rd-emph-out {
+  stroke: var(--color-radar-out);
+  stroke-width: 2;
+  opacity: 1;
+}
+.radar-edge.rd-emph-in {
+  stroke: var(--color-radar-in);
+  stroke-width: 2;
+  opacity: 1;
 }
 
 html,

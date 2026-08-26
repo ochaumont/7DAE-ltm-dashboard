@@ -76,6 +76,18 @@ export type Lifecycle = {
   dismantled?: string;
 };
 
+export type DependencyRelationKind =
+  | "depends-on"
+  | "supports"
+  | "shared-resource";
+
+export type DependencyRelation = {
+  id: string;
+  externalId: string;
+  name: string;
+  kind: DependencyRelationKind;
+};
+
 export type AircraftStructureCategory =
   | "programFamily"
   | "aircraftType"
@@ -110,7 +122,9 @@ export type LabTestMean = {
   programs: string[];
   atas: string[];
   softwares: { id: string; name: string }[];
-  dependsOn: { id: string; name: string }[];
+  dependsOn: DependencyRelation[];
+  supports: DependencyRelation[];
+  sharedResources: DependencyRelation[];
   portfolio: { id: string; name: string } | null;
   technicalCapabilities: TechnicalCapability[];
   projects: string[];

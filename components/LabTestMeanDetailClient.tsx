@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
 import { useSearchParams, notFound } from "next/navigation";
 import Link from "next/link";
 import useSWR, { useSWRConfig } from "swr";
 import LabTestMeanHeader from "@/components/LabTestMeanHeader";
 import Gallery from "@/components/Gallery";
 import Section from "@/components/detail/Section";
-import { getLabTestMeans, getLabTestMeanByExternalId } from "@/lib/labtestmeans";
+import { getLabTestMeanByExternalId } from "@/lib/labtestmeans";
 import { SWR_KEY_LTM } from "@/lib/useLabTestMeans";
 import { getCatalogueState } from "@/lib/catalogueFilters";
 import type { LabTestMean } from "@/lib/types";
@@ -43,21 +42,6 @@ export default function LabTestMeanDetailClient() {
     () => getLabTestMeanByExternalId(externalId),
     { fallbackData },
   );
-
-  // Cold access (direct URL) with dependencies → load the full list in the
-  // background ONLY to resolve "depends on" links (id → externalId). The fiche
-  // itself is already shown from the single-item endpoint.
-  const needList = !!ltm && ltm.dependsOn.length > 0 && !cachedList;
-  const { data: bgList } = useSWR(needList ? SWR_KEY_LTM : null, getLabTestMeans);
-
-  const idToExternalId = useMemo(() => {
-    const src = cachedList ?? bgList ?? [];
-    return new Map(
-      src
-        .filter((m) => m.externalId)
-        .map((m) => [m.id, m.externalId] as const),
-    );
-  }, [cachedList, bgList]);
 
   if (error) throw error;
   if (!externalId) return notFound();
@@ -116,29 +100,18 @@ export default function LabTestMeanDetailClient() {
           {ltm.dependsOn.length > 0 && (
             <Section title="Depends on">
               <div className="flex flex-wrap gap-2 max-w-detail-info">
-                {ltm.dependsOn.map((dep) => {
-                  const xid = idToExternalId.get(dep.id);
-                  return xid ? (
-                    <Link
-                      key={dep.id}
-                      href={`/labtestmean?id=${encodeURIComponent(xid)}`}
-                      // Same static page as every other detail link → no prefetch
-                      // (avoids redundant fetches and gateway 301/403 noise).
-                      prefetch={false}
-                      className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
-                    >
-                      {dep.name}
-                    </Link>
-                  ) : (
-                    <span
-                      key={dep.id}
-                      className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-surface-2 text-muted border border-border"
-                      title="lab test mean introuvable"
-                    >
-                      {dep.name}
-                    </span>
-                  );
-                })}
+                {ltm.dependsOn.map((dep) => (
+                  <Link
+                    key={dep.id}
+                    href={`/labtestmean?id=${encodeURIComponent(dep.externalId)}`}
+                    // Same static page as every other detail link → no prefetch
+                    // (avoids redundant fetches and gateway 301/403 noise).
+                    prefetch={false}
+                    className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+                  >
+                    {dep.name}
+                  </Link>
+                ))}
               </div>
             </Section>
           )}

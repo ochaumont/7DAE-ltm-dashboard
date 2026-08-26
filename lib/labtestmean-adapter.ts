@@ -5,6 +5,8 @@ import type {
   LabTestMeanDto,
 } from "./atom-api";
 import type {
+  DependencyRelation,
+  DependencyRelationKind,
   LabTestMean,
   LabTestMeanStatus,
   LabTestMeanType,
@@ -88,6 +90,23 @@ function toPhotos(
     else others.push(photo);
   }
   return [...selected, ...others];
+}
+
+function toRelations(
+  refs: FactsheetRef[] | null | undefined,
+  kind: DependencyRelationKind,
+): DependencyRelation[] {
+  return (refs ?? [])
+    .filter(
+      (r): r is FactsheetRef =>
+        typeof r.id === "string" &&
+        r.id.length > 0 &&
+        typeof r.externalId === "string" &&
+        r.externalId.length > 0 &&
+        typeof r.name === "string" &&
+        r.name.length > 0,
+    )
+    .map((r) => ({ id: r.id, externalId: r.externalId, name: r.name, kind }));
 }
 
 function toType(raw: LabTestMeanDto["category"]): LabTestMeanType {
@@ -273,15 +292,12 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
           s.name.length > 0,
       )
       .map((s) => ({ id: s.id, name: s.name })),
-    dependsOn: (dto.LTMDependsOn ?? [])
-      .filter(
-        (d) =>
-          typeof d.id === "string" &&
-          d.id.length > 0 &&
-          typeof d.name === "string" &&
-          d.name.length > 0,
-      )
-      .map((d) => ({ id: d.id, name: d.name })),
+    dependsOn: toRelations(dto.LTMDependsOn, "depends-on"),
+    supports: toRelations(dto.LTMSupports, "supports"),
+    sharedResources: toRelations(
+      dto.SharedResourcesDependsOn,
+      "shared-resource",
+    ),
     portfolio:
       dto.portfolio &&
       typeof dto.portfolio.id === "string" &&

@@ -1,0 +1,147 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { LabTestMean } from "@/lib/types";
+
+type Props = {
+  options: LabTestMean[];
+  value: LabTestMean | null;
+  onChange: (m: LabTestMean | null) => void;
+  placeholder?: string;
+};
+
+const MAX_RESULTS = 50;
+
+export default function BenchCombobox({
+  options,
+  value,
+  onChange,
+  placeholder = "Search a bench by name or code…",
+}: Props) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listboxId = "bench-combobox-listbox";
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const matches = q
+      ? options.filter(
+          (m) =>
+            (m.name ?? "").toLowerCase().includes(q) ||
+            (m.externalId ?? "").toLowerCase().includes(q),
+        )
+      : options;
+    return matches.slice(0, MAX_RESULTS);
+  }, [options, query]);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [query, open]);
+
+  useEffect(() => {
+    function onPointerDown(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, []);
+
+  function selectOption(m: LabTestMean) {
+    onChange(m);
+    setQuery("");
+    setOpen(false);
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      setOpen(true);
+      return;
+    }
+    if (!open) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const m = filtered[activeIndex];
+      if (m) selectOption(m);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+      setQuery("");
+    }
+  }
+
+  const displayValue = open ? query : value?.name ?? query;
+
+  return (
+    <div ref={rootRef} className="relative w-full max-w-sm">
+      <input
+        type="text"
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-controls={listboxId}
+        aria-activedescendant={
+          open && filtered[activeIndex]
+            ? `bench-option-${filtered[activeIndex].id}`
+            : undefined
+        }
+        aria-label="Select a bench"
+        placeholder={placeholder}
+        value={displayValue}
+        onFocus={() => {
+          setQuery("");
+          setOpen(true);
+        }}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={onKeyDown}
+        className="w-full px-3 py-2 rounded bg-surface border border-border text-fg placeholder:text-muted focus:outline-none focus:border-accent"
+      />
+      {open && (
+        <ul
+          id={listboxId}
+          role="listbox"
+          className="absolute top-full left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-card bg-surface border border-border shadow-lg z-20"
+        >
+          {filtered.length === 0 ? (
+            <li className="px-3 py-2 text-sm text-muted" role="option" aria-disabled="true" aria-selected={false}>
+              No bench found.
+            </li>
+          ) : (
+            filtered.map((m, i) => (
+              <li
+                key={m.id}
+                id={`bench-option-${m.id}`}
+                role="option"
+                aria-selected={i === activeIndex}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  selectOption(m);
+                }}
+                onMouseEnter={() => setActiveIndex(i)}
+                className={`px-3 py-2 text-sm cursor-pointer ${
+                  i === activeIndex
+                    ? "bg-accent/10 text-accent"
+                    : "text-fg/90"
+                }`}
+              >
+                <span className="font-medium">{m.name}</span>{" "}
+                <span className="text-muted font-mono text-xs">
+                  {m.externalId}
+                </span>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
