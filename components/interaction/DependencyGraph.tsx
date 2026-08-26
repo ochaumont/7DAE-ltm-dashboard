@@ -456,6 +456,12 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
         elementsSelectable={false}
         deleteKeyCode={null}
         fitView
+        // Cap the zoom so a compact layout (e.g. "layered", which packs
+        // everything into 2 tight columns vs "radial" spreading nodes around
+        // a wide circle) doesn't get blown up to fill the viewport — card
+        // size should look the same regardless of which algorithm produced
+        // the smaller bounding box.
+        fitViewOptions={{ maxZoom: 1 }}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={clearHover}
         onNodeClick={(_, n) => {
