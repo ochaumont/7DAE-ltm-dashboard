@@ -33,8 +33,13 @@ export default function InteractionClient() {
   if (error) throw error;
   if (loading) return <InteractionSkeleton />;
 
-  const selected =
-    labTestMeans.find((m) => m.externalId === selectedExternalId) ?? null;
+  // Guard `selectedExternalId` explicitly: without it, `m.externalId ===
+  // null` would auto-match any bench whose externalId is null/missing (a
+  // real backend data-quality issue, cf. BenchCombobox) whenever the page is
+  // opened with no `?id=` in the URL at all.
+  const selected = selectedExternalId
+    ? labTestMeans.find((m) => m.externalId === selectedExternalId) ?? null
+    : null;
 
   function handleChange(m: (typeof labTestMeans)[number] | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -54,7 +59,11 @@ export default function InteractionClient() {
       </div>
       <div className="relative flex-1">
         {selected ? (
-          <DependencyGraph bench={selected} allBenches={labTestMeans} />
+          <DependencyGraph
+            bench={selected}
+            allBenches={labTestMeans}
+            onRequestBench={handleChange}
+          />
         ) : (
           <InteractionEmptyState reason="no-selection" />
         )}

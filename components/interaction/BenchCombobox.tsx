@@ -25,14 +25,19 @@ export default function BenchCombobox({
   const listboxId = "bench-combobox-listbox";
 
   const filtered = useMemo(() => {
+    // Some backend records have a null/empty `externalId` despite the DTO's
+    // string typing — selecting one of those breaks every downstream feature
+    // keyed on it (routing, the /interaction graph's node ids fed to ELK), so
+    // they're excluded here rather than merely hidden from the search filter.
+    const selectable = options.filter((m) => !!m.externalId);
     const q = query.trim().toLowerCase();
     const matches = q
-      ? options.filter(
+      ? selectable.filter(
           (m) =>
             (m.name ?? "").toLowerCase().includes(q) ||
-            (m.externalId ?? "").toLowerCase().includes(q),
+            m.externalId.toLowerCase().includes(q),
         )
-      : options;
+      : selectable;
     return matches.slice(0, MAX_RESULTS);
   }, [options, query]);
 

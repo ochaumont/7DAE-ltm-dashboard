@@ -36,7 +36,12 @@ export type ElkEdgeSections = Map<string, ElkPoint[]>;
 
 export type ElkLayoutState =
   | { status: "loading" }
-  | { status: "ok"; positions: ElkPositions; edgeSections: ElkEdgeSections }
+  | {
+      status: "ok";
+      algorithm: ElkAlgorithm;
+      positions: ElkPositions;
+      edgeSections: ElkEdgeSections;
+    }
   | { status: "error"; error: unknown };
 
 /**
@@ -81,7 +86,7 @@ export function useElkLayout(
           ]);
         });
 
-        setState({ status: "ok", positions, edgeSections });
+        setState({ status: "ok", algorithm, positions, edgeSections });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
