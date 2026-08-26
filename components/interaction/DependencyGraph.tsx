@@ -1,11 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ReactFlow,
   Background,
   Controls,
-  Panel,
   BaseEdge,
   Handle,
   Position,
@@ -27,25 +34,29 @@ import DependencyLegend from "./DependencyLegend";
 import InteractionEmptyState from "./InteractionEmptyState";
 import BenchPreviewModal, { type PreviewTarget } from "./BenchPreviewModal";
 import NodeContextMenu, { type NodeContextMenuTarget } from "./NodeContextMenu";
-import SaveLoadControls from "./SaveLoadControls";
 import {
   useElkLayout,
   type ElkAlgorithm,
   type ElkEdgeSections,
   type ElkPositions,
 } from "./useElkLayout";
-import {
-  deleteSave,
-  listSaves,
-  loadSave,
-  writeSave,
-  type InteractionSave,
+import type {
+  InteractionSave,
+  InteractionSaveEdge,
+  InteractionSaveNode,
 } from "@/lib/interactionSaves";
 
 type Props = {
   bench: LabTestMean;
   allBenches: LabTestMean[];
-  onRequestBench: (bench: LabTestMean) => void;
+  algorithm: ElkAlgorithm;
+  onDirty: () => void;
+  pendingLoad: InteractionSave | null;
+  onPendingLoadConsumed: () => void;
+};
+
+export type DependencyGraphHandle = {
+  getSnapshot: () => { nodes: InteractionSaveNode[]; edges: InteractionSaveEdge[] } | null;
 };
 
 /**
@@ -478,18 +489,15 @@ function placeNewNode(
   return { x, y };
 }
 
-const ALGORITHM_LABELS: Record<ElkAlgorithm, string> = {
-  layered: "Layered",
-  radial: "Radial",
-};
-
-export default function DependencyGraph({ bench, allBenches, onRequestBench }: Props) {
+const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function DependencyGraph(
+  { bench, allBenches, algorithm, onDirty, pendingLoad, onPendingLoadConsumed },
+  ref,
+) {
   const [hidden, setHidden] = useState<Record<EdgeColorKind, boolean>>({
     "depends-on": false,
     "shared-resource": false,
   });
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
-  const [algorithm, setAlgorithm] = useState<ElkAlgorithm>("layered");
   const [contextMenu, setContextMenu] = useState<NodeContextMenuTarget | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rootId = bench.externalId;
@@ -514,15 +522,15 @@ export default function DependencyGraph({ bench, allBenches, onRequestBench }: P
   const layout = useElkLayout(elkGraph, algorithm);
 
   const { nodes: rawNodes, edgeMeta: rawEdgeMeta } = useMemo(() => {
-    // `layout.algorithm` must also match: right after `setAlgorithm(...)`,
-    // React re-renders this component before `useElkLayout`'s own effect has
-    // had a chance to flip its state to "loading" for the new algorithm — for
-    // that one render, `layout` is still the PREVIOUS algorithm's `"ok"`
-    // result. Without this check, this memo would recompute using stale
-    // positions/edgeSections paired with the already-updated `algorithm`
-    // value, producing a mismatched-but-"ok"-flagged result that the effect
-    // below would treat as ready, consuming `pendingLoadRef` a render too
-    // early.
+    // `layout.algorithm` must also match: right after the parent changes
+    // `algorithm`, React re-renders this component before `useElkLayout`'s
+    // own effect has had a chance to flip its state to "loading" for the new
+    // algorithm — for that one render, `layout` is still the PREVIOUS
+    // algorithm's `"ok"` result. Without this check, this memo would
+    // recompute using stale positions/edgeSections paired with the
+    // already-updated `algorithm` value, producing a mismatched-but-"ok"
+    // -flagged result that the effect below would treat as ready, consuming
+    // `pendingLoad` a render too early.
     if (layout.status !== "ok" || layout.algorithm !== algorithm) {
       return { nodes: [] as Node[], edgeMeta: [] as EdgeMeta[] };
     }
@@ -547,22 +555,15 @@ export default function DependencyGraph({ bench, allBenches, onRequestBench }: P
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edgeMeta, setEdgeMeta] = useState<EdgeMeta[]>([]);
 
-  // Save/Load bookkeeping. `pendingLoadRef` carries a save across the
-  // bench/algorithm change it may have triggered (see `handleLoadSave`) until
-  // the ELK-reset effect below sees the matching bench and applies it instead
-  // of the freshly-computed ELK layout. `isBaselineUpdateRef` distinguishes a
+  // Save/Load bookkeeping. `pendingLoad` (owned by the parent, which also
+  // owns the Save/Load UI and its bench/algorithm selection) carries a save
+  // across the bench/algorithm change it may have triggered until the
+  // ELK-reset effect below sees the matching bench and applies it instead of
+  // the freshly-computed ELK layout. `isBaselineUpdateRef` distinguishes a
   // programmatic reset (new ELK layout, or a load) from a user-driven edit
-  // (drag, expand, hide) for the purposes of the "unsaved changes" indicator.
-  const pendingLoadRef = useRef<InteractionSave | null>(null);
+  // (drag, expand, hide) for the purposes of the parent's "unsaved changes"
+  // indicator.
   const isBaselineUpdateRef = useRef(false);
-  const [activeSaveName, setActiveSaveName] = useState<string | null>(null);
-  const [dirty, setDirty] = useState(false);
-  const [saveVersion, setSaveVersion] = useState(0);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  // `saveVersion` is a pure refresh trigger — bumped after writeSave/deleteSave
-  // so this recomputes, even though `listSaves()` itself doesn't read it.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const saves = useMemo(() => listSaves(), [saveVersion]);
 
   const applyLoadedSave = useCallback(
     (save: InteractionSave) => {
@@ -598,26 +599,46 @@ export default function DependencyGraph({ bench, allBenches, onRequestBench }: P
   );
 
   // New ELK layout (new bench or algorithm) → replace the whole graph, UNLESS
-  // a `Load` is in flight for this exact bench, in which case its saved
-  // nodes/edges are applied instead of the freshly-computed ELK layout — this
-  // is what lets `Load` switch to a different root bench without the newly
-  // selected bench's default layout flashing in first.
+  // a `Load` is in flight for this exact bench (`pendingLoad`, owned by the
+  // parent), in which case its saved nodes/edges are applied instead of the
+  // freshly-computed ELK layout — this is what lets `Load` switch to a
+  // different root bench without the newly selected bench's default layout
+  // flashing in first. Depending on `pendingLoad` directly (not just on
+  // `rawNodes`/`rawEdgeMeta`) also makes this fire immediately for a `Load`
+  // that keeps the same bench/algorithm, where `layout`/`rawNodes` never
+  // change at all.
   //
   // Guarded on `layout.status === "ok" && layout.algorithm === algorithm`:
   // while ELK is (re)computing, or during the one-render window where
   // `layout` still reflects the PREVIOUS algorithm (see the comment on the
   // `rawNodes`/`rawEdgeMeta` memo above), this effect would otherwise fire on
-  // a stale/empty intermediate result — consuming and clearing
-  // `pendingLoadRef` right there, then firing AGAIN once the real computation
-  // resolves with the plain 1-hop layout, silently overwriting the
-  // just-restored save with it. That race is what made a loaded save that
-  // also changes bench/algorithm appear to drop every expanded node.
+  // a stale/empty intermediate result — consuming and clearing `pendingLoad`
+  // right there, then firing AGAIN once the real computation resolves with
+  // the plain 1-hop layout, silently overwriting the just-restored save with
+  // it. That race is what made a loaded save that also changes
+  // bench/algorithm appear to drop every expanded node.
+  //
+  // `justConsumedLoadRef` guards a SECOND race introduced by `pendingLoad`
+  // now being a prop (owned by the parent) rather than a plain ref: clearing
+  // it via `onPendingLoadConsumed()` is itself a dependency change, so this
+  // effect fires once more right after a successful load, this time with
+  // `pendingLoad` back to `null` — without the guard, that extra run would
+  // fall straight into the "fresh reset" branch and clobber the save that was
+  // just applied one run earlier.
+  const resolvedLayoutAlgorithm = layout.status === "ok" ? layout.algorithm : null;
+  const justConsumedLoadRef = useRef(false);
   useEffect(() => {
     if (layout.status !== "ok" || layout.algorithm !== algorithm) return;
-    const pending = pendingLoadRef.current;
-    if (pending && pending.rootExternalId === bench.externalId) {
-      pendingLoadRef.current = null;
-      applyLoadedSave(pending);
+    if (pendingLoad && pendingLoad.rootExternalId === bench.externalId) {
+      justConsumedLoadRef.current = true;
+      onPendingLoadConsumed();
+      applyLoadedSave(pendingLoad);
+      return;
+    }
+    if (justConsumedLoadRef.current) {
+      // This run was only triggered by `pendingLoad` flipping back to `null`
+      // as a result of the load applied one run ago — nothing new to do.
+      justConsumedLoadRef.current = false;
       return;
     }
     // A plain bench/algorithm change unrelated to any save starts a fresh,
@@ -625,21 +646,24 @@ export default function DependencyGraph({ bench, allBenches, onRequestBench }: P
     isBaselineUpdateRef.current = true;
     setNodes(rawNodes.map((n) => ({ ...n, style: { cursor: "pointer" } })));
     setEdgeMeta(rawEdgeMeta);
-    setActiveSaveName(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawNodes, rawEdgeMeta, layout.status, layout.status === "ok" ? layout.algorithm : null]);
+  }, [rawNodes, rawEdgeMeta, layout.status, resolvedLayoutAlgorithm, pendingLoad, bench.externalId]);
 
   // Any change to the displayed graph that wasn't one of the baseline resets
   // above (i.e. a drag, an expansion, or a hide) means there are unsaved
-  // changes relative to the active save.
+  // changes relative to the active save — the parent owns that flag and the
+  // transitions back to "clean" (bench/algorithm change, successful
+  // save/load), so this only ever needs to report the "dirty" direction. The
+  // `nodes.length === 0` guard skips the very first mount, before any
+  // baseline has been applied at all.
   useEffect(() => {
+    if (nodes.length === 0 && edgeMeta.length === 0) return;
     if (isBaselineUpdateRef.current) {
       isBaselineUpdateRef.current = false;
-      setDirty(false);
       return;
     }
-    setDirty(true);
-  }, [nodes, edgeMeta]);
+    onDirty();
+  }, [nodes, edgeMeta, onDirty]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((current) => applyNodeChanges(changes, current));
@@ -713,79 +737,21 @@ export default function DependencyGraph({ bench, allBenches, onRequestBench }: P
     [rootId],
   );
 
-  const buildSnapshot = useCallback(
-    (): InteractionSave => ({
-      version: 1,
-      rootExternalId: rootId,
-      algorithm,
-      nodes: nodes.map((n) => ({ id: n.id, x: n.position.x, y: n.position.y })),
-      edges: edgeMeta.map((e) => ({ source: e.source, target: e.target, kind: e.kind })),
-      savedAt: new Date().toISOString(),
+  // Exposes the currently displayed graph so the parent (which owns the
+  // Save/Save-as UI) can snapshot it on demand — pulled only when the user
+  // actually clicks Save, rather than pushed up on every drag frame.
+  useImperativeHandle(
+    ref,
+    () => ({
+      getSnapshot: () => {
+        if (nodes.length === 0) return null;
+        return {
+          nodes: nodes.map((n) => ({ id: n.id, x: n.position.x, y: n.position.y })),
+          edges: edgeMeta.map((e) => ({ source: e.source, target: e.target, kind: e.kind })),
+        };
+      },
     }),
-    [rootId, algorithm, nodes, edgeMeta],
-  );
-
-  const handleSaveAs = useCallback(
-    (name: string) => {
-      const ok = writeSave(name, buildSnapshot());
-      if (!ok) {
-        setSaveError("Could not save (storage unavailable or full).");
-        return;
-      }
-      setSaveError(null);
-      setActiveSaveName(name);
-      setDirty(false);
-      setSaveVersion((v) => v + 1);
-    },
-    [buildSnapshot],
-  );
-
-  const handleSave = useCallback(() => {
-    if (!activeSaveName) return; // SaveLoadControls routes this to Save-as instead
-    handleSaveAs(activeSaveName);
-  }, [activeSaveName, handleSaveAs]);
-
-  const handleLoadSave = useCallback(
-    (name: string) => {
-      const save = loadSave(name);
-      if (!save) {
-        setSaveError("This save could not be read.");
-        return;
-      }
-      const rootBench = byExternalId.get(save.rootExternalId);
-      if (!rootBench) {
-        setSaveError("This save's root bench no longer exists in the catalogue.");
-        return;
-      }
-      setSaveError(null);
-
-      const benchChanging = rootBench.externalId !== bench.externalId;
-      const algoChanging = save.algorithm !== algorithm;
-
-      if (benchChanging || algoChanging) {
-        // Applied once the resulting ELK-reset effect sees the matching bench.
-        pendingLoadRef.current = save;
-        if (algoChanging) setAlgorithm(save.algorithm);
-        if (benchChanging) onRequestBench(rootBench);
-      } else {
-        applyLoadedSave(save);
-      }
-      setActiveSaveName(name);
-      setDirty(false);
-    },
-    [byExternalId, bench, algorithm, onRequestBench, applyLoadedSave],
-  );
-
-  const handleDeleteSave = useCallback(
-    (name: string) => {
-      deleteSave(name);
-      if (activeSaveName === name) {
-        setActiveSaveName(null);
-        setDirty(false);
-      }
-      setSaveVersion((v) => v + 1);
-    },
-    [activeSaveName],
+    [nodes, edgeMeta],
   );
 
   const nodePositions = useMemo(() => {
@@ -901,34 +867,6 @@ export default function DependencyGraph({ bench, allBenches, onRequestBench }: P
       >
         <Background />
         <Controls showInteractive={false} />
-        <Panel position="top-right">
-          <div className="flex items-center gap-1.5">
-            <label className="flex items-center gap-2 rounded-card border border-border bg-surface/90 px-2.5 py-1.5 text-xs text-muted backdrop-blur-md">
-              Layout
-              <select
-                value={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value as ElkAlgorithm)}
-                className="rounded border border-border bg-surface px-1.5 py-0.5 text-xs text-fg"
-              >
-                {(Object.keys(ALGORITHM_LABELS) as ElkAlgorithm[]).map((a) => (
-                  <option key={a} value={a}>
-                    {ALGORITHM_LABELS[a]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <SaveLoadControls
-              activeSaveName={activeSaveName}
-              dirty={dirty}
-              saves={saves}
-              errorMessage={saveError}
-              onSaveAs={handleSaveAs}
-              onSave={handleSave}
-              onLoad={handleLoadSave}
-              onDelete={handleDeleteSave}
-            />
-          </div>
-        </Panel>
       </ReactFlow>
       <DependencyLegend
         counts={counts}
@@ -945,4 +883,6 @@ export default function DependencyGraph({ bench, allBenches, onRequestBench }: P
       />
     </div>
   );
-}
+});
+
+export default DependencyGraph;

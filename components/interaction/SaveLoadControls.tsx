@@ -7,6 +7,7 @@ type Props = {
   dirty: boolean;
   saves: string[];
   errorMessage: string | null;
+  disableSave?: boolean;
   onSaveAs: (name: string) => void;
   onSave: () => void;
   onLoad: (name: string) => void;
@@ -18,6 +19,7 @@ export default function SaveLoadControls({
   dirty,
   saves,
   errorMessage,
+  disableSave = false,
   onSaveAs,
   onSave,
   onLoad,
@@ -74,7 +76,12 @@ export default function SaveLoadControls({
           </span>
         )}
       </span>
-      <button type="button" onClick={handleSaveClick} className={buttonClass}>
+      <button
+        type="button"
+        onClick={handleSaveClick}
+        disabled={disableSave}
+        className={`${buttonClass} disabled:opacity-40 disabled:cursor-not-allowed`}
+      >
         Save
       </button>
       <button
@@ -83,7 +90,8 @@ export default function SaveLoadControls({
           setName("");
           setOpen((o) => (o === "saveAs" ? null : "saveAs"));
         }}
-        className={buttonClass}
+        disabled={disableSave}
+        className={`${buttonClass} disabled:opacity-40 disabled:cursor-not-allowed`}
       >
         Save as
       </button>
