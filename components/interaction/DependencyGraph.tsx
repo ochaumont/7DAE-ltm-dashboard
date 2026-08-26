@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -10,9 +10,11 @@ import {
   Handle,
   Position,
   MarkerType,
+  applyNodeChanges,
   type Node,
   type Edge,
   type EdgeProps,
+  type NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { ElkNode } from "elkjs/lib/elk.bundled.js";
@@ -191,7 +193,7 @@ const edgeTypes = { radial: RadialEdge, elkPath: ElkRoutedEdge };
 
 /**
  * Direction of an edge as fed to ELK for layout purposes. This can differ
- * from the true semantic direction used for rendering (cf. `toReactFlowGraph`,
+ * from the true semantic direction used for rendering (cf. `buildGraphStructure`,
  * which always uses the real direction regardless of algorithm):
  *
  * - `radial`: every edge is normalized to `hub -> neighbor`. Feeding ELK the
@@ -233,113 +235,158 @@ function toElkGraph(groups: RelationGroup[], algorithm: ElkAlgorithm): ElkNode {
   return { id: "root", children, edges };
 }
 
-function toReactFlowGraph(
+/** Everything about an edge that ELK produces ONCE at layout time and doesn't
+ * depend on where the nodes currently sit — the live endpoint coordinates are
+ * recomputed on every drag instead (see `buildLiveEdges`), so a dragged card
+ * never leaves its edges behind. `elkPoints` (when present, "layered" only)
+ * keeps ELK's original obstacle-routed interior bend points; only its first
+ * and last point get replaced with the live border points. */
+type EdgeMeta = {
+  id: string;
+  source: string;
+  target: string;
+  kind: DependencyRelationKind;
+  bend: number;
+  elkPoints?: { x: number; y: number }[];
+};
+
+function widthFor(nodeId: string): number {
+  return nodeId === "hub" ? HUB_W : NODE_W;
+}
+
+function buildGraphStructure(
   bench: LabTestMean,
   groups: RelationGroup[],
   resolve: (rel: DependencyRelation) => LabTestMean | null,
   positions: ElkPositions,
   algorithm: ElkAlgorithm,
   edgeSections: ElkEdgeSections,
-): { nodes: Node[]; edges: Edge[] } {
-  const hubPos = positions.get("hub") ?? { x: 0, y: 0 };
-  const hubCenter = { x: hubPos.x + HUB_W / 2, y: hubPos.y + CARD_H / 2 };
-
+): { nodes: Node[]; edgeMeta: EdgeMeta[] } {
   const nodes: Node[] = [
     {
       id: "hub",
       type: "card",
-      position: hubPos,
+      position: positions.get("hub") ?? { x: 0, y: 0 },
       data: { label: bench.name, kind: "hub", resolved: bench } satisfies NodeData,
-      draggable: false,
       selectable: false,
     },
   ];
-  const edges: Edge[] = [];
+  const edgeMeta: EdgeMeta[] = [];
 
   groups.forEach(({ kind, list }) => {
     list.forEach((rel, i) => {
       const nodeId = `${kind}:${rel.externalId}`;
-      const pos = positions.get(nodeId) ?? { x: 0, y: 0 };
       nodes.push({
         id: nodeId,
         type: "card",
-        position: pos,
+        position: positions.get(nodeId) ?? { x: 0, y: 0 },
         data: { label: rel.name, kind, resolved: resolve(rel) } satisfies NodeData,
-        draggable: false,
         selectable: false,
       });
-
-      const nodeCenter = { x: pos.x + NODE_W / 2, y: pos.y + CARD_H / 2 };
-      const hubBorder = borderPoint(
-        hubCenter.x,
-        hubCenter.y,
-        HUB_W,
-        CARD_H,
-        nodeCenter.x,
-        nodeCenter.y,
-      );
-      const nodeBorder = borderPoint(
-        nodeCenter.x,
-        nodeCenter.y,
-        NODE_W,
-        CARD_H,
-        hubCenter.x,
-        hubCenter.y,
-      );
 
       // "depends-on"/"shared-resource": the central bench needs this neighbor.
       // "supports": the neighbor depends on the central bench. The rendered
       // arrow always follows this real direction, regardless of `algorithm`
       // — only how the edge is ROUTED (straight bow vs ELK's path) changes.
-      const [source, target, sPt, tPt] =
-        kind === "supports"
-          ? [nodeId, "hub", nodeBorder, hubBorder]
-          : ["hub", nodeId, hubBorder, nodeBorder];
+      const [source, target] =
+        kind === "supports" ? [nodeId, "hub"] : ["hub", nodeId];
       const edgeId = `${source}->${target}`;
 
       // ELK's own routing is only used for "layered" — its radial algorithm
       // was tried too (see `useElkLayout`) but only ever returns a straight
-      // 2-point section, so radial keeps drawing its own bow curve below.
+      // 2-point section, so radial keeps drawing its own bow curve.
       const section = algorithm === "layered" ? edgeSections.get(edgeId) : undefined;
 
-      edges.push(
-        section && section.length >= 2
-          ? {
-              id: edgeId,
-              source,
-              target,
-              type: "elkPath",
-              data: { kind, points: section } satisfies ElkPathEdgeData,
-              style: { stroke: `var(--color-graph-${kind})`, strokeWidth: 2 },
-              markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: `var(--color-graph-${kind})`,
-              },
-            }
-          : {
-              id: edgeId,
-              source,
-              target,
-              type: "radial",
-              data: {
-                sx: sPt.x,
-                sy: sPt.y,
-                tx: tPt.x,
-                ty: tPt.y,
-                bend: i % 2 === 0 ? 1 : -1,
-                kind,
-              } satisfies EdgeData,
-              style: { stroke: `var(--color-graph-${kind})`, strokeWidth: 2 },
-              markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: `var(--color-graph-${kind})`,
-              },
-            },
-      );
+      edgeMeta.push({
+        id: edgeId,
+        source,
+        target,
+        kind,
+        bend: i % 2 === 0 ? 1 : -1,
+        elkPoints: section && section.length >= 2 ? section : undefined,
+      });
     });
   });
 
-  return { nodes, edges };
+  return { nodes, edgeMeta };
+}
+
+/** Recomputes every edge's actual path from the CURRENT node positions (which
+ * may have been dragged away from where ELK originally put them) — this is
+ * what keeps edges attached to their cards while the user repositions them. */
+function buildLiveEdges(
+  edgeMeta: EdgeMeta[],
+  nodePositions: Map<string, { x: number; y: number }>,
+): Edge[] {
+  const centerOf = (id: string) => {
+    const pos = nodePositions.get(id);
+    if (!pos) return null;
+    return { x: pos.x + widthFor(id) / 2, y: pos.y + CARD_H / 2 };
+  };
+
+  const result: Edge[] = [];
+  edgeMeta.forEach((meta) => {
+    const sourceCenter = centerOf(meta.source);
+    const targetCenter = centerOf(meta.target);
+    if (!sourceCenter || !targetCenter) return;
+
+    const sourceBorder = borderPoint(
+      sourceCenter.x,
+      sourceCenter.y,
+      widthFor(meta.source),
+      CARD_H,
+      targetCenter.x,
+      targetCenter.y,
+    );
+    const targetBorder = borderPoint(
+      targetCenter.x,
+      targetCenter.y,
+      widthFor(meta.target),
+      CARD_H,
+      sourceCenter.x,
+      sourceCenter.y,
+    );
+
+    const style = { stroke: `var(--color-graph-${meta.kind})`, strokeWidth: 2 };
+    const markerEnd = {
+      type: MarkerType.ArrowClosed,
+      color: `var(--color-graph-${meta.kind})`,
+    };
+
+    if (meta.elkPoints) {
+      const points = [...meta.elkPoints];
+      points[0] = sourceBorder;
+      points[points.length - 1] = targetBorder;
+      result.push({
+        id: meta.id,
+        source: meta.source,
+        target: meta.target,
+        type: "elkPath",
+        data: { kind: meta.kind, points } satisfies ElkPathEdgeData,
+        style,
+        markerEnd,
+      });
+      return;
+    }
+
+    result.push({
+      id: meta.id,
+      source: meta.source,
+      target: meta.target,
+      type: "radial",
+      data: {
+        sx: sourceBorder.x,
+        sy: sourceBorder.y,
+        tx: targetBorder.x,
+        ty: targetBorder.y,
+        bend: meta.bend,
+        kind: meta.kind,
+      } satisfies EdgeData,
+      style,
+      markerEnd,
+    });
+  });
+  return result;
 }
 
 const EMPTY_HIDDEN: Record<DependencyRelationKind, boolean> = {
@@ -374,9 +421,9 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
   );
   const layout = useElkLayout(elkGraph, algorithm);
 
-  const { nodes: rawNodes, edges: rawEdges } = useMemo(() => {
-    if (layout.status !== "ok") return { nodes: [] as Node[], edges: [] as Edge[] };
-    return toReactFlowGraph(
+  const { nodes: rawNodes, edgeMeta } = useMemo(() => {
+    if (layout.status !== "ok") return { nodes: [] as Node[], edgeMeta: [] as EdgeMeta[] };
+    return buildGraphStructure(
       bench,
       groups,
       resolve,
@@ -387,27 +434,62 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bench, groups, byExternalId, layout, algorithm]);
 
-  // Only `hidden` (legend toggles) changes this — the hover fade below is
-  // applied directly to the DOM instead, so passing brand-new node/edge
-  // objects on every mouse move doesn't force React Flow to re-measure every
-  // card (that remeasurement flash was the cause of the flicker on hover).
-  const nodes = useMemo(
-    () =>
-      rawNodes.map((n) => {
-        const data = n.data as unknown as NodeData;
-        return {
-          ...n,
-          hidden: data.kind !== "hub" && hidden[data.kind],
-          style: { cursor: "pointer" },
-        };
+  // `nodes` is the array actually fed to React Flow, kept as real state (not
+  // re-derived from `rawNodes` on every render) so dragging can patch it via
+  // `applyNodeChanges` — that helper reuses the SAME object reference for
+  // every node that didn't change, only creating a new one for the node
+  // being dragged. Rebuilding the whole array with `.map()` on every drag
+  // frame (as an earlier version did) made every card look "new" to React
+  // Flow, forcing a re-measure of all of them each frame — that's what was
+  // flickering.
+  const [nodes, setNodes] = useState<Node[]>([]);
+
+  const isHiddenFor = useCallback(
+    (n: Node) => {
+      const data = n.data as unknown as NodeData;
+      return data.kind !== "hub" && hidden[data.kind];
+    },
+    [hidden],
+  );
+
+  // New ELK layout (new bench or algorithm) → replace the whole array.
+  useEffect(() => {
+    setNodes(
+      rawNodes.map((n) => ({ ...n, hidden: isHiddenFor(n), style: { cursor: "pointer" } })),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawNodes]);
+
+  // Legend toggle → patch only the nodes whose visibility actually flips,
+  // same reference-preserving idea as the drag path below.
+  useEffect(() => {
+    setNodes((current) =>
+      current.map((n) => {
+        const shouldHide = isHiddenFor(n);
+        return n.hidden === shouldHide ? n : { ...n, hidden: shouldHide };
       }),
-    [rawNodes, hidden],
+    );
+  }, [isHiddenFor]);
+
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    setNodes((current) => applyNodeChanges(changes, current));
+  }, []);
+
+  const nodePositions = useMemo(() => {
+    const map = new Map<string, { x: number; y: number }>();
+    nodes.forEach((n) => map.set(n.id, n.position));
+    return map;
+  }, [nodes]);
+
+  const rawEdges = useMemo(
+    () => buildLiveEdges(edgeMeta, nodePositions),
+    [edgeMeta, nodePositions],
   );
 
   const edges = useMemo(
     () =>
       rawEdges.map((e) => {
-        const data = e.data as unknown as EdgeData;
+        const data = e.data as unknown as { kind: DependencyRelationKind };
         return { ...e, hidden: hidden[data.kind] };
       }),
     [rawEdges, hidden],
@@ -471,7 +553,7 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        nodesDraggable={false}
+        nodesDraggable
         nodesConnectable={false}
         elementsSelectable={false}
         deleteKeyCode={null}
@@ -482,6 +564,7 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
         // size should look the same regardless of which algorithm produced
         // the smaller bounding box.
         fitViewOptions={{ maxZoom: 1 }}
+        onNodesChange={onNodesChange}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={clearHover}
         onNodeClick={(_, n) => {
