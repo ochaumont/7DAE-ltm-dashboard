@@ -159,15 +159,31 @@ function RadialEdge({ data, markerEnd, style }: EdgeProps) {
   return <BaseEdge path={path} markerEnd={markerEnd} style={style} />;
 }
 
+/** Rounds a polyline's interior corners: each bend point becomes a quadratic
+ * curve's control point, ending at the midpoint to the next point, instead of
+ * a hard angle — the standard trick for smoothing a point list without
+ * needing a spline library. */
+function smoothPolylinePath(points: { x: number; y: number }[]): string {
+  let path = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length - 1; i++) {
+    const curr = points[i];
+    const next = points[i + 1];
+    const midX = (curr.x + next.x) / 2;
+    const midY = (curr.y + next.y) / 2;
+    path += ` Q ${curr.x} ${curr.y} ${midX} ${midY}`;
+  }
+  const last = points[points.length - 1];
+  path += ` L ${last.x} ${last.y}`;
+  return path;
+}
+
 /** Draws the path ELK already computed (start point, its bend points, end
  * point) instead of a fixed-curvature bow — ELK's routing already accounts
  * for intervening cards, ours doesn't. Used for the "layered" algorithm. */
 function ElkRoutedEdge({ data, markerEnd, style }: EdgeProps) {
   const d = data as unknown as ElkPathEdgeData;
   if (!d.points || d.points.length < 2) return null;
-  const [first, ...rest] = d.points;
-  const path =
-    `M ${first.x} ${first.y} ` + rest.map((p) => `L ${p.x} ${p.y}`).join(" ");
+  const path = smoothPolylinePath(d.points);
   return <BaseEdge path={path} markerEnd={markerEnd} style={style} />;
 }
 
