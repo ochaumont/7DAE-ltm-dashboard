@@ -26,6 +26,7 @@ import type {
 import DependencyLegend from "./DependencyLegend";
 import InteractionEmptyState from "./InteractionEmptyState";
 import BenchPreviewModal, { type PreviewTarget } from "./BenchPreviewModal";
+import NodeContextMenu, { type NodeContextMenuTarget } from "./NodeContextMenu";
 import {
   useElkLayout,
   type ElkAlgorithm,
@@ -35,11 +36,34 @@ import {
 
 type Props = { bench: LabTestMean; allBenches: LabTestMean[] };
 
+/**
+ * A node's id is the bench's own `externalId` (the root included) — NOT
+ * prefixed by relation kind. That's what makes "one bench = one node" hold
+ * once the graph can grow transitively via the context menu: the same bench
+ * can be reached as a `depends-on` target from one node and a `supports`
+ * source from another, so kind can no longer be a property of the NODE —
+ * only of the EDGE that reaches it. Non-root cards are therefore visually
+ * neutral; only the root keeps its distinct accent styling.
+ */
 type NodeData = {
   label: string;
-  kind: DependencyRelationKind | "hub";
+  isRoot: boolean;
   resolved: LabTestMean | null;
 };
+
+/**
+ * Business rule: an "A depends-on B" relation always exists as a mirrored
+ * "B supports A" on the other bench — the backend maintains both ends of the
+ * very same fact. Drawing them as two differently-colored edges would make it
+ * look like two facts, so both collapse into one visual/edge-identity bucket
+ * here. Only the arrow direction (dependent -> dependency) carries meaning;
+ * `shared-resource` is a genuinely distinct relation and stays separate.
+ */
+export type EdgeColorKind = "depends-on" | "shared-resource";
+
+function canonicalKind(kind: DependencyRelationKind): EdgeColorKind {
+  return kind === "shared-resource" ? "shared-resource" : "depends-on";
+}
 
 type EdgeData = {
   sx: number;
@@ -47,18 +71,18 @@ type EdgeData = {
   tx: number;
   ty: number;
   bend: number;
-  kind: DependencyRelationKind;
+  kind: EdgeColorKind;
 };
 
 type ElkPathEdgeData = {
-  kind: DependencyRelationKind;
+  kind: EdgeColorKind;
   points: { x: number; y: number }[];
 };
 
 const HUB_W = 250;
 const NODE_W = 200;
-// Same height for every card (hub included) — only the width differs, so the
-// hub reads as visually larger without the grid looking inconsistent.
+// Same height for every card (root included) — only the width differs, so
+// the root reads as visually larger without the grid looking inconsistent.
 const CARD_H = 60;
 
 type RelationGroup = { kind: DependencyRelationKind; list: DependencyRelation[] };
@@ -107,9 +131,8 @@ function truncateLabel(label: string): string {
 }
 
 function NodeCard({ data }: { data: NodeData }) {
-  const isHub = data.kind === "hub";
-  const width = isHub ? HUB_W : NODE_W;
-  const colorVar = isHub ? "var(--color-accent)" : `var(--color-graph-${data.kind})`;
+  const width = data.isRoot ? HUB_W : NODE_W;
+  const colorVar = data.isRoot ? "var(--color-accent)" : "var(--color-border)";
   return (
     <div
       className="flex flex-col justify-center overflow-hidden rounded-card border bg-surface px-3 py-2 shadow-sm transition-opacity"
@@ -117,8 +140,7 @@ function NodeCard({ data }: { data: NodeData }) {
         width,
         height: CARD_H,
         borderColor: colorVar,
-        borderWidth: isHub ? 2 : 1.5,
-        background: data.kind === "shared-resource" ? "var(--surface-2)" : undefined,
+        borderWidth: data.isRoot ? 2 : 1.5,
       }}
     >
       <Handle type="source" position={Position.Left} style={{ visibility: "hidden" }} />
@@ -128,7 +150,7 @@ function NodeCard({ data }: { data: NodeData }) {
       <div
         className="truncate font-mono text-sm font-semibold"
         title={data.label}
-        style={{ color: isHub ? colorVar : undefined }}
+        style={{ color: data.isRoot ? colorVar : undefined }}
       >
         {truncateLabel(data.label)}
       </div>
@@ -136,9 +158,9 @@ function NodeCard({ data }: { data: NodeData }) {
         <div className="mt-0.5 truncate text-xs text-muted">
           {data.resolved.type} · {data.resolved.location.city}
         </div>
-      ) : data.kind !== "hub" ? (
+      ) : (
         <div className="mt-0.5 text-xs text-muted">Not in catalogue</div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -196,36 +218,44 @@ const edgeTypes = { radial: RadialEdge, elkPath: ElkRoutedEdge };
  * from the true semantic direction used for rendering (cf. `buildGraphStructure`,
  * which always uses the real direction regardless of algorithm):
  *
- * - `radial`: every edge is normalized to `hub -> neighbor`. Feeding ELK the
- *   mixed real direction (some in, some out) made the hub's role as root
+ * - `radial`: every edge is normalized to `root -> neighbor`. Feeding ELK the
+ *   mixed real direction (some in, some out) made the root's role as root
  *   ambiguous — the radial algorithm couldn't reliably tell it apart from
  *   any other node, which is what produced erratic distances/positions.
- * - `layered`: the real direction is kept (`supports` -> hub, others ->
+ * - `layered`: the real direction is kept (`supports` -> root, others ->
  *   neighbor), because that's exactly what makes the layered algorithm split
  *   the graph into meaningful columns (supporters on one side, dependencies
  *   on the other) instead of dumping every neighbor into a single column.
  */
 function elkEdgeDirection(
   kind: DependencyRelationKind,
+  rootId: string,
   nodeId: string,
   algorithm: ElkAlgorithm,
 ): [string, string] {
-  if (algorithm === "radial") return ["hub", nodeId];
-  return kind === "supports" ? [nodeId, "hub"] : ["hub", nodeId];
+  if (algorithm === "radial") return [rootId, nodeId];
+  return kind === "supports" ? [nodeId, rootId] : [rootId, nodeId];
 }
 
-/** Structure only (ids + sizes + edges) — no positions. ELK computes those. */
-function toElkGraph(groups: RelationGroup[], algorithm: ElkAlgorithm): ElkNode {
-  const children: ElkNode[] = [{ id: "hub", width: HUB_W, height: CARD_H }];
+/** Structure only (ids + sizes + edges) — no positions. ELK computes those.
+ * Only used for the INITIAL graph (root + its direct relations); nodes added
+ * later via the context menu are placed locally (see `placeNewNode`) rather
+ * than re-running ELK, so an expansion never disturbs existing positions. */
+function toElkGraph(
+  rootId: string,
+  groups: RelationGroup[],
+  algorithm: ElkAlgorithm,
+): ElkNode {
+  const children: ElkNode[] = [{ id: rootId, width: HUB_W, height: CARD_H }];
   const edges: ElkNode["edges"] = [];
 
   groups.forEach(({ kind, list }) => {
     list.forEach((rel) => {
-      const nodeId = `${kind}:${rel.externalId}`;
-      children.push({ id: nodeId, width: NODE_W, height: CARD_H });
-      const [source, target] = elkEdgeDirection(kind, nodeId, algorithm);
+      if (rel.externalId === rootId) return; // self-reference
+      children.push({ id: rel.externalId, width: NODE_W, height: CARD_H });
+      const [source, target] = elkEdgeDirection(kind, rootId, rel.externalId, algorithm);
       edges!.push({
-        id: `${source}->${target}`,
+        id: `${canonicalKind(kind)}:${source}->${target}`,
         sources: [source],
         targets: [target],
       });
@@ -235,23 +265,23 @@ function toElkGraph(groups: RelationGroup[], algorithm: ElkAlgorithm): ElkNode {
   return { id: "root", children, edges };
 }
 
-/** Everything about an edge that ELK produces ONCE at layout time and doesn't
- * depend on where the nodes currently sit — the live endpoint coordinates are
- * recomputed on every drag instead (see `buildLiveEdges`), so a dragged card
- * never leaves its edges behind. `elkPoints` (when present, "layered" only)
- * keeps ELK's original obstacle-routed interior bend points; only its first
- * and last point get replaced with the live border points. */
+/** Everything about an edge that doesn't depend on where its nodes currently
+ * sit — the live endpoint coordinates are recomputed from current positions
+ * instead (see `buildLiveEdges`), so a dragged card never leaves its edges
+ * behind. `elkPoints` (when present, "layered" only) keeps ELK's original
+ * obstacle-routed interior bend points; only its first and last point get
+ * replaced with the live border points. */
 type EdgeMeta = {
   id: string;
   source: string;
   target: string;
-  kind: DependencyRelationKind;
+  kind: EdgeColorKind;
   bend: number;
   elkPoints?: { x: number; y: number }[];
 };
 
-function widthFor(nodeId: string): number {
-  return nodeId === "hub" ? HUB_W : NODE_W;
+function widthFor(nodeId: string, rootId: string): number {
+  return nodeId === rootId ? HUB_W : NODE_W;
 }
 
 function buildGraphStructure(
@@ -262,12 +292,13 @@ function buildGraphStructure(
   algorithm: ElkAlgorithm,
   edgeSections: ElkEdgeSections,
 ): { nodes: Node[]; edgeMeta: EdgeMeta[] } {
+  const rootId = bench.externalId;
   const nodes: Node[] = [
     {
-      id: "hub",
+      id: rootId,
       type: "card",
-      position: positions.get("hub") ?? { x: 0, y: 0 },
-      data: { label: bench.name, kind: "hub", resolved: bench } satisfies NodeData,
+      position: positions.get(rootId) ?? { x: 0, y: 0 },
+      data: { label: bench.name, isRoot: true, resolved: bench } satisfies NodeData,
       selectable: false,
     },
   ];
@@ -275,22 +306,22 @@ function buildGraphStructure(
 
   groups.forEach(({ kind, list }) => {
     list.forEach((rel, i) => {
-      const nodeId = `${kind}:${rel.externalId}`;
+      if (rel.externalId === rootId) return; // self-reference
       nodes.push({
-        id: nodeId,
+        id: rel.externalId,
         type: "card",
-        position: positions.get(nodeId) ?? { x: 0, y: 0 },
-        data: { label: rel.name, kind, resolved: resolve(rel) } satisfies NodeData,
+        position: positions.get(rel.externalId) ?? { x: 0, y: 0 },
+        data: { label: rel.name, isRoot: false, resolved: resolve(rel) } satisfies NodeData,
         selectable: false,
       });
 
-      // "depends-on"/"shared-resource": the central bench needs this neighbor.
-      // "supports": the neighbor depends on the central bench. The rendered
-      // arrow always follows this real direction, regardless of `algorithm`
-      // — only how the edge is ROUTED (straight bow vs ELK's path) changes.
+      // "depends-on"/"shared-resource": the spawning bench needs this
+      // neighbor. "supports": the neighbor depends on the spawning bench.
+      // The rendered arrow always follows this real direction, regardless of
+      // `algorithm` — only how the edge is ROUTED (bow vs ELK's path) changes.
       const [source, target] =
-        kind === "supports" ? [nodeId, "hub"] : ["hub", nodeId];
-      const edgeId = `${source}->${target}`;
+        kind === "supports" ? [rel.externalId, rootId] : [rootId, rel.externalId];
+      const edgeId = `${canonicalKind(kind)}:${source}->${target}`;
 
       // ELK's own routing is only used for "layered" — its radial algorithm
       // was tried too (see `useElkLayout`) but only ever returns a straight
@@ -301,7 +332,7 @@ function buildGraphStructure(
         id: edgeId,
         source,
         target,
-        kind,
+        kind: canonicalKind(kind),
         bend: i % 2 === 0 ? 1 : -1,
         elkPoints: section && section.length >= 2 ? section : undefined,
       });
@@ -312,16 +343,18 @@ function buildGraphStructure(
 }
 
 /** Recomputes every edge's actual path from the CURRENT node positions (which
- * may have been dragged away from where ELK originally put them) — this is
- * what keeps edges attached to their cards while the user repositions them. */
+ * may have been dragged away from where they were originally placed) — this
+ * is what keeps edges attached to their cards while the user repositions
+ * them. */
 function buildLiveEdges(
   edgeMeta: EdgeMeta[],
   nodePositions: Map<string, { x: number; y: number }>,
+  rootId: string,
 ): Edge[] {
   const centerOf = (id: string) => {
     const pos = nodePositions.get(id);
     if (!pos) return null;
-    return { x: pos.x + widthFor(id) / 2, y: pos.y + CARD_H / 2 };
+    return { x: pos.x + widthFor(id, rootId) / 2, y: pos.y + CARD_H / 2 };
   };
 
   const result: Edge[] = [];
@@ -333,7 +366,7 @@ function buildLiveEdges(
     const sourceBorder = borderPoint(
       sourceCenter.x,
       sourceCenter.y,
-      widthFor(meta.source),
+      widthFor(meta.source, rootId),
       CARD_H,
       targetCenter.x,
       targetCenter.y,
@@ -341,7 +374,7 @@ function buildLiveEdges(
     const targetBorder = borderPoint(
       targetCenter.x,
       targetCenter.y,
-      widthFor(meta.target),
+      widthFor(meta.target, rootId),
       CARD_H,
       sourceCenter.x,
       sourceCenter.y,
@@ -389,11 +422,49 @@ function buildLiveEdges(
   return result;
 }
 
-const EMPTY_HIDDEN: Record<DependencyRelationKind, boolean> = {
-  "depends-on": false,
-  supports: false,
-  "shared-resource": false,
-};
+function rectsOverlap(
+  a: { x: number; y: number; w: number; h: number },
+  b: { x: number; y: number; w: number; h: number },
+): boolean {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+/** Places a node added by a context-menu expansion near the node that spawned
+ * it, WITHOUT running ELK again — that's what guarantees an expansion never
+ * moves anything already on screen (including a card the user dragged).
+ * `depends-on`/`shared-resource` fan out to the right of the spawner,
+ * `supports` to the left — the same column convention the "layered" ELK
+ * layout already uses. A small nudge-down loop avoids landing on top of an
+ * already-placed card. */
+function placeNewNode(
+  spawnerPos: { x: number; y: number },
+  index: number,
+  count: number,
+  kind: DependencyRelationKind,
+  existing: Node[],
+  rootId: string,
+): { x: number; y: number } {
+  const direction = kind === "supports" ? -1 : 1;
+  const gapX = 280;
+  const gapY = 90;
+  let x = spawnerPos.x + direction * gapX;
+  let y = spawnerPos.y + (index - (count - 1) / 2) * gapY;
+
+  let guard = 0;
+  while (
+    existing.some((n) =>
+      rectsOverlap(
+        { x, y, w: NODE_W, h: CARD_H },
+        { x: n.position.x, y: n.position.y, w: widthFor(n.id, rootId), h: CARD_H },
+      ),
+    ) &&
+    guard < 30
+  ) {
+    y += CARD_H + 20;
+    guard++;
+  }
+  return { x, y };
+}
 
 const ALGORITHM_LABELS: Record<ElkAlgorithm, string> = {
   layered: "Layered",
@@ -401,10 +472,15 @@ const ALGORITHM_LABELS: Record<ElkAlgorithm, string> = {
 };
 
 export default function DependencyGraph({ bench, allBenches }: Props) {
-  const [hidden, setHidden] = useState(EMPTY_HIDDEN);
+  const [hidden, setHidden] = useState<Record<EdgeColorKind, boolean>>({
+    "depends-on": false,
+    "shared-resource": false,
+  });
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
   const [algorithm, setAlgorithm] = useState<ElkAlgorithm>("layered");
+  const [contextMenu, setContextMenu] = useState<NodeContextMenuTarget | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rootId = bench.externalId;
 
   const byExternalId = useMemo(() => {
     const map = new Map<string, LabTestMean>();
@@ -412,16 +488,20 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
     return map;
   }, [allBenches]);
 
+  const resolveBench = useCallback(
+    (id: string) => (id === rootId ? bench : byExternalId.get(id) ?? null),
+    [bench, rootId, byExternalId],
+  );
   const resolve = (rel: DependencyRelation) => byExternalId.get(rel.externalId) ?? null;
 
   const groups = useMemo(() => relationGroups(bench), [bench]);
   const elkGraph = useMemo(
-    () => toElkGraph(groups, algorithm),
-    [groups, algorithm],
+    () => toElkGraph(rootId, groups, algorithm),
+    [rootId, groups, algorithm],
   );
   const layout = useElkLayout(elkGraph, algorithm);
 
-  const { nodes: rawNodes, edgeMeta } = useMemo(() => {
+  const { nodes: rawNodes, edgeMeta: rawEdgeMeta } = useMemo(() => {
     if (layout.status !== "ok") return { nodes: [] as Node[], edgeMeta: [] as EdgeMeta[] };
     return buildGraphStructure(
       bench,
@@ -434,46 +514,94 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bench, groups, byExternalId, layout, algorithm]);
 
-  // `nodes` is the array actually fed to React Flow, kept as real state (not
-  // re-derived from `rawNodes` on every render) so dragging can patch it via
-  // `applyNodeChanges` — that helper reuses the SAME object reference for
-  // every node that didn't change, only creating a new one for the node
-  // being dragged. Rebuilding the whole array with `.map()` on every drag
-  // frame (as an earlier version did) made every card look "new" to React
-  // Flow, forcing a re-measure of all of them each frame — that's what was
-  // flickering.
+  // `nodes`/`edgeMeta` are real state (not derived), so the context-menu
+  // expansion/hide actions can mutate them directly, and dragging can patch
+  // `nodes` via `applyNodeChanges` — that helper reuses the SAME object
+  // reference for every node that didn't change, only creating a new one for
+  // the node being touched. Rebuilding the whole array with `.map()` on every
+  // change makes every card look "new" to React Flow, forcing a re-measure
+  // of all of them each time — that's what caused earlier flicker on drag.
   const [nodes, setNodes] = useState<Node[]>([]);
+  const [edgeMeta, setEdgeMeta] = useState<EdgeMeta[]>([]);
 
-  const isHiddenFor = useCallback(
-    (n: Node) => {
-      const data = n.data as unknown as NodeData;
-      return data.kind !== "hub" && hidden[data.kind];
-    },
-    [hidden],
-  );
-
-  // New ELK layout (new bench or algorithm) → replace the whole array.
+  // New ELK layout (new bench or algorithm) → replace the whole graph. Any
+  // expansion state from a previous bench does not carry over.
   useEffect(() => {
-    setNodes(
-      rawNodes.map((n) => ({ ...n, hidden: isHiddenFor(n), style: { cursor: "pointer" } })),
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawNodes]);
-
-  // Legend toggle → patch only the nodes whose visibility actually flips,
-  // same reference-preserving idea as the drag path below.
-  useEffect(() => {
-    setNodes((current) =>
-      current.map((n) => {
-        const shouldHide = isHiddenFor(n);
-        return n.hidden === shouldHide ? n : { ...n, hidden: shouldHide };
-      }),
-    );
-  }, [isHiddenFor]);
+    setNodes(rawNodes.map((n) => ({ ...n, style: { cursor: "pointer" } })));
+    setEdgeMeta(rawEdgeMeta);
+  }, [rawNodes, rawEdgeMeta]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((current) => applyNodeChanges(changes, current));
   }, []);
+
+  const handleExpand = useCallback(
+    (nodeId: string, kind: "depends-on" | "supports") => {
+      const spawner = resolveBench(nodeId);
+      if (!spawner) return;
+      const list = kind === "depends-on" ? spawner.dependsOn : spawner.supports;
+      const relevant = list.filter((rel) => rel.externalId !== nodeId);
+      if (relevant.length === 0) return;
+
+      setNodes((current) => {
+        const existingIds = new Set(current.map((n) => n.id));
+        const spawnerNode = current.find((n) => n.id === nodeId);
+        if (!spawnerNode) return current;
+        const toAdd = relevant.filter((rel) => !existingIds.has(rel.externalId));
+        const additions = toAdd.map((rel, i) => ({
+          id: rel.externalId,
+          type: "card",
+          position: placeNewNode(
+            spawnerNode.position,
+            i,
+            toAdd.length,
+            kind,
+            [...current],
+            rootId,
+          ),
+          data: {
+            label: rel.name,
+            isRoot: false,
+            resolved: resolveBench(rel.externalId),
+          } satisfies NodeData,
+          selectable: false,
+          style: { cursor: "pointer" },
+        }));
+        return additions.length > 0 ? [...current, ...additions] : current;
+      });
+
+      setEdgeMeta((current) => {
+        const existingIds = new Set(current.map((e) => e.id));
+        const additions: EdgeMeta[] = [];
+        relevant.forEach((rel, i) => {
+          const [source, target] =
+            kind === "supports" ? [rel.externalId, nodeId] : [nodeId, rel.externalId];
+          const edgeId = `${canonicalKind(kind)}:${source}->${target}`;
+          if (existingIds.has(edgeId)) return;
+          additions.push({
+            id: edgeId,
+            source,
+            target,
+            kind: canonicalKind(kind),
+            bend: i % 2 === 0 ? 1 : -1,
+          });
+        });
+        return additions.length > 0 ? [...current, ...additions] : current;
+      });
+    },
+    [resolveBench, rootId],
+  );
+
+  const handleHide = useCallback(
+    (nodeId: string) => {
+      if (nodeId === rootId) return; // the root anchors the whole diagram
+      setNodes((current) => current.filter((n) => n.id !== nodeId));
+      setEdgeMeta((current) =>
+        current.filter((e) => e.source !== nodeId && e.target !== nodeId),
+      );
+    },
+    [rootId],
+  );
 
   const nodePositions = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
@@ -482,14 +610,14 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
   }, [nodes]);
 
   const rawEdges = useMemo(
-    () => buildLiveEdges(edgeMeta, nodePositions),
-    [edgeMeta, nodePositions],
+    () => buildLiveEdges(edgeMeta, nodePositions, rootId),
+    [edgeMeta, nodePositions, rootId],
   );
 
   const edges = useMemo(
     () =>
       rawEdges.map((e) => {
-        const data = e.data as unknown as { kind: DependencyRelationKind };
+        const data = e.data as unknown as { kind: EdgeColorKind };
         return { ...e, hidden: hidden[data.kind] };
       }),
     [rawEdges, hidden],
@@ -528,13 +656,14 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
     [rawEdges],
   );
 
-  const counts: Record<DependencyRelationKind, number> = {
-    "depends-on": bench.dependsOn.length,
-    supports: bench.supports.length,
+  // "depends-on" and "supports" are the same fact viewed from either end (cf.
+  // `canonicalKind`), so their counts merge into one legend entry.
+  const counts: Record<EdgeColorKind, number> = {
+    "depends-on": bench.dependsOn.length + bench.supports.length,
     "shared-resource": bench.sharedResources.length,
   };
 
-  const hasRelations = counts["depends-on"] + counts.supports + counts["shared-resource"] > 0;
+  const hasRelations = counts["depends-on"] + counts["shared-resource"] > 0;
 
   if (!hasRelations) {
     return <InteractionEmptyState reason="no-relations" />;
@@ -569,7 +698,20 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
         onNodeMouseLeave={clearHover}
         onNodeClick={(_, n) => {
           const data = n.data as unknown as NodeData;
-          setPreview({ label: data.label, kind: data.kind, resolved: data.resolved });
+          setPreview({ label: data.label, isRoot: data.isRoot, resolved: data.resolved });
+        }}
+        onNodeContextMenu={(event, n) => {
+          event.preventDefault();
+          const wrapRect = containerRef.current?.getBoundingClientRect();
+          const resolved = resolveBench(n.id);
+          setContextMenu({
+            nodeId: n.id,
+            x: event.clientX - (wrapRect?.left ?? 0),
+            y: event.clientY - (wrapRect?.top ?? 0),
+            canExpandDependsOn: !!resolved && resolved.dependsOn.length > 0,
+            canExpandSupports: !!resolved && resolved.supports.length > 0,
+            canHide: n.id !== rootId,
+          });
         }}
       >
         <Background />
@@ -597,6 +739,13 @@ export default function DependencyGraph({ bench, allBenches }: Props) {
         onToggle={(kind) => setHidden((h) => ({ ...h, [kind]: !h[kind] }))}
       />
       <BenchPreviewModal target={preview} onClose={() => setPreview(null)} />
+      <NodeContextMenu
+        target={contextMenu}
+        onExpandDependsOn={(id) => handleExpand(id, "depends-on")}
+        onExpandSupports={(id) => handleExpand(id, "supports")}
+        onHide={handleHide}
+        onClose={() => setContextMenu(null)}
+      />
     </div>
   );
 }

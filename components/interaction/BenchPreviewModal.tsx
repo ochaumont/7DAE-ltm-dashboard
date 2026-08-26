@@ -2,22 +2,15 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import type { DependencyRelationKind, LabTestMean } from "@/lib/types";
+import type { LabTestMean } from "@/lib/types";
 import { usePhoto } from "@/lib/usePhoto";
 import { placeholderOnError } from "@/lib/photo";
 import ChipType from "@/components/ChipType";
 
 export type PreviewTarget = {
   label: string;
-  kind: DependencyRelationKind | "hub";
+  isRoot: boolean;
   resolved: LabTestMean | null;
-};
-
-const KIND_LABELS: Record<PreviewTarget["kind"], string> = {
-  hub: "Selected bench",
-  "depends-on": "Depends on",
-  supports: "Supports",
-  "shared-resource": "Shared resource",
 };
 
 /**
@@ -76,7 +69,7 @@ export default function BenchPreviewModal({
       </div>
       <div className="space-y-2 p-5">
         <span className="text-xs font-mono uppercase tracking-wider text-muted">
-          {KIND_LABELS[target.kind]}
+          {target.isRoot ? "Selected bench" : "Bench"}
         </span>
         <h2
           id="bench-preview-title"

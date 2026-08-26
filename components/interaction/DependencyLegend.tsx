@@ -1,15 +1,18 @@
-import type { DependencyRelationKind } from "@/lib/types";
+import type { EdgeColorKind } from "./DependencyGraph";
 
-const LEGEND_ITEMS: { kind: DependencyRelationKind; label: string }[] = [
+// "depends-on" and "supports" are merged: an "A depends-on B" relation always
+// exists mirrored as "B supports A" on the other bench (same underlying
+// fact), so they share one legend entry/color — only the arrow direction on
+// the diagram tells you which end is which.
+const LEGEND_ITEMS: { kind: EdgeColorKind; label: string }[] = [
   { kind: "depends-on", label: "Depends on" },
-  { kind: "supports", label: "Supports" },
   { kind: "shared-resource", label: "Shared resource" },
 ];
 
 type Props = {
-  counts: Record<DependencyRelationKind, number>;
-  hidden: Record<DependencyRelationKind, boolean>;
-  onToggle: (kind: DependencyRelationKind) => void;
+  counts: Record<EdgeColorKind, number>;
+  hidden: Record<EdgeColorKind, boolean>;
+  onToggle: (kind: EdgeColorKind) => void;
 };
 
 export default function DependencyLegend({ counts, hidden, onToggle }: Props) {
