@@ -23,6 +23,10 @@ const ALGORITHM_OPTIONS: Record<ElkAlgorithm, Record<string, string>> = {
   radial: {
     "elk.algorithm": "radial",
     "elk.spacing.nodeNode": "40",
+    // Tried "elk.edgeRouting": "SPLINES" here too, but ELK's radial algorithm
+    // just returns a straight 2-point section regardless — it doesn't route
+    // edges the way "layered" does. `toReactFlowGraph` always draws its own
+    // bow curve for radial (cf. `RadialEdge`), which already looks right.
   },
 };
 

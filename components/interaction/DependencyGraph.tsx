@@ -296,6 +296,10 @@ function toReactFlowGraph(
           ? [nodeId, "hub", nodeBorder, hubBorder]
           : ["hub", nodeId, hubBorder, nodeBorder];
       const edgeId = `${source}->${target}`;
+
+      // ELK's own routing is only used for "layered" — its radial algorithm
+      // was tried too (see `useElkLayout`) but only ever returns a straight
+      // 2-point section, so radial keeps drawing its own bow curve below.
       const section = algorithm === "layered" ? edgeSections.get(edgeId) : undefined;
 
       edges.push(
