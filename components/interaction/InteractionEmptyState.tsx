@@ -4,7 +4,7 @@ type Props = {
 
 const MESSAGES: Record<Props["reason"], string> = {
   "no-selection": "Select a bench to view its dependencies.",
-  "no-relations": "No known dependency for this bench.",
+  "no-relations": "No known dependency for the selected benches.",
   "layout-loading": "Computing the graph layout…",
   "layout-error": "Could not compute the graph layout.",
 };

@@ -9,6 +9,15 @@ const LEGEND_ITEMS: { kind: EdgeColorKind; label: string }[] = [
   { kind: "shared-resource", label: "Shared resource" },
 ];
 
+// Purely explanatory — line style is orthogonal to the relation-kind colors
+// above (it comes from `dependencyType`, cf. `DependencyGraph.tsx`), so these
+// rows have no toggle/count, just a sample of each style.
+const LINE_STYLE_ITEMS: { label: string; dasharray?: string; color: string }[] = [
+  { label: "Mandatory", color: "var(--color-fg)" },
+  { label: "Optional", dasharray: "4 3", color: "var(--color-fg)" },
+  { label: "No data", color: "var(--color-muted)" },
+];
+
 type Props = {
   counts: Record<EdgeColorKind, number>;
   hidden: Record<EdgeColorKind, boolean>;
@@ -39,6 +48,26 @@ export default function DependencyLegend({ counts, hidden, onToggle }: Props) {
           <span className="flex-1 text-left">{item.label}</span>
           <span className="font-mono text-muted">{counts[item.kind]}</span>
         </button>
+      ))}
+      <div className="my-1 border-t border-border" />
+      <span className="px-2 pb-1 text-[0.65rem] uppercase tracking-wider text-muted">
+        Dependency
+      </span>
+      {LINE_STYLE_ITEMS.map((item) => (
+        <div key={item.label} className="flex items-center gap-2 px-2 py-1 text-xs text-fg/90">
+          <svg width="18" height="10" aria-hidden="true" className="shrink-0">
+            <line
+              x1="0"
+              y1="5"
+              x2="18"
+              y2="5"
+              stroke={item.color}
+              strokeWidth="2"
+              strokeDasharray={item.dasharray}
+            />
+          </svg>
+          <span>{item.label}</span>
+        </div>
       ))}
     </div>
   );

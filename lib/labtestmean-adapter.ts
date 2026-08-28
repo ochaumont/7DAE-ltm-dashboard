@@ -92,6 +92,12 @@ function toPhotos(
   return [...selected, ...others];
 }
 
+/** Anything other than these two exact values (absent, `null`, a typo, a
+ * future backend value) is treated as "not determined" rather than guessed. */
+function toDependencyType(raw: string | undefined): "mandatory" | "optional" | undefined {
+  return raw === "mandatory" || raw === "optional" ? raw : undefined;
+}
+
 function toRelations(
   refs: FactsheetRef[] | null | undefined,
   kind: DependencyRelationKind,
@@ -106,7 +112,19 @@ function toRelations(
         typeof r.name === "string" &&
         r.name.length > 0,
     )
-    .map((r) => ({ id: r.id, externalId: r.externalId, name: r.name, kind }));
+    .map((r) => ({
+      id: r.id,
+      externalId: r.externalId,
+      name: r.name,
+      kind,
+      dependencyType: toDependencyType(r.attributes?.dependencyType),
+    }));
+}
+
+/** APPROVED and BROKEN_QUALITY_SEAL are both "released" as far as the UI is
+ * concerned; DRAFT, and anything absent or unexpected, defaults to DRAFT. */
+function toLxTag(raw: string | null | undefined): "DRAFT" | "RELEASE" {
+  return raw === "APPROVED" || raw === "BROKEN_QUALITY_SEAL" ? "RELEASE" : "DRAFT";
 }
 
 function toType(raw: LabTestMeanDto["category"]): LabTestMeanType {
@@ -312,5 +330,6 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
     projects: (dto.financeProjects ?? []).map((p) => p.name),
     coverPhoto,
     photos,
+    lxState: toLxTag(dto.lxState),
   };
 }

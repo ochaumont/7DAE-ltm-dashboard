@@ -86,6 +86,9 @@ export type DependencyRelation = {
   externalId: string;
   name: string;
   kind: DependencyRelationKind;
+  // Absent means "not determined" — never an empty string or any value
+  // other than these two.
+  dependencyType?: "mandatory" | "optional";
 };
 
 export type AircraftStructureCategory =
@@ -130,4 +133,5 @@ export type LabTestMean = {
   projects: string[];
   coverPhoto: CoverPhoto | null;
   photos: Photo[];
+  lxState: "DRAFT" | "RELEASE";
 };

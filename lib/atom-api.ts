@@ -8,6 +8,9 @@ export type FactsheetRef = {
   id: string;
   externalId: string;
   name: string;
+  // Raw and possibly absent/unexpected — normalized to exactly
+  // "mandatory" | "optional" | undefined by the adapter, not here.
+  attributes?: { dependencyType?: string } | null;
   etags?: unknown;
   userSubscriptions?: unknown;
 };
@@ -63,6 +66,9 @@ export type LabTestMeanDto = {
   financeAircraftPrograms: FinanceRef[] | null;
   financeProjects: FinanceRef[] | null;
   documentRefs: DocumentRef[] | null;
+  // Raw and possibly absent/unexpected — normalized to exactly
+  // "DRAFT" | "RELEASE" by the adapter, not here.
+  lxState?: string | null;
 };
 
 export type AtomErrorKind = "backend-down" | "unauthorized" | "http-error";

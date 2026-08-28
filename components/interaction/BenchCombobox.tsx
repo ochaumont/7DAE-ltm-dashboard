@@ -5,17 +5,17 @@ import type { LabTestMean } from "@/lib/types";
 
 type Props = {
   options: LabTestMean[];
-  value: LabTestMean | null;
-  onChange: (m: LabTestMean | null) => void;
+  excludeIds: Set<string>;
+  onSelect: (m: LabTestMean) => void;
   placeholder?: string;
 };
 
-const MAX_RESULTS = 50;
+const MAX_RESULTS = 400;
 
 export default function BenchCombobox({
   options,
-  value,
-  onChange,
+  excludeIds,
+  onSelect,
   placeholder = "Search a bench by name or code…",
 }: Props) {
   const [query, setQuery] = useState("");
@@ -29,7 +29,11 @@ export default function BenchCombobox({
     // string typing — selecting one of those breaks every downstream feature
     // keyed on it (routing, the /interaction graph's node ids fed to ELK), so
     // they're excluded here rather than merely hidden from the search filter.
-    const selectable = options.filter((m) => !!m.externalId);
+    // Already-selected benches are also excluded — picking one again would
+    // just be a no-op duplicate.
+    const selectable = options.filter(
+      (m) => !!m.externalId && !excludeIds.has(m.externalId),
+    );
     const q = query.trim().toLowerCase();
     const matches = q
       ? selectable.filter(
@@ -39,7 +43,7 @@ export default function BenchCombobox({
         )
       : selectable;
     return matches.slice(0, MAX_RESULTS);
-  }, [options, query]);
+  }, [options, query, excludeIds]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -57,7 +61,7 @@ export default function BenchCombobox({
   }, []);
 
   function selectOption(m: LabTestMean) {
-    onChange(m);
+    onSelect(m);
     setQuery("");
     setOpen(false);
   }
@@ -84,10 +88,8 @@ export default function BenchCombobox({
     }
   }
 
-  const displayValue = open ? query : value?.name ?? query;
-
   return (
-    <div ref={rootRef} className="relative w-full max-w-sm">
+    <div ref={rootRef} className="relative w-full max-w-xl">
       <input
         type="text"
         role="combobox"
@@ -101,12 +103,20 @@ export default function BenchCombobox({
         }
         aria-label="Select a bench"
         placeholder={placeholder}
-        value={displayValue}
+        value={query}
         onFocus={() => {
           setQuery("");
           setOpen(true);
         }}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          // Picking an option keeps focus in the field (the option's
+          // `onMouseDown` calls `preventDefault()` so the click registers
+          // before any blur) but closes the list — typing right after a
+          // pick must reopen it even though no focus/blur transition
+          // happens to trigger `onFocus` again.
+          setOpen(true);
+        }}
         onKeyDown={onKeyDown}
         className="w-full px-3 py-2 rounded bg-surface border border-border text-fg placeholder:text-muted focus:outline-none focus:border-accent"
       />

@@ -27,7 +27,7 @@
   --color-danger: #f87171;
   --color-graph-depends-on: #5b8def;
   --color-graph-supports: #34d399;
-  --color-graph-shared-resource: #c084fc;
+  --color-graph-shared-resource: #fb923c;
   --color-radar-out: #f59e0b;
   --color-radar-in: #22d3ee;
 }
@@ -46,7 +46,7 @@
   --color-danger: #b91c1c;
   --color-graph-depends-on: #2563eb;
   --color-graph-supports: #047857;
-  --color-graph-shared-resource: #9333ea;
+  --color-graph-shared-resource: #c2410c;
   --color-radar-out: #b45309;
   --color-radar-in: #0e7490;
 }

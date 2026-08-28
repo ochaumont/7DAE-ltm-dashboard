@@ -7,57 +7,30 @@ import ELK, { type ElkNode } from "elkjs/lib/elk.bundled.js";
 // same instance, no need to recreate it per graph.
 const elk = new ELK();
 
-export type ElkAlgorithm = "layered" | "radial";
-
-const ALGORITHM_OPTIONS: Record<ElkAlgorithm, Record<string, string>> = {
-  layered: {
-    "elk.algorithm": "layered",
-    "elk.direction": "RIGHT",
-    "elk.spacing.nodeNode": "40",
-    "elk.layered.spacing.nodeNodeBetweenLayers": "80",
-    // Let ELK route edges around intervening nodes instead of us drawing a
-    // naive obstacle-blind curve — that's what was cutting through cards
-    // whenever a layer ended up with more than one node in it.
-    "elk.edgeRouting": "SPLINES",
-  },
-  radial: {
-    "elk.algorithm": "radial",
-    "elk.spacing.nodeNode": "40",
-    // Tried "elk.edgeRouting": "SPLINES" here too, but ELK's radial algorithm
-    // just returns a straight 2-point section regardless — it doesn't route
-    // edges the way "layered" does. `toReactFlowGraph` always draws its own
-    // bow curve for radial (cf. `RadialEdge`), which already looks right.
-  },
+// The only layout algorithm `/interaction` uses — the "layered" option (and
+// the algorithm picker that let a user choose between the two) was removed;
+// every diagram is radial now.
+const LAYOUT_OPTIONS: Record<string, string> = {
+  "elk.algorithm": "radial",
+  "elk.spacing.nodeNode": "40",
 };
 
 export type ElkPositions = Map<string, { x: number; y: number }>;
-export type ElkPoint = { x: number; y: number };
-export type ElkEdgeSections = Map<string, ElkPoint[]>;
 
 export type ElkLayoutState =
   | { status: "loading" }
-  | {
-      status: "ok";
-      algorithm: ElkAlgorithm;
-      positions: ElkPositions;
-      edgeSections: ElkEdgeSections;
-    }
+  | { status: "ok"; positions: ElkPositions }
   | { status: "error"; error: unknown };
 
 /**
- * Runs an ELK layout for `graph` and returns its resolved node positions
- * (plus, when ELK computed one, the routed point list per edge id — used by
- * the "layered" algorithm to draw obstacle-aware paths instead of our own
- * fixed-curvature bow).
+ * Runs an ELK radial layout for `graph` and returns its resolved node
+ * positions.
  *
- * elkjs has no cancellation API, so a stale result (e.g. the bench or the
- * algorithm changed before this one resolved) is detected via the `cancelled`
- * flag below and silently ignored rather than applied.
+ * elkjs has no cancellation API, so a stale result (e.g. the graph changed
+ * before this one resolved) is detected via the `cancelled` flag below and
+ * silently ignored rather than applied.
  */
-export function useElkLayout(
-  graph: ElkNode,
-  algorithm: ElkAlgorithm,
-): ElkLayoutState {
+export function useElkLayout(graph: ElkNode): ElkLayoutState {
   const [state, setState] = useState<ElkLayoutState>({ status: "loading" });
 
   useEffect(() => {
@@ -65,7 +38,7 @@ export function useElkLayout(
     setState({ status: "loading" });
 
     elk
-      .layout(graph, { layoutOptions: ALGORITHM_OPTIONS[algorithm] })
+      .layout(graph, { layoutOptions: LAYOUT_OPTIONS })
       .then((result) => {
         if (cancelled) return;
         const positions: ElkPositions = new Map();
@@ -75,18 +48,7 @@ export function useElkLayout(
           }
         });
 
-        const edgeSections: ElkEdgeSections = new Map();
-        (result.edges ?? []).forEach((edge) => {
-          const section = edge.sections?.[0];
-          if (!section || !edge.id) return;
-          edgeSections.set(edge.id, [
-            section.startPoint,
-            ...(section.bendPoints ?? []),
-            section.endPoint,
-          ]);
-        });
-
-        setState({ status: "ok", algorithm, positions, edgeSections });
+        setState({ status: "ok", positions });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -97,7 +59,7 @@ export function useElkLayout(
     return () => {
       cancelled = true;
     };
-  }, [graph, algorithm]);
+  }, [graph]);
 
   return state;
 }
