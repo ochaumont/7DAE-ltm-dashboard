@@ -7,6 +7,7 @@ import clsx from "clsx";
 import ThemeToggle from "./ThemeToggle";
 import AboutDialog from "./AboutDialog";
 import RefreshButton from "./RefreshButton";
+import PhotoCacheSettingsControl from "./PhotoCacheSettingsControl";
 import { resetCatalogueFilters } from "@/lib/catalogueFilters";
 
 export default function Header() {
@@ -83,6 +84,7 @@ export default function Header() {
           {/* RESERVED: avatar, global search, notifications (V2) */}
           <RefreshButton />
           <AboutDialog />
+          <PhotoCacheSettingsControl />
           <ThemeToggle />
         </div>
       </div>

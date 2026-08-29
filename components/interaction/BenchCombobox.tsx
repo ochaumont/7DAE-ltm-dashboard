@@ -108,6 +108,12 @@ export default function BenchCombobox({
           setQuery("");
           setOpen(true);
         }}
+        onClick={() => {
+          // `onFocus` doesn't fire again if the field is already focused, so
+          // a plain click there would otherwise leave the list closed until
+          // the user blurs and refocuses.
+          setOpen(true);
+        }}
         onChange={(e) => {
           setQuery(e.target.value);
           // Picking an option keeps focus in the field (the option's

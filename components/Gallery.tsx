@@ -8,7 +8,7 @@ import PanoramaClient from "./PanoramaClient";
 import PhotoSpinner from "./PhotoSpinner";
 
 function PhotoSlide({ photo }: { photo: Photo }) {
-  const { url: src, isLoading } = usePhoto(photo.resourceId, photo.resourceUri);
+  const { url: src, isLoading } = usePhoto(photo.resourceId, photo.resourceUri, !photo.is360);
   if (photo.is360) return <PanoramaClient src={src} />;
   return (
     <>
@@ -31,7 +31,7 @@ function Thumbnail({
   active: boolean;
   onClick: () => void;
 }) {
-  const { url: src, isLoading } = usePhoto(photo.resourceId, photo.resourceUri);
+  const { url: src, isLoading } = usePhoto(photo.resourceId, photo.resourceUri, !photo.is360);
   return (
     <button
       onClick={onClick}

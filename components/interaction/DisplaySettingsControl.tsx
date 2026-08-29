@@ -8,6 +8,7 @@ import {
   NODE_WIDTH_MAX,
   type InteractionDisplaySettings,
 } from "@/lib/interactionDisplaySettings";
+import Switch from "@/components/Switch";
 
 type BooleanSettingKey = {
   [K in keyof InteractionDisplaySettings]: InteractionDisplaySettings[K] extends boolean
@@ -94,25 +95,6 @@ export default function DisplaySettingsControl() {
         </div>
       )}
     </div>
-  );
-}
-
-function Switch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-[20px] w-9 shrink-0 items-center rounded-full transition-colors ${
-        checked ? "bg-accent" : "bg-border"
-      }`}
-    >
-      <span
-        className="inline-block h-4 w-4 transform rounded-full bg-surface shadow transition-transform"
-        style={{ transform: checked ? "translateX(17px)" : "translateX(2px)" }}
-      />
-    </button>
   );
 }
 
