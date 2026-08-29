@@ -9,6 +9,7 @@ import BenchCombobox from "@/components/interaction/BenchCombobox";
 import SelectedBenchesBar from "@/components/interaction/SelectedBenchesBar";
 import InteractionEmptyState from "@/components/interaction/InteractionEmptyState";
 import SaveLoadControls from "@/components/interaction/SaveLoadControls";
+import DisplaySettingsControl from "@/components/interaction/DisplaySettingsControl";
 import type { DependencyGraphHandle } from "@/components/interaction/DependencyGraph";
 import {
   deleteSave,
@@ -83,7 +84,7 @@ export default function InteractionClient() {
       if (ids.length > 0) params.set("ids", ids.join(","));
       else params.delete("ids");
       params.delete("id"); // drop the legacy singular param if present
-      router.replace(`/interaction?${params.toString()}`, { scroll: false });
+      router.replace(`/depgraph?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
   );
@@ -210,6 +211,7 @@ export default function InteractionClient() {
             onLoad={handleLoadSave}
             onDelete={handleDeleteSave}
           />
+          <DisplaySettingsControl />
         </div>
       </div>
       <div className="relative flex-1">

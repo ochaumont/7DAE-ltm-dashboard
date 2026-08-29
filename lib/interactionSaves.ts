@@ -18,7 +18,7 @@ export type InteractionSave = {
   savedAt: string;
 };
 
-/** Pre-single-algorithm save formats — `/interaction` used to let the user
+/** Pre-single-algorithm save formats — `/depgraph` used to let the user
  * choose an ELK algorithm (`algorithm: "layered" | "radial"`), and before
  * that supported only one root bench at all (`rootExternalId` instead of
  * `rootExternalIds`). Both are transparently upgraded on read (see

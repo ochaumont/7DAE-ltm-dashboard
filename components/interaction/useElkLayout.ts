@@ -7,7 +7,7 @@ import ELK, { type ElkNode } from "elkjs/lib/elk.bundled.js";
 // same instance, no need to recreate it per graph.
 const elk = new ELK();
 
-// The only layout algorithm `/interaction` uses — the "layered" option (and
+// The only layout algorithm `/depgraph` uses — the "layered" option (and
 // the algorithm picker that let a user choose between the two) was removed;
 // every diagram is radial now.
 const LAYOUT_OPTIONS: Record<string, string> = {

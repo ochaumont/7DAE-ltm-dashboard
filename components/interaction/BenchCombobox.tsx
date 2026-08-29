@@ -27,7 +27,7 @@ export default function BenchCombobox({
   const filtered = useMemo(() => {
     // Some backend records have a null/empty `externalId` despite the DTO's
     // string typing — selecting one of those breaks every downstream feature
-    // keyed on it (routing, the /interaction graph's node ids fed to ELK), so
+    // keyed on it (routing, the /depgraph graph's node ids fed to ELK), so
     // they're excluded here rather than merely hidden from the search filter.
     // Already-selected benches are also excluded — picking one again would
     // just be a no-op duplicate.

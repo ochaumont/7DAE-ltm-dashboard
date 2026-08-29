@@ -20,10 +20,10 @@ export default function Header() {
     pathname === "/" || pathname.startsWith("/labtestmean");
   const mapActive =
     pathname === "/map" || pathname.startsWith("/map/");
-  const interactionActive =
-    pathname === "/interaction" || pathname.startsWith("/interaction/");
-  const radarActive =
-    pathname === "/radar" || pathname.startsWith("/radar/");
+  const depGraphActive =
+    pathname === "/depgraph" || pathname.startsWith("/depgraph/");
+  const depViewActive =
+    pathname === "/depview" || pathname.startsWith("/depview/");
 
   const itemClass = (active: boolean) =>
     clsx(
@@ -64,11 +64,11 @@ export default function Header() {
           <Link href="/map" className={itemClass(mapActive)}>
             Map
           </Link>
-          <Link href="/interaction" className={itemClass(interactionActive)}>
-            Interaction
+          <Link href="/depgraph" className={itemClass(depGraphActive)}>
+            Dependency Graph
           </Link>
-          <Link href="/radar" className={itemClass(radarActive)}>
-            Radar
+          <Link href="/depview" className={itemClass(depViewActive)}>
+            Dependency View
           </Link>
         </nav>
 

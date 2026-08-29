@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ComponentType,
 } from "react";
 import {
   ReactFlow,
@@ -29,12 +30,21 @@ import type {
   DependencyRelation,
   DependencyRelationKind,
   LabTestMean,
+  LabTestMeanStatus,
 } from "@/lib/types";
 import DependencyLegend from "./DependencyLegend";
 import InteractionEmptyState from "./InteractionEmptyState";
 import BenchPreviewModal, { type PreviewTarget } from "./BenchPreviewModal";
 import NodeContextMenu, { type NodeContextMenuTarget } from "./NodeContextMenu";
 import { useElkLayout, type ElkPositions } from "./useElkLayout";
+import { useInteractionDisplaySettings } from "@/lib/interactionDisplaySettings";
+import {
+  KickoffIcon,
+  InServiceIcon,
+  MothballedIcon,
+  DismantledIcon,
+} from "@/components/icons/LifecycleStepIcon";
+import TypeIcon from "@/components/icons/TypeIcon";
 import type {
   InteractionSave,
   InteractionSaveEdge,
@@ -93,10 +103,10 @@ type EdgeData = {
   kind: EdgeColorKind;
 };
 
-const HUB_W = 250;
-const NODE_W = 200;
-// Same height for every card (root included) — only the width differs, so
-// the root reads as visually larger without the grid looking inconsistent.
+// Card width is user-configurable (see `useInteractionDisplaySettings` /
+// "Box width" in `DisplaySettingsControl`); only height is fixed. Same size
+// for every card, root included — a root is distinguished from a plain
+// neighbor only by border thickness, not by a larger footprint.
 const CARD_H = 60;
 
 type RelationGroup = { kind: DependencyRelationKind; list: DependencyRelation[] };
@@ -144,8 +154,23 @@ function truncateLabel(label: string): string {
     : label;
 }
 
+// Same icon/color per status as the lifecycle timeline on the detail page
+// (`STEPS` in `components/detail/LifecycleSection.tsx`), so the diagram reads
+// consistently with the rest of the app: kickoff=accent, in-service=success,
+// mothballed=warning, dismantled=danger.
+const STATUS_ICON: Record<
+  LabTestMeanStatus,
+  { Icon: ComponentType<{ size?: number; className?: string }>; colorVar: string }
+> = {
+  "in-project": { Icon: KickoffIcon, colorVar: "var(--color-accent)" },
+  operational: { Icon: InServiceIcon, colorVar: "var(--color-success)" },
+  mothballed: { Icon: MothballedIcon, colorVar: "var(--color-warning)" },
+  "out-of-service": { Icon: DismantledIcon, colorVar: "var(--color-danger)" },
+};
+
 function NodeCard({ data }: { data: NodeData }) {
-  const width = data.isRoot ? HUB_W : NODE_W;
+  const displaySettings = useInteractionDisplaySettings();
+  const width = displaySettings.nodeWidth;
   // The card's border color is driven by the resolved bench's TYPE, not by
   // its root/selected status — root vs. non-root is conveyed separately by
   // border thickness (below). A "SHARE" bench gets the same color as
@@ -168,7 +193,7 @@ function NodeCard({ data }: { data: NodeData }) {
         borderWidth: data.isRoot ? 2 : 1.5,
       }}
     >
-      {data.resolved && (
+      {data.resolved && displaySettings.showQualitySeal && (
         // Straddles the card's top border (translateY(-50%) off a `top-0`
         // anchor) rather than sitting inside the card, so it never overlaps
         // the bench name label underneath.
@@ -183,6 +208,21 @@ function NodeCard({ data }: { data: NodeData }) {
           {data.resolved.lxState}
         </span>
       )}
+      {data.resolved &&
+        displaySettings.showStatus &&
+        (() => {
+          const resolved = data.resolved!;
+          const { Icon, colorVar: statusColorVar } = STATUS_ICON[resolved.status];
+          return (
+            <span
+              className="absolute bottom-1 right-1"
+              style={{ color: statusColorVar }}
+              title={resolved.status}
+            >
+              <Icon size={14} />
+            </span>
+          );
+        })()}
       <Handle type="source" position={Position.Left} style={{ visibility: "hidden" }} />
       <Handle type="source" position={Position.Right} style={{ visibility: "hidden" }} />
       <Handle type="target" position={Position.Left} style={{ visibility: "hidden" }} />
@@ -197,9 +237,21 @@ function NodeCard({ data }: { data: NodeData }) {
         {truncateLabel(data.label)}
       </div>
       {data.resolved ? (
-        <div className="mt-0.5 truncate text-xs text-muted">
-          {data.resolved.type} · {data.resolved.location.city}
-        </div>
+        (() => {
+          const resolved = data.resolved!;
+          const textSegments = [
+            displaySettings.showCity ? resolved.location.city : null,
+            displaySettings.showBuilding ? resolved.location.building : null,
+            displaySettings.showRoom ? resolved.location.room : null,
+          ].filter((s): s is string => !!s && s.length > 0);
+          if (!displaySettings.showType && textSegments.length === 0) return null;
+          return (
+            <div className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted">
+              {displaySettings.showType && <TypeIcon type={resolved.type} className="shrink-0" />}
+              {textSegments.length > 0 && <span className="truncate">{textSegments.join(" · ")}</span>}
+            </div>
+          );
+        })()
       ) : (
         <div className="mt-0.5 text-xs text-muted">Not in catalogue</div>
       )}
@@ -234,14 +286,15 @@ const edgeTypes = { radial: RadialEdge };
  * re-running ELK, so neither ever disturbs existing positions.
  *
  * With multiple roots, all of them are seeded as children FIRST so a node
- * that's simultaneously a root AND another root's direct relation is sized
- * as a root (HUB_W), never downgraded to a plain neighbor. */
+ * that's simultaneously a root AND another root's direct relation is never
+ * overwritten by the second pass below. */
 function toElkGraph(
   rootIds: string[],
   groupsByRoot: Map<string, RelationGroup[]>,
+  nodeWidth: number,
 ): ElkNode {
   const childrenById = new Map<string, ElkNode>();
-  rootIds.forEach((id) => childrenById.set(id, { id, width: HUB_W, height: CARD_H }));
+  rootIds.forEach((id) => childrenById.set(id, { id, width: nodeWidth, height: CARD_H }));
 
   const edges: ElkNode["edges"] = [];
   // Every edge is fed to ELK as `root -> neighbor`, regardless of the
@@ -266,7 +319,7 @@ function toElkGraph(
       list.forEach((rel) => {
         if (rel.externalId === rootId) return; // self-reference
         if (!childrenById.has(rel.externalId)) {
-          childrenById.set(rel.externalId, { id: rel.externalId, width: NODE_W, height: CARD_H });
+          childrenById.set(rel.externalId, { id: rel.externalId, width: nodeWidth, height: CARD_H });
         }
         const pairKey = `${canonicalKind(kind)}|${[rootId, rel.externalId].sort().join("|")}`;
         if (seenPairs.has(pairKey)) return;
@@ -299,9 +352,6 @@ type EdgeMeta = {
   dependencyType?: "mandatory" | "optional";
 };
 
-function widthFor(nodeId: string, rootIds: Set<string>): number {
-  return rootIds.has(nodeId) ? HUB_W : NODE_W;
-}
 
 function buildGraphStructure(
   roots: LabTestMean[],
@@ -375,12 +425,12 @@ function buildGraphStructure(
 function buildLiveEdges(
   edgeMeta: EdgeMeta[],
   nodePositions: Map<string, { x: number; y: number }>,
-  rootIds: Set<string>,
+  nodeWidth: number,
 ): Edge[] {
   const centerOf = (id: string) => {
     const pos = nodePositions.get(id);
     if (!pos) return null;
-    return { x: pos.x + widthFor(id, rootIds) / 2, y: pos.y + CARD_H / 2 };
+    return { x: pos.x + nodeWidth / 2, y: pos.y + CARD_H / 2 };
   };
 
   const result: Edge[] = [];
@@ -392,7 +442,7 @@ function buildLiveEdges(
     const sourceBorder = borderPoint(
       sourceCenter.x,
       sourceCenter.y,
-      widthFor(meta.source, rootIds),
+      nodeWidth,
       CARD_H,
       targetCenter.x,
       targetCenter.y,
@@ -400,7 +450,7 @@ function buildLiveEdges(
     const targetBorder = borderPoint(
       targetCenter.x,
       targetCenter.y,
-      widthFor(meta.target, rootIds),
+      nodeWidth,
       CARD_H,
       sourceCenter.x,
       sourceCenter.y,
@@ -469,7 +519,7 @@ function placeNewNode(
   count: number,
   kind: DependencyRelationKind,
   existing: Node[],
-  rootIds: Set<string>,
+  nodeWidth: number,
 ): { x: number; y: number } {
   const direction = kind === "supports" ? -1 : 1;
   const gapX = 280;
@@ -481,8 +531,8 @@ function placeNewNode(
   while (
     existing.some((n) =>
       rectsOverlap(
-        { x, y, w: NODE_W, h: CARD_H },
-        { x: n.position.x, y: n.position.y, w: widthFor(n.id, rootIds), h: CARD_H },
+        { x, y, w: nodeWidth, h: CARD_H },
+        { x: n.position.x, y: n.position.y, w: nodeWidth, h: CARD_H },
       ),
     ) &&
     guard < 30
@@ -505,6 +555,7 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
   const [previewNodeId, setPreviewNodeId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<NodeContextMenuTarget | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const displaySettings = useInteractionDisplaySettings();
 
   const rootIds = useMemo(() => new Set(benches.map((b) => b.externalId)), [benches]);
   const rootsById = useMemo(
@@ -532,7 +583,13 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
   // `benches` — computed once, from whichever selection existed at mount,
   // via this lazy initializer, and never again. Adding/removing a bench must
   // never re-run ELK: that would discard every manually-dragged position.
-  const [elkGraph] = useState(() => toElkGraph([...rootIds], groupsByRoot));
+  // Same reasoning for the box width read here: a later change to the
+  // "Box width" setting resizes/reanchors everything reactively (see
+  // `NodeCard`/`buildLiveEdges`/`placeNewNode` below) but never reruns ELK,
+  // so its spacing stays based on whatever width was current at mount.
+  const [elkGraph] = useState(() =>
+    toElkGraph([...rootIds], groupsByRoot, displaySettings.nodeWidth),
+  );
   const layout = useElkLayout(elkGraph);
 
   const { nodes: rawNodes, edgeMeta: rawEdgeMeta } = useMemo(() => {
@@ -698,7 +755,7 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
             toAdd.length,
             kind,
             [...current],
-            rootIds,
+            displaySettings.nodeWidth,
           ),
           data: {
             label: rel.name,
@@ -731,7 +788,7 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
         return additions.length > 0 ? [...current, ...additions] : current;
       });
     },
-    [resolveBench, rootIds],
+    [resolveBench, displaySettings.nodeWidth],
   );
 
   const handleHide = useCallback(
@@ -788,7 +845,7 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
             toAdd.length,
             "depends-on",
             [...current],
-            rootIds,
+            displaySettings.nodeWidth,
           ),
           data: {
             label: u.name,
@@ -823,7 +880,7 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
         return additions.length > 0 ? [...current, ...additions] : current;
       });
     },
-    [usersOf, resolveBench, rootIds],
+    [usersOf, resolveBench, displaySettings.nodeWidth],
   );
 
   // Adds a brand-new selected bench without touching anything already on
@@ -887,7 +944,7 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
                 relevant.length,
                 kind,
                 [...current, rootNode, ...additions],
-                rootIds,
+                displaySettings.nodeWidth,
               ),
               data: {
                 label: rel.name,
@@ -927,7 +984,7 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
         return [...current, ...additions];
       });
     },
-    [resolveBench, rootIds],
+    [resolveBench, displaySettings.nodeWidth],
   );
 
   // Removes a selected bench AND every node that was only reachable through
@@ -1001,8 +1058,8 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
   }, [nodes]);
 
   const rawEdges = useMemo(
-    () => buildLiveEdges(edgeMeta, nodePositions, rootIds),
-    [edgeMeta, nodePositions, rootIds],
+    () => buildLiveEdges(edgeMeta, nodePositions, displaySettings.nodeWidth),
+    [edgeMeta, nodePositions, displaySettings.nodeWidth],
   );
 
   const edges = useMemo(

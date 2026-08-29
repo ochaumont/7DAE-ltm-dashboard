@@ -93,6 +93,8 @@ export default function BenchPreviewModal({
           <Link
             href={`/labtestmean?id=${encodeURIComponent(target.resolved.externalId)}`}
             prefetch={false}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-block pt-1 text-sm text-accent hover:underline"
           >
             Open full record →
