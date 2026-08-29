@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LabTestMean } from "@/lib/types";
-import { buildRadarGraph, type RadarNode } from "./buildRadarGraph";
+import { buildRadarGraph, type RadarNode, type RadarEdge } from "./buildRadarGraph";
+import BenchPreviewModal, {
+  type PreviewTarget,
+} from "@/components/interaction/BenchPreviewModal";
 
 type Props = { benches: LabTestMean[]; radius: number };
 
@@ -35,6 +38,25 @@ function radarEdgePath(
   const cx = mx + (center.x - mx) * pull;
   const cy = my + (center.y - my) * pull;
   return `M ${s.x} ${s.y} Q ${cx} ${cy} ${t.x} ${t.y}`;
+}
+
+/** Hover colors for an edge, from the hovered bench's own point of view:
+ * `out` when the hovered bench is this edge's source (it depends on the
+ * other end), `in` when it's the target (it supports the other end).
+ * "shared-resource" has no direction, so both sides share one color. */
+function edgeHoverColors(kind: RadarEdge["kind"]): { out: string; in: string } {
+  if (kind === "shared-resource") {
+    const color = "var(--color-graph-shared-resource)";
+    return { out: color, in: color };
+  }
+  return { out: "var(--color-graph-depends-on)", in: "var(--color-graph-supports)" };
+}
+
+// A "shared-resource" relation is optional by nature — same rule as
+// `/depgraph` (DependencyGraph.tsx) — so an absent dependencyType there
+// still means "optional", not "no data".
+function isOptional(edge: RadarEdge): boolean {
+  return (edge.dependencyType ?? (edge.kind === "shared-resource" ? "optional" : undefined)) === "optional";
 }
 
 export default function CircularGraph({ benches, radius }: Props) {
@@ -74,6 +96,28 @@ export default function CircularGraph({ benches, radius }: Props) {
     nodes.forEach((n) => map.set(n.id, n));
     return map;
   }, [nodes]);
+
+  const benchById = useMemo(() => {
+    const map = new Map<string, LabTestMean>();
+    benches.forEach((b) => map.set(b.externalId, b));
+    return map;
+  }, [benches]);
+
+  const [preview, setPreview] = useState<PreviewTarget | null>(null);
+  const [previewNodeId, setPreviewNodeId] = useState<string | null>(null);
+
+  const handleNodeDoubleClick = useCallback(
+    (n: RadarNode) => () => {
+      if (previewNodeId === n.id) {
+        setPreview(null);
+        setPreviewNodeId(null);
+        return;
+      }
+      setPreview({ label: n.label, isRoot: false, resolved: benchById.get(n.id) ?? null });
+      setPreviewNodeId(n.id);
+    },
+    [previewNodeId, benchById],
+  );
 
   const clearHover = useCallback(() => {
     containerRef.current
@@ -135,11 +179,19 @@ export default function CircularGraph({ benches, radius }: Props) {
             const s = nodeById.get(edge.source);
             const t = nodeById.get(edge.target);
             if (!s || !t) return null;
+            const colors = edgeHoverColors(edge.kind);
             return (
               <path
                 key={edge.id}
                 d={radarEdgePath(s, t, center)}
                 className="radar-edge"
+                style={
+                  {
+                    "--edge-color-out": colors.out,
+                    "--edge-color-in": colors.in,
+                  } as React.CSSProperties
+                }
+                strokeDasharray={isOptional(edge) ? "6 4" : undefined}
                 data-id={edge.id}
                 data-source={edge.source}
                 data-target={edge.target}
@@ -162,7 +214,8 @@ export default function CircularGraph({ benches, radius }: Props) {
                 key={n.id}
                 onMouseEnter={handleNodeMouseEnter(n.id, n.label)}
                 onMouseLeave={clearHover}
-                style={{ cursor: "default" }}
+                onDoubleClick={handleNodeDoubleClick(n)}
+                style={{ cursor: "pointer" }}
               >
                 <circle
                   cx={n.x}
@@ -192,6 +245,13 @@ export default function CircularGraph({ benches, radius }: Props) {
         ref={tooltipRef}
         className="pointer-events-none absolute rounded border border-border bg-surface px-2 py-1 text-xs font-mono text-fg shadow-lg"
         style={{ display: "none" }}
+      />
+      <BenchPreviewModal
+        target={preview}
+        onClose={() => {
+          setPreview(null);
+          setPreviewNodeId(null);
+        }}
       />
     </div>
   );

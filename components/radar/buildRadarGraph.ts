@@ -13,6 +13,7 @@ export type RadarEdge = {
   source: string;
   target: string;
   kind: DependencyRelationKind;
+  dependencyType?: "mandatory" | "optional";
 };
 
 export function buildRadarGraph(
@@ -59,6 +60,7 @@ export function buildRadarGraph(
           source,
           target,
           kind,
+          dependencyType: rel.dependencyType,
         });
       });
     });

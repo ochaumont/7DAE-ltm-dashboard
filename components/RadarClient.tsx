@@ -9,11 +9,12 @@ import CircularGraph, {
   RADAR_MIN_RADIUS,
 } from "@/components/radar/CircularGraph";
 import TooDenseMessage from "@/components/radar/TooDenseMessage";
+import RadarSettingsControl from "@/components/radar/RadarSettingsControl";
+import RadarLegend from "@/components/radar/RadarLegend";
 import { filterLabTestMeans } from "@/lib/labtestmeans";
 import { expandSelection } from "@/lib/aircraftStructure";
 import { useLabTestMeans } from "@/lib/useLabTestMeans";
-
-const RADAR_DENSITY_LIMIT = 100;
+import { useRadarDisplaySettings } from "@/lib/radarDisplaySettings";
 
 function RadarSkeleton() {
   return (
@@ -94,6 +95,7 @@ function RadarLoaded({
     portfolios: [],
   });
   const [radius, setRadius] = useState(RADAR_DEFAULT_RADIUS);
+  const { densityLimit } = useRadarDisplaySettings();
 
   const visible = useMemo(() => {
     const { names, includeUnassigned } = expandSelection(
@@ -131,6 +133,7 @@ function RadarLoaded({
             onChange={(e) => setRadius(Number(e.target.value))}
             className="w-40 accent-accent"
           />
+          <RadarSettingsControl />
         </div>
       </div>
 
@@ -142,11 +145,14 @@ function RadarLoaded({
             </div>
           </div>
         )}
-        {visible.length > 0 && visible.length <= RADAR_DENSITY_LIMIT && (
-          <CircularGraph benches={visible} radius={radius} />
+        {visible.length > 0 && visible.length <= densityLimit && (
+          <>
+            <CircularGraph benches={visible} radius={radius} />
+            <RadarLegend />
+          </>
         )}
-        {visible.length > RADAR_DENSITY_LIMIT && (
-          <TooDenseMessage count={visible.length} limit={RADAR_DENSITY_LIMIT} />
+        {visible.length > densityLimit && (
+          <TooDenseMessage count={visible.length} limit={densityLimit} />
         )}
 
         <div className="absolute top-4 left-4 w-[340px] max-h-[calc(100%-2rem)] glass-panel p-5 overflow-y-auto z-10 hidden lg:block">

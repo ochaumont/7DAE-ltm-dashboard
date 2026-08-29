@@ -86,6 +86,9 @@
 }
 .radar-edge {
   fill: none;
+  /* Gray at rest — "depends-on" vs "supports" only means something relative
+     to whichever bench is hovered (see --edge-color-out/-in below), so no
+     permanent per-kind color here. */
   stroke: var(--color-muted);
   stroke-width: 1;
   opacity: 0.6;
@@ -98,12 +101,15 @@
   opacity: 0.08;
 }
 .radar-edge.rd-emph-out {
-  stroke: var(--color-radar-out);
+  /* Set per-edge in CircularGraph.tsx from the relation kind — the hovered
+     bench is this edge's source, i.e. it depends on the other end. */
+  stroke: var(--edge-color-out);
   stroke-width: 2;
   opacity: 1;
 }
 .radar-edge.rd-emph-in {
-  stroke: var(--color-radar-in);
+  /* The hovered bench is this edge's target, i.e. it supports the other end. */
+  stroke: var(--edge-color-in);
   stroke-width: 2;
   opacity: 1;
 }
