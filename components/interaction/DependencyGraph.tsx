@@ -45,6 +45,7 @@ import {
   DismantledIcon,
 } from "@/components/icons/LifecycleStepIcon";
 import TypeIcon from "@/components/icons/TypeIcon";
+import { TYPE_LABELS } from "@/lib/labels";
 import type {
   InteractionSave,
   InteractionSaveEdge,
@@ -247,7 +248,11 @@ function NodeCard({ data }: { data: NodeData }) {
           if (!displaySettings.showType && textSegments.length === 0) return null;
           return (
             <div className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted">
-              {displaySettings.showType && <TypeIcon type={resolved.type} className="shrink-0" />}
+              {displaySettings.showType && (
+                <span title={TYPE_LABELS[resolved.type]} className="shrink-0">
+                  <TypeIcon type={resolved.type} className="shrink-0" />
+                </span>
+              )}
               {textSegments.length > 0 && <span className="truncate">{textSegments.join(" · ")}</span>}
             </div>
           );
