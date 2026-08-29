@@ -25,7 +25,7 @@ const PAGE_SIZE = 6;
 function CatalogueSkeleton() {
   return (
     <main className="px-4 md:px-6 py-8 max-w-[1600px] mx-auto">
-      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+      <div className="grid lg:grid-cols-[296px_1fr] gap-6">
         <aside className="hidden lg:block">
           <div className="h-[400px] rounded-card bg-surface-2 skeleton-pulse" />
         </aside>
@@ -209,9 +209,12 @@ function CatalogueLoaded({
 
   return (
     <main className="px-4 md:px-6 py-8 max-w-[1600px] mx-auto">
-      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+      <div className="grid lg:grid-cols-[296px_1fr] gap-6">
         <aside className="hidden lg:block">
-          <div className="sticky top-[80px]">
+          <div className="sticky top-[80px] max-h-[calc(100vh-100px)] overflow-y-auto">
+            <div className="mb-3 text-xs text-muted font-mono">
+              {visible.length} / {labTestMeans.length} lab test means
+            </div>
             <FilterBar
               types={types}
               statuses={statuses}
@@ -224,9 +227,6 @@ function CatalogueLoaded({
               value={filters}
               onChange={handleFiltersChange}
             />
-            <div className="mt-4 text-xs text-muted font-mono">
-              {visible.length} / {labTestMeans.length} lab test means
-            </div>
             <button
               type="button"
               onClick={handleExportPdf}

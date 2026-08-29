@@ -25,6 +25,7 @@ export default function BenchVisibilityList({
   onDeselectAll,
 }: Props) {
   const hiddenCount = benches.filter((b) => hiddenIds.has(b.externalId)).length;
+  const displayedCount = benches.length - hiddenCount;
   const [search, setSearch] = useState("");
   const q = search.trim().toLowerCase();
   // Search only narrows which rows are shown — Select all/Deselect all always
@@ -33,7 +34,10 @@ export default function BenchVisibilityList({
 
   return (
     <div className="mt-4 border-t border-border pt-4">
-      <CollapsibleSection title={`Displayed LTM (${benches.length})`}>
+      <CollapsibleSection
+        title={`Displayed LTM (${displayedCount}/${benches.length})`}
+        defaultOpen={false}
+      >
         <input
           type="text"
           value={search}

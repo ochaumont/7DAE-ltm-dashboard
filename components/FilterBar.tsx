@@ -100,7 +100,7 @@ function Toggle<T extends string>({
               onChange(active ? value.filter((v) => v !== o) : [...value, o])
             }
             className={clsx(
-              "px-2.5 py-1 rounded text-xs font-medium border transition-colors truncate",
+              "px-2 py-0.5 rounded text-[11px] font-medium border transition-colors truncate",
               active
                 ? "bg-accent text-accent-fg border-accent"
                 : "bg-surface text-fg border-border hover:border-accent/50",
@@ -137,20 +137,20 @@ function TriToggle<T extends string>({
   const current = states[index];
   return (
     <div>
-      <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
         {label}
       </div>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         <div
           role="radiogroup"
           aria-label={ariaLabel}
-          className="relative inline-flex h-[26px] w-16 shrink-0 rounded-full bg-[#00205B] p-[3px] shadow-inner"
+          className="relative inline-flex h-[22px] w-14 shrink-0 rounded-full bg-[#00205B] p-[3px] shadow-inner"
         >
           <span
             aria-hidden
-            className="pointer-events-none absolute top-[3px] left-[3px] z-20 h-5 w-5 rounded-full shadow transition-transform duration-200 ease-out"
+            className="pointer-events-none absolute top-[3px] left-[3px] z-20 h-4 w-4 rounded-full shadow transition-transform duration-200 ease-out"
             style={{
-              transform: `translateX(${index * 19}px)`,
+              transform: `translateX(${index * 17}px)`,
               backgroundColor: "var(--color-bg)",
             }}
           />
@@ -167,7 +167,7 @@ function TriToggle<T extends string>({
             />
           ))}
         </div>
-        <span className="text-xs font-medium text-fg">{current.label}</span>
+        <span className="text-[11px] font-medium text-fg">{current.label}</span>
       </div>
     </div>
   );
@@ -208,7 +208,7 @@ export default function FilterBar({
     [statuses],
   );
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <input
         type="search"
         placeholder="Search lab test means, references, managers…"
@@ -217,7 +217,7 @@ export default function FilterBar({
           setSearch(e.target.value);
           onChange({ ...value, search: e.target.value });
         }}
-        className="w-full px-3 py-2 rounded bg-surface border border-border text-fg placeholder:text-muted focus:outline-none focus:border-accent"
+        className="w-full px-3 py-1.5 rounded bg-surface border border-border text-sm text-fg placeholder:text-muted focus:outline-none focus:border-accent"
       />
       <div className="grid grid-cols-2 gap-3">
         <TriToggle
@@ -236,7 +236,7 @@ export default function FilterBar({
         />
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Type</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Type</div>
         <div className="space-y-1">
           {typeRows.map((row, i) => (
             <Toggle
@@ -252,7 +252,7 @@ export default function FilterBar({
         </div>
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Status</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Status</div>
         <Toggle
           options={sortedStatuses}
           value={value.statuses}
@@ -262,7 +262,7 @@ export default function FilterBar({
         />
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Country</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Country</div>
         <Toggle
           options={sortedCountries}
           value={value.countries}
@@ -271,7 +271,7 @@ export default function FilterBar({
         />
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Portfolio</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Portfolio</div>
         <Toggle
           options={portfolios}
           value={value.portfolios}
@@ -281,7 +281,7 @@ export default function FilterBar({
         />
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Complexity</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Complexity</div>
         <Toggle
           options={sortedComplexities}
           value={value.complexities}
@@ -292,7 +292,7 @@ export default function FilterBar({
       </div>
       {(tree.length > 0 || hasUnassignedPrograms) && (
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Aircraft programs</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Aircraft programs</div>
           <TreeFilter
             tree={tree}
             hasUnassigned={hasUnassignedPrograms}

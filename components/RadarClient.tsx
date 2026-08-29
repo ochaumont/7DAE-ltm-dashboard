@@ -138,7 +138,7 @@ function RadarLoaded({
     <div className="flex h-[calc(100vh-57px)] flex-col">
       <div className="flex items-center gap-4 border-b border-border px-4 py-3">
         <span className="text-xs text-muted">
-          {shown.length} of {labTestMeans.length} lab test means shown
+          {shown.length} / {labTestMeans.length} lab test means
         </span>
         <div className="ml-auto flex items-center gap-2">
           <label htmlFor="radar-size" className="text-xs text-muted">
@@ -177,7 +177,7 @@ function RadarLoaded({
         )}
 
         <div className="absolute top-4 left-4 w-[340px] max-h-[calc(100%-2rem)] glass-panel p-5 overflow-y-auto z-10 hidden lg:block">
-          <CollapsibleSection title="Filters">
+          <CollapsibleSection title="Filters" defaultOpen={false}>
             <FilterBar
               types={types}
               statuses={statuses}
