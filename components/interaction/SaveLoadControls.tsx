@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { InteractionSave } from "@/lib/interactionSaves";
+import { parseImportedSave } from "@/lib/interactionSaves";
 
 type Props = {
   activeSaveName: string | null;
@@ -12,6 +14,10 @@ type Props = {
   onSave: () => void;
   onLoad: (name: string) => void;
   onDelete: (name: string) => void;
+  onExportActive: () => void;
+  onExportSave: (name: string) => void;
+  onImport: (name: string, data: InteractionSave) => void;
+  onImportError: (message: string) => void;
 };
 
 export default function SaveLoadControls({
@@ -24,11 +30,19 @@ export default function SaveLoadControls({
   onSave,
   onLoad,
   onDelete,
+  onExportActive,
+  onExportSave,
+  onImport,
+  onImportError,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [popup, setPopup] = useState<"saveAs" | "load" | null>(null);
+  const [popup, setPopup] = useState<"saveAs" | "load" | "import" | null>(null);
   const [name, setName] = useState("");
+  const [importDraft, setImportDraft] = useState<{ data: InteractionSave; name: string } | null>(
+    null,
+  );
   const rootRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -51,6 +65,31 @@ export default function SaveLoadControls({
     if (!trimmed) return; // empty/whitespace names are refused
     onSaveAs(trimmed);
     setName("");
+    setPopup(null);
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+    try {
+      const raw = await file.text();
+      const data = parseImportedSave(raw);
+      const suggested = file.name.replace(/\.json$/i, "").trim() || "Imported diagram";
+      setImportDraft({ data, name: suggested });
+      setPopup("import");
+    } catch (err) {
+      onImportError(err instanceof Error ? err.message : "This file could not be imported.");
+    }
+  }
+
+  const importTrimmedName = importDraft?.name.trim() ?? "";
+  const importNameConflict = !!importDraft && saves.includes(importTrimmedName);
+
+  function submitImport() {
+    if (!importDraft || !importTrimmedName || importNameConflict) return;
+    onImport(importTrimmedName, importDraft.data);
+    setImportDraft(null);
     setPopup(null);
   }
 
@@ -88,6 +127,14 @@ export default function SaveLoadControls({
       >
         ...
       </button>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        onChange={handleFileSelected}
+        className="hidden"
+      />
 
       {menuOpen && (
         <div
@@ -129,6 +176,29 @@ export default function SaveLoadControls({
             className={menuItemClass(true)}
           >
             Load
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={saveDisabled}
+            onClick={() => {
+              onExportActive();
+              setMenuOpen(false);
+            }}
+            className={menuItemClass(!saveDisabled)}
+          >
+            Export
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              fileInputRef.current?.click();
+              setMenuOpen(false);
+            }}
+            className={menuItemClass(true)}
+          >
+            Import
           </button>
         </div>
       )}
@@ -219,6 +289,14 @@ export default function SaveLoadControls({
                     </button>
                     <button
                       type="button"
+                      onClick={() => onExportSave(n)}
+                      aria-label={`Export ${n}`}
+                      className="text-muted hover:text-accent"
+                    >
+                      <DownloadIcon />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => onDelete(n)}
                       aria-label={`Delete ${n}`}
                       className="text-muted hover:text-danger"
@@ -229,6 +307,71 @@ export default function SaveLoadControls({
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {popup === "import" && importDraft && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => {
+            setImportDraft(null);
+            setPopup(null);
+          }}
+          role="presentation"
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-title"
+            className="w-full max-w-sm rounded-lg border border-border bg-surface p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="import-title" className="mb-3 text-base font-semibold">
+              Import diagram
+            </h2>
+            <input
+              autoFocus
+              type="text"
+              value={importDraft.name}
+              onChange={(e) =>
+                setImportDraft((d) => (d ? { ...d, name: e.target.value } : d))
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitImport();
+                if (e.key === "Escape") {
+                  setImportDraft(null);
+                  setPopup(null);
+                }
+              }}
+              placeholder="Save name…"
+              className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-fg focus:outline-none focus:border-accent"
+            />
+            {importNameConflict && (
+              <p className="mt-1.5 text-xs text-danger">
+                A save named &ldquo;{importTrimmedName}&rdquo; already exists — choose another name.
+              </p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setImportDraft(null);
+                  setPopup(null);
+                }}
+                className="rounded px-3 py-1.5 text-sm text-muted hover:bg-surface-2"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitImport}
+                disabled={!importTrimmedName || importNameConflict}
+                className="rounded bg-accent px-3 py-1.5 text-sm font-semibold text-accent-fg disabled:opacity-40"
+              >
+                Import
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -258,6 +401,26 @@ function SaveIcon() {
       <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
       <path d="M17 21v-8H7v8" />
       <path d="M7 3v5h8" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
     </svg>
   );
 }

@@ -124,3 +124,120 @@ export function deleteSave(name: string): void {
   safeRemoveItem(entryKey(name));
   writeIndex(readIndex().filter((n) => n !== name));
 }
+
+function sanitizeFilename(name: string): string {
+  return name.replace(/[\\/:*?"<>|]/g, "_").trim() || "diagram";
+}
+
+/** Downloads `data` as a `.json` file named after `name` — lets a user share
+ * a diagram with a colleague (email, Teams, USB key, etc.) since saves
+ * otherwise never leave this browser's `localStorage`. */
+export function downloadInteractionSave(name: string, data: InteractionSave): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${sanitizeFilename(name)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+type UnknownRecord = Record<string, unknown>;
+
+function isNodeArray(value: unknown): value is InteractionSaveNode[] {
+  return (
+    Array.isArray(value) &&
+    value.every((n) => {
+      if (!n || typeof n !== "object") return false;
+      const rec = n as UnknownRecord;
+      return (
+        typeof rec.id === "string" &&
+        typeof rec.x === "number" &&
+        typeof rec.y === "number"
+      );
+    })
+  );
+}
+
+function isEdgeArray(value: unknown): value is InteractionSaveEdge[] {
+  return (
+    Array.isArray(value) &&
+    value.every((e) => {
+      if (!e || typeof e !== "object") return false;
+      const rec = e as UnknownRecord;
+      if (typeof rec.source !== "string" || typeof rec.target !== "string") return false;
+      if (rec.kind !== "depends-on" && rec.kind !== "shared-resource") return false;
+      if (
+        rec.dependencyType !== undefined &&
+        rec.dependencyType !== "mandatory" &&
+        rec.dependencyType !== "optional"
+      ) {
+        return false;
+      }
+      return true;
+    })
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((v) => typeof v === "string");
+}
+
+/**
+ * Validates untrusted JSON from an imported file into a v3 `InteractionSave`,
+ * upgrading the same historical v1/v2 shapes `loadSave` already reads from
+ * localStorage. Unlike `loadSave` (which trusts its own past writes and only
+ * branches on `.version`), this performs real structural/type checks so a
+ * malformed or unrelated JSON file is rejected with a clear message instead
+ * of silently becoming a broken save.
+ */
+export function parseImportedSave(raw: string): InteractionSave {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("This file is not valid JSON.");
+  }
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("This file does not contain a diagram save.");
+  }
+  const rec = parsed as UnknownRecord;
+
+  if (typeof rec.savedAt !== "string") {
+    throw new Error("This file does not contain a diagram save.");
+  }
+  if (!isNodeArray(rec.nodes)) {
+    throw new Error("This file's diagram data is malformed (nodes).");
+  }
+  if (!isEdgeArray(rec.edges)) {
+    throw new Error("This file's diagram data is malformed (edges).");
+  }
+
+  if (rec.version === 1) {
+    if (typeof rec.rootExternalId !== "string") {
+      throw new Error("This file's diagram data is malformed (root bench).");
+    }
+    return {
+      version: 3,
+      rootExternalIds: [rec.rootExternalId],
+      nodes: rec.nodes,
+      edges: rec.edges,
+      savedAt: rec.savedAt,
+    };
+  }
+  if (rec.version === 2 || rec.version === 3) {
+    if (!isStringArray(rec.rootExternalIds)) {
+      throw new Error("This file's diagram data is malformed (root benches).");
+    }
+    return {
+      version: 3,
+      rootExternalIds: rec.rootExternalIds,
+      nodes: rec.nodes,
+      edges: rec.edges,
+      savedAt: rec.savedAt,
+    };
+  }
+  throw new Error("This file was exported by an unsupported version of this app.");
+}

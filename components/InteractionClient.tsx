@@ -13,6 +13,7 @@ import DisplaySettingsControl from "@/components/interaction/DisplaySettingsCont
 import type { DependencyGraphHandle } from "@/components/interaction/DependencyGraph";
 import {
   deleteSave,
+  downloadInteractionSave,
   listSaves,
   loadSave,
   writeSave,
@@ -185,6 +186,41 @@ export default function InteractionClient() {
     [activeSaveName],
   );
 
+  const handleExportActive = useCallback(() => {
+    if (!activeSaveName) return;
+    const snapshot = graphRef.current?.getSnapshot();
+    if (!snapshot) return;
+    downloadInteractionSave(activeSaveName, {
+      version: 3,
+      rootExternalIds: selectedBenches.map((b) => b.externalId),
+      ...snapshot,
+      savedAt: new Date().toISOString(),
+    });
+  }, [activeSaveName, selectedBenches]);
+
+  const handleExportSave = useCallback((name: string) => {
+    const save = loadSave(name);
+    if (!save) {
+      setSaveError("This save could not be read.");
+      return;
+    }
+    downloadInteractionSave(name, save);
+  }, []);
+
+  const handleImport = useCallback((name: string, data: InteractionSave) => {
+    const ok = writeSave(name, data);
+    if (!ok) {
+      setSaveError("Could not save (storage unavailable or full).");
+      return;
+    }
+    setSaveError(null);
+    setSaveVersion((v) => v + 1);
+  }, []);
+
+  const handleImportError = useCallback((message: string) => {
+    setSaveError(message);
+  }, []);
+
   if (error) throw error;
   if (loading) return <InteractionSkeleton />;
 
@@ -210,6 +246,10 @@ export default function InteractionClient() {
             onSave={handleSave}
             onLoad={handleLoadSave}
             onDelete={handleDeleteSave}
+            onExportActive={handleExportActive}
+            onExportSave={handleExportSave}
+            onImport={handleImport}
+            onImportError={handleImportError}
           />
           <DisplaySettingsControl />
         </div>
