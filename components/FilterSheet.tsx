@@ -21,6 +21,10 @@ type Props = {
   value: FilterValue;
   onChange: (v: FilterValue) => void;
   count: number;
+  /** Extra content rendered right after `FilterBar` in the sheet body — e.g.
+   * Dependency View's per-bench visibility list. Optional so Catalogue/Map
+   * are unaffected. */
+  extraContent?: React.ReactNode;
 };
 
 export default function FilterSheet({
@@ -35,6 +39,7 @@ export default function FilterSheet({
   value,
   onChange,
   count,
+  extraContent,
 }: Props) {
   const [open, setOpen] = useState(false);
   const activeCount =
@@ -101,6 +106,7 @@ export default function FilterSheet({
                 value={value}
                 onChange={onChange}
               />
+              {extraContent}
               <button
                 type="button"
                 onClick={() => setOpen(false)}

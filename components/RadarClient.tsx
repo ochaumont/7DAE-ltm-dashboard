@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import FilterBar, { type FilterValue } from "@/components/FilterBar";
 import FilterSheet from "@/components/FilterSheet";
 import CircularGraph, {
@@ -11,6 +11,8 @@ import CircularGraph, {
 import TooDenseMessage from "@/components/radar/TooDenseMessage";
 import RadarSettingsControl from "@/components/radar/RadarSettingsControl";
 import RadarLegend from "@/components/radar/RadarLegend";
+import BenchVisibilityList from "@/components/radar/BenchVisibilityList";
+import CollapsibleSection from "@/components/radar/CollapsibleSection";
 import { filterLabTestMeans } from "@/lib/labtestmeans";
 import { expandSelection } from "@/lib/aircraftStructure";
 import { useLabTestMeans } from "@/lib/useLabTestMeans";
@@ -109,15 +111,34 @@ function RadarLoaded({
     });
   }, [labTestMeans, tree, filters]);
 
+  // Second, finer-grained refinement step on top of the coarse filters above
+  // — individually hidden benches, independent of `filters` so a bench
+  // hidden this way stays hidden across filter changes (see
+  // `liste-bancs-masquables-dependency-view.md`).
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const toggleBenchVisibility = useCallback((externalId: string) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(externalId)) next.delete(externalId);
+      else next.add(externalId);
+      return next;
+    });
+  }, []);
+  const selectAllBenches = useCallback(() => setHiddenIds(new Set()), []);
+  const deselectAllBenches = useCallback(() => {
+    setHiddenIds(new Set(visible.map((b) => b.externalId)));
+  }, [visible]);
+
+  const shown = useMemo(
+    () => visible.filter((b) => !hiddenIds.has(b.externalId)),
+    [visible, hiddenIds],
+  );
+
   return (
     <div className="flex h-[calc(100vh-57px)] flex-col">
       <div className="flex items-center gap-4 border-b border-border px-4 py-3">
-        <h1 className="text-lg font-bold">Radar</h1>
-        <span className="text-xs font-medium uppercase tracking-wide text-muted">
-          Preview
-        </span>
         <span className="text-xs text-muted">
-          {visible.length} of {labTestMeans.length} lab test means shown
+          {shown.length} of {labTestMeans.length} lab test means shown
         </span>
         <div className="ml-auto flex items-center gap-2">
           <label htmlFor="radar-size" className="text-xs text-muted">
@@ -138,36 +159,47 @@ function RadarLoaded({
       </div>
 
       <div className="relative flex-1 min-h-0 overflow-hidden">
-        {visible.length === 0 && (
+        {shown.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="px-5 py-3 rounded-card bg-surface/90 border border-border text-sm text-muted backdrop-blur-md pointer-events-auto">
               No lab test means match these filters.
             </div>
           </div>
         )}
-        {visible.length > 0 && visible.length <= densityLimit && (
+        {shown.length > 0 && shown.length <= densityLimit && (
           <>
-            <CircularGraph benches={visible} radius={radius} />
+            <CircularGraph benches={shown} radius={radius} />
             <RadarLegend />
           </>
         )}
-        {visible.length > densityLimit && (
-          <TooDenseMessage count={visible.length} limit={densityLimit} />
+        {shown.length > densityLimit && (
+          <TooDenseMessage count={shown.length} limit={densityLimit} />
         )}
 
         <div className="absolute top-4 left-4 w-[340px] max-h-[calc(100%-2rem)] glass-panel p-5 overflow-y-auto z-10 hidden lg:block">
-          <FilterBar
-            types={types}
-            statuses={statuses}
-            countries={countries}
-            tree={tree}
-            programCounts={programCounts}
-            hasUnassignedPrograms={hasUnassignedPrograms}
-            complexities={complexities}
-            portfolios={portfolios}
-            value={filters}
-            onChange={setFilters}
-          />
+          <CollapsibleSection title="Filters">
+            <FilterBar
+              types={types}
+              statuses={statuses}
+              countries={countries}
+              tree={tree}
+              programCounts={programCounts}
+              hasUnassignedPrograms={hasUnassignedPrograms}
+              complexities={complexities}
+              portfolios={portfolios}
+              value={filters}
+              onChange={setFilters}
+            />
+          </CollapsibleSection>
+          {visible.length > 0 && (
+            <BenchVisibilityList
+              benches={visible}
+              hiddenIds={hiddenIds}
+              onToggle={toggleBenchVisibility}
+              onSelectAll={selectAllBenches}
+              onDeselectAll={deselectAllBenches}
+            />
+          )}
         </div>
         <FilterSheet
           types={types}
@@ -180,7 +212,18 @@ function RadarLoaded({
           portfolios={portfolios}
           value={filters}
           onChange={setFilters}
-          count={visible.length}
+          count={shown.length}
+          extraContent={
+            visible.length > 0 ? (
+              <BenchVisibilityList
+                benches={visible}
+                hiddenIds={hiddenIds}
+                onToggle={toggleBenchVisibility}
+                onSelectAll={selectAllBenches}
+                onDeselectAll={deselectAllBenches}
+              />
+            ) : undefined
+          }
         />
       </div>
     </div>
