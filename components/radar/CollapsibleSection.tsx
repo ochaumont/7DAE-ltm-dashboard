@@ -21,12 +21,12 @@ export default function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 rounded bg-surface-2 px-2 py-1.5">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted hover:text-fg"
+          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fg"
         >
           <ChevronIcon open={open} />
           {title}

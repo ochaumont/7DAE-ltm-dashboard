@@ -33,29 +33,7 @@ export default function BenchVisibilityList({
 
   return (
     <div className="mt-4 border-t border-border pt-4">
-      <CollapsibleSection
-        title={`Displayed LTM (${benches.length})`}
-        headerExtra={
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onSelectAll}
-              disabled={hiddenCount === 0}
-              className="text-xs text-accent hover:underline disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
-            >
-              Select all
-            </button>
-            <button
-              type="button"
-              onClick={onDeselectAll}
-              disabled={hiddenCount === benches.length}
-              className="text-xs text-accent hover:underline disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
-            >
-              Deselect all
-            </button>
-          </div>
-        }
-      >
+      <CollapsibleSection title={`Displayed LTM (${benches.length})`}>
         <input
           type="text"
           value={search}
@@ -63,6 +41,24 @@ export default function BenchVisibilityList({
           placeholder="Search…"
           className="mb-1.5 w-full rounded border border-border bg-surface px-2 py-1 text-sm text-fg placeholder:text-muted focus:outline-none focus:border-accent"
         />
+        <div className="mb-1.5 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSelectAll}
+            disabled={hiddenCount === 0}
+            className="text-[11px] text-accent hover:underline disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
+          >
+            Select all
+          </button>
+          <button
+            type="button"
+            onClick={onDeselectAll}
+            disabled={hiddenCount === benches.length}
+            className="text-[11px] text-accent hover:underline disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
+          >
+            Deselect all
+          </button>
+        </div>
         <div className="max-h-[240px] overflow-y-auto rounded border border-border">
           {filtered.length === 0 ? (
             <p className="px-2 py-1.5 text-sm text-muted">No match.</p>
