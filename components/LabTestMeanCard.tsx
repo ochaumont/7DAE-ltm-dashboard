@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { LabTestMean } from "@/lib/types";
 import { PHOTO_PLACEHOLDER } from "@/lib/photo";
 import { usePhoto } from "@/lib/usePhoto";
+import PhotoSpinner from "./PhotoSpinner";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
 import BadgeQualitySeal from "./BadgeQualitySeal";
@@ -14,7 +15,7 @@ export default function LabTestMeanCard({
 }: {
   labTestMean: LabTestMean;
 }) {
-  const coverSrc = usePhoto(
+  const { url: coverSrc, isLoading: coverLoading } = usePhoto(
     labTestMean.coverPhoto?.id ?? "",
     labTestMean.coverPhoto?.uri ?? "",
   );
@@ -37,6 +38,7 @@ export default function LabTestMeanCard({
           loading="lazy"
           decoding="async"
         />
+        {coverLoading && <PhotoSpinner />}
         <div className="absolute right-2 top-2">
           <BadgeQualitySeal lxState={labTestMean.lxState} />
         </div>

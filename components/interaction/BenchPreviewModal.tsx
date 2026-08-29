@@ -6,6 +6,7 @@ import type { LabTestMean } from "@/lib/types";
 import { usePhoto } from "@/lib/usePhoto";
 import { placeholderOnError } from "@/lib/photo";
 import ChipType from "@/components/ChipType";
+import PhotoSpinner from "@/components/PhotoSpinner";
 
 export type PreviewTarget = {
   label: string;
@@ -26,7 +27,7 @@ export default function BenchPreviewModal({
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
-  const coverSrc = usePhoto(
+  const { url: coverSrc, isLoading: coverLoading } = usePhoto(
     target?.resolved?.coverPhoto?.id ?? "",
     target?.resolved?.coverPhoto?.uri ?? "",
   );
@@ -57,6 +58,7 @@ export default function BenchPreviewModal({
           onError={placeholderOnError}
           className="h-full w-full object-cover"
         />
+        {coverLoading && <PhotoSpinner />}
         <button
           ref={closeRef}
           type="button"

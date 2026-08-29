@@ -5,16 +5,20 @@ import type { Photo } from "@/lib/types";
 import { PHOTO_PLACEHOLDER } from "@/lib/photo";
 import { usePhoto } from "@/lib/usePhoto";
 import PanoramaClient from "./PanoramaClient";
+import PhotoSpinner from "./PhotoSpinner";
 
 function PhotoSlide({ photo }: { photo: Photo }) {
-  const src = usePhoto(photo.resourceId, photo.resourceUri);
+  const { url: src, isLoading } = usePhoto(photo.resourceId, photo.resourceUri);
   if (photo.is360) return <PanoramaClient src={src} />;
   return (
-    <img
-      src={src}
-      alt={photo.alt ?? ""}
-      className="w-full h-full object-cover"
-    />
+    <>
+      <img
+        src={src}
+        alt={photo.alt ?? ""}
+        className="w-full h-full object-cover"
+      />
+      {isLoading && <PhotoSpinner />}
+    </>
   );
 }
 
@@ -27,7 +31,7 @@ function Thumbnail({
   active: boolean;
   onClick: () => void;
 }) {
-  const src = usePhoto(photo.resourceId, photo.resourceUri);
+  const { url: src, isLoading } = usePhoto(photo.resourceId, photo.resourceUri);
   return (
     <button
       onClick={onClick}
@@ -40,6 +44,7 @@ function Thumbnail({
       type="button"
     >
       <img src={src} alt={photo.alt ?? ""} className="w-full h-full object-cover" />
+      {isLoading && <PhotoSpinner />}
       {photo.is360 && (
         <span
           aria-hidden="true"

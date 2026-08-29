@@ -30,15 +30,18 @@ export async function fetchPhoto(
   return { url: URL.createObjectURL(blob), blob };
 }
 
+export type PhotoState = { url: string; isLoading: boolean };
+
 /**
  * Returns a session-cached object URL for a backend photo resource, or
- * PHOTO_PLACEHOLDER while loading / on error. Backed by SWR so the same
- * resource is fetched once and shared everywhere.
+ * PHOTO_PLACEHOLDER while loading / on error, plus `isLoading` so callers can
+ * show a spinner during the (often slow, 5-30s) backend round trip. Backed by
+ * SWR so the same resource is fetched once and shared everywhere.
  */
-export function usePhoto(resourceId: string, resourceUri: string): string {
-  const { data } = useSWR(
+export function usePhoto(resourceId: string, resourceUri: string): PhotoState {
+  const { data, isLoading } = useSWR(
     resourceId && resourceUri ? photoKey(resourceId) : null,
     () => fetchPhoto(resourceId, resourceUri),
   );
-  return data?.url ?? PHOTO_PLACEHOLDER;
+  return { url: data?.url ?? PHOTO_PLACEHOLDER, isLoading };
 }
