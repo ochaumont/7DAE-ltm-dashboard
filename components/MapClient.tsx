@@ -77,6 +77,7 @@ function MapLoaded({
   const [filters, setFilters] = useState<FilterValue>({
     search: "",
     photo: "all",
+    qualitySeal: "all",
     types: [],
     statuses: [],
     countries: [],

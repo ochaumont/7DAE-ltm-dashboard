@@ -160,7 +160,7 @@ function NodeCard({ data }: { data: NodeData }) {
       : "var(--color-accent)";
   return (
     <div
-      className="relative flex flex-col justify-center overflow-hidden rounded-card border bg-surface px-3 py-2 shadow-sm transition-opacity"
+      className="relative flex flex-col justify-center rounded-card border bg-surface px-3 py-2 shadow-sm transition-opacity"
       style={{
         width,
         height: CARD_H,
@@ -169,8 +169,11 @@ function NodeCard({ data }: { data: NodeData }) {
       }}
     >
       {data.resolved && (
+        // Straddles the card's top border (translateY(-50%) off a `top-0`
+        // anchor) rather than sitting inside the card, so it never overlaps
+        // the bench name label underneath.
         <span
-          className="absolute right-1 top-1 rounded px-1 py-px text-[0.55rem] font-semibold uppercase leading-tight tracking-wide"
+          className="absolute right-1 top-0 -translate-y-1/2 rounded px-1 py-px text-[0.55rem] font-semibold uppercase leading-tight tracking-wide"
           style={{
             background:
               data.resolved.lxState === "DRAFT" ? "var(--color-muted)" : "var(--color-success)",
@@ -1055,13 +1058,6 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
     "shared-resource": edgeMeta.filter((e) => e.kind === "shared-resource").length,
   };
 
-  const hasAnyRelation = benches.some(
-    (b) => b.dependsOn.length + b.supports.length + b.sharedResources.length > 0,
-  );
-
-  if (!hasAnyRelation) {
-    return <InteractionEmptyState reason="no-relations" />;
-  }
   if (layout.status === "loading") {
     return <InteractionEmptyState reason="layout-loading" />;
   }

@@ -1,6 +1,7 @@
 import type { LabTestMean } from "@/lib/types";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
+import BadgeQualitySeal from "./BadgeQualitySeal";
 import ChipComplexity from "./ChipComplexity";
 import ChipAccessControl from "./ChipAccessControl";
 import ChipCapabilities from "./ChipCapabilities";
@@ -36,6 +37,7 @@ export default function LabTestMeanHeader({
             </span>
           )}
           <BadgeStatus status={m.status} withIcon />
+          <BadgeQualitySeal lxState={m.lxState} />
         </div>
       </div>
 

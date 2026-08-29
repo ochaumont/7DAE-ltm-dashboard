@@ -6,6 +6,7 @@ import { PHOTO_PLACEHOLDER } from "@/lib/photo";
 import { usePhoto } from "@/lib/usePhoto";
 import ChipType from "./ChipType";
 import BadgeStatus from "./BadgeStatus";
+import BadgeQualitySeal from "./BadgeQualitySeal";
 import ChipAccessControl from "./ChipAccessControl";
 
 export default function LabTestMeanCard({
@@ -36,6 +37,9 @@ export default function LabTestMeanCard({
           loading="lazy"
           decoding="async"
         />
+        <div className="absolute right-2 top-2">
+          <BadgeQualitySeal lxState={labTestMean.lxState} />
+        </div>
       </div>
       <div className="px-4 pt-4 pb-3 space-y-2">
         <div className="flex items-center justify-between gap-2">

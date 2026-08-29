@@ -15,6 +15,7 @@ import type { FilterValue } from "@/components/FilterBar";
 export const DEFAULT_FILTERS: FilterValue = {
   search: "",
   photo: "all",
+  qualitySeal: "all",
   types: [],
   statuses: [],
   countries: [],

@@ -45,7 +45,8 @@ export default function FilterSheet({
     value.complexities.length +
     value.portfolios.length +
     (value.search ? 1 : 0) +
-    (value.photo !== "all" ? 1 : 0);
+    (value.photo !== "all" ? 1 : 0) +
+    (value.qualitySeal !== "all" ? 1 : 0);
   return (
     <>
       <button

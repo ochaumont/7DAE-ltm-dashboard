@@ -6,6 +6,7 @@ import type {
   LabTestMeanStatus,
   LabTestMeanType,
   PhotoFilter,
+  QualitySealFilter,
 } from "@/lib/types";
 import { COMPLEXITY_NA, PORTFOLIO_NONE } from "@/lib/labtestmeans";
 import { STATUS_LABELS, TYPE_LABELS } from "@/lib/labels";
@@ -36,9 +37,17 @@ const PHOTO_STATES: { value: PhotoFilter; label: string; tone: "on" | "off" }[] 
     { value: "without", label: "Without photo", tone: "off" },
   ];
 
+// Same tri-state sliding switch as PHOTO_STATES, ALL in the middle position.
+const QUALITY_SEAL_STATES: { value: QualitySealFilter; label: string }[] = [
+  { value: "draft", label: "Draft" },
+  { value: "all", label: "All" },
+  { value: "released", label: "Released" },
+];
+
 export type FilterValue = {
   search: string;
   photo: PhotoFilter;
+  qualitySeal: QualitySealFilter;
   types: LabTestMeanType[];
   statuses: LabTestMeanStatus[];
   countries: string[];
@@ -106,6 +115,64 @@ function Toggle<T extends string>({
   );
 }
 
+// Tri-state sliding switch shared by "Photo" and "Quality seal" — same knob
+// animation and radiogroup semantics, parameterized by the states array.
+function TriToggle<T extends string>({
+  label,
+  ariaLabel,
+  states,
+  value,
+  onChange,
+}: {
+  label: string;
+  ariaLabel: string;
+  states: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  const index = Math.max(
+    0,
+    states.findIndex((s) => s.value === value),
+  );
+  const current = states[index];
+  return (
+    <div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">
+        {label}
+      </div>
+      <div className="flex items-center gap-2.5">
+        <div
+          role="radiogroup"
+          aria-label={ariaLabel}
+          className="relative inline-flex h-[26px] w-16 shrink-0 rounded-full bg-[#00205B] p-[3px] shadow-inner"
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute top-[3px] left-[3px] z-20 h-5 w-5 rounded-full shadow transition-transform duration-200 ease-out"
+            style={{
+              transform: `translateX(${index * 19}px)`,
+              backgroundColor: "var(--color-bg)",
+            }}
+          />
+          {states.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              role="radio"
+              aria-checked={value === s.value}
+              aria-label={s.label}
+              title={s.label}
+              onClick={() => onChange(s.value)}
+              className="relative z-10 flex-1 rounded-full bg-transparent focus:outline-none"
+            />
+          ))}
+        </div>
+        <span className="text-xs font-medium text-fg">{current.label}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function FilterBar({
   types,
   statuses,
@@ -119,11 +186,6 @@ export default function FilterBar({
   onChange,
 }: Props) {
   const [search, setSearch] = useState(value.search);
-  const photoIndex = Math.max(
-    0,
-    PHOTO_STATES.findIndex((s) => s.value === value.photo),
-  );
-  const currentPhoto = PHOTO_STATES[photoIndex];
   const typeRows = useMemo(() => {
     const present = new Set(types);
     return TYPE_ROWS.map((row) => row.filter((t) => present.has(t))).filter(
@@ -157,37 +219,21 @@ export default function FilterBar({
         }}
         className="w-full px-3 py-2 rounded bg-surface border border-border text-fg placeholder:text-muted focus:outline-none focus:border-accent"
       />
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Photo</div>
-        <div className="flex items-center gap-2.5">
-          <div
-            role="radiogroup"
-            aria-label="Photo filter"
-            className="relative inline-flex h-[26px] w-16 shrink-0 rounded-full bg-[#00205B] p-[3px] shadow-inner"
-          >
-            <span
-              aria-hidden
-              className="pointer-events-none absolute top-[3px] left-[3px] z-20 h-5 w-5 rounded-full shadow transition-transform duration-200 ease-out"
-              style={{
-                transform: `translateX(${photoIndex * 19}px)`,
-                backgroundColor: "var(--color-bg)",
-              }}
-            />
-            {PHOTO_STATES.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                role="radio"
-                aria-checked={value.photo === s.value}
-                aria-label={s.label}
-                title={s.label}
-                onClick={() => onChange({ ...value, photo: s.value })}
-                className="relative z-10 flex-1 rounded-full bg-transparent focus:outline-none"
-              />
-            ))}
-          </div>
-          <span className="text-xs font-medium text-fg">{currentPhoto.label}</span>
-        </div>
+      <div className="grid grid-cols-2 gap-3">
+        <TriToggle
+          label="Photo"
+          ariaLabel="Photo filter"
+          states={PHOTO_STATES}
+          value={value.photo}
+          onChange={(v) => onChange({ ...value, photo: v })}
+        />
+        <TriToggle
+          label="Quality seal"
+          ariaLabel="Quality seal filter"
+          states={QUALITY_SEAL_STATES}
+          value={value.qualitySeal}
+          onChange={(v) => onChange({ ...value, qualitySeal: v })}
+        />
       </div>
       <div>
         <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Type</div>

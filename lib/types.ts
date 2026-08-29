@@ -11,6 +11,9 @@ export type Complexity = "simple" | "medium" | "complex";
 /** Tri-state photo filter: any LTM / only with ≥1 photo / only without photos. */
 export type PhotoFilter = "all" | "with" | "without";
 
+/** Tri-state quality seal filter: any LTM / only DRAFT / only RELEASE. */
+export type QualitySealFilter = "all" | "draft" | "released";
+
 export type TechnicalCapability =
   | "aircraft-simulation-package"
   | "automatic-testing"
