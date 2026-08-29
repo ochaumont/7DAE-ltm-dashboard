@@ -211,7 +211,7 @@ function CatalogueLoaded({
     <main className="px-4 md:px-6 py-8 max-w-[1600px] mx-auto">
       <div className="grid lg:grid-cols-[296px_1fr] gap-6">
         <aside className="hidden lg:block">
-          <div className="sticky top-[80px] max-h-[calc(100vh-100px)] overflow-y-auto">
+          <div className="sticky top-[80px] max-h-[calc(100vh-100px)] overflow-y-auto glass-panel p-5">
             <div className="mb-3 text-xs text-muted font-mono">
               {visible.length} / {labTestMeans.length} lab test means
             </div>

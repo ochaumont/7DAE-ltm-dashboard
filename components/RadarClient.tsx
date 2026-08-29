@@ -135,63 +135,83 @@ function RadarLoaded({
   );
 
   return (
-    <div className="flex h-[calc(100vh-57px)] flex-col">
-      <div className="flex items-center gap-4 border-b border-border px-4 py-3">
-        <span className="text-xs text-muted">
-          {shown.length} / {labTestMeans.length} lab test means
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <label htmlFor="radar-size" className="text-xs text-muted">
-            Circle size
-          </label>
-          <input
-            id="radar-size"
-            type="range"
-            min={RADAR_MIN_RADIUS}
-            max={RADAR_MAX_RADIUS}
-            step={10}
-            value={radius}
-            onChange={(e) => setRadius(Number(e.target.value))}
-            className="w-40 accent-accent"
-          />
-          <RadarSettingsControl />
+    <div className="relative h-[calc(100vh-57px)]">
+      {shown.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="px-5 py-3 rounded-card bg-surface/90 border border-border text-sm text-muted backdrop-blur-md pointer-events-auto">
+            No lab test means match these filters.
+          </div>
         </div>
+      )}
+      {shown.length > 0 && shown.length <= densityLimit && (
+        <>
+          <CircularGraph benches={shown} radius={radius} />
+          <RadarLegend />
+        </>
+      )}
+      {shown.length > densityLimit && (
+        <TooDenseMessage count={shown.length} limit={densityLimit} />
+      )}
+
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+        <label htmlFor="radar-size" className="text-xs text-muted">
+          Circle size
+        </label>
+        <input
+          id="radar-size"
+          type="range"
+          min={RADAR_MIN_RADIUS}
+          max={RADAR_MAX_RADIUS}
+          step={10}
+          value={radius}
+          onChange={(e) => setRadius(Number(e.target.value))}
+          className="w-40 accent-accent"
+        />
+        <RadarSettingsControl />
       </div>
 
-      <div className="relative flex-1 min-h-0 overflow-hidden">
-        {shown.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="px-5 py-3 rounded-card bg-surface/90 border border-border text-sm text-muted backdrop-blur-md pointer-events-auto">
-              No lab test means match these filters.
-            </div>
-          </div>
+      <div className="absolute top-4 left-4 w-[340px] max-h-[calc(100%-2rem)] glass-panel p-5 overflow-y-auto z-10 hidden lg:block">
+        <div className="mb-3 inline-block rounded bg-surface-2 px-2 py-1 text-xs text-muted font-mono">
+          {shown.length} / {labTestMeans.length} lab test means
+        </div>
+        <CollapsibleSection title="Filters" defaultOpen={false}>
+          <FilterBar
+            types={types}
+            statuses={statuses}
+            countries={countries}
+            tree={tree}
+            programCounts={programCounts}
+            hasUnassignedPrograms={hasUnassignedPrograms}
+            complexities={complexities}
+            portfolios={portfolios}
+            value={filters}
+            onChange={setFilters}
+          />
+        </CollapsibleSection>
+        {visible.length > 0 && (
+          <BenchVisibilityList
+            benches={visible}
+            hiddenIds={hiddenIds}
+            onToggle={toggleBenchVisibility}
+            onSelectAll={selectAllBenches}
+            onDeselectAll={deselectAllBenches}
+          />
         )}
-        {shown.length > 0 && shown.length <= densityLimit && (
-          <>
-            <CircularGraph benches={shown} radius={radius} />
-            <RadarLegend />
-          </>
-        )}
-        {shown.length > densityLimit && (
-          <TooDenseMessage count={shown.length} limit={densityLimit} />
-        )}
-
-        <div className="absolute top-4 left-4 w-[340px] max-h-[calc(100%-2rem)] glass-panel p-5 overflow-y-auto z-10 hidden lg:block">
-          <CollapsibleSection title="Filters" defaultOpen={false}>
-            <FilterBar
-              types={types}
-              statuses={statuses}
-              countries={countries}
-              tree={tree}
-              programCounts={programCounts}
-              hasUnassignedPrograms={hasUnassignedPrograms}
-              complexities={complexities}
-              portfolios={portfolios}
-              value={filters}
-              onChange={setFilters}
-            />
-          </CollapsibleSection>
-          {visible.length > 0 && (
+      </div>
+      <FilterSheet
+        types={types}
+        statuses={statuses}
+        countries={countries}
+        tree={tree}
+        programCounts={programCounts}
+        hasUnassignedPrograms={hasUnassignedPrograms}
+        complexities={complexities}
+        portfolios={portfolios}
+        value={filters}
+        onChange={setFilters}
+        count={shown.length}
+        extraContent={
+          visible.length > 0 ? (
             <BenchVisibilityList
               benches={visible}
               hiddenIds={hiddenIds}
@@ -199,33 +219,9 @@ function RadarLoaded({
               onSelectAll={selectAllBenches}
               onDeselectAll={deselectAllBenches}
             />
-          )}
-        </div>
-        <FilterSheet
-          types={types}
-          statuses={statuses}
-          countries={countries}
-          tree={tree}
-          programCounts={programCounts}
-          hasUnassignedPrograms={hasUnassignedPrograms}
-          complexities={complexities}
-          portfolios={portfolios}
-          value={filters}
-          onChange={setFilters}
-          count={shown.length}
-          extraContent={
-            visible.length > 0 ? (
-              <BenchVisibilityList
-                benches={visible}
-                hiddenIds={hiddenIds}
-                onToggle={toggleBenchVisibility}
-                onSelectAll={selectAllBenches}
-                onDeselectAll={deselectAllBenches}
-              />
-            ) : undefined
-          }
-        />
-      </div>
+          ) : undefined
+        }
+      />
     </div>
   );
 }
