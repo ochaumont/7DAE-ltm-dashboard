@@ -36,7 +36,6 @@ export default function BenchVisibilityList({
     <div className="mt-4 border-t border-border pt-4">
       <CollapsibleSection
         title={`Displayed LTM (${displayedCount}/${benches.length})`}
-        defaultOpen={false}
       >
         <input
           type="text"

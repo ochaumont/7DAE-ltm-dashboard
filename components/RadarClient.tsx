@@ -171,7 +171,7 @@ function RadarLoaded({
       </div>
 
       <div className="absolute top-4 left-4 w-[340px] max-h-[calc(100%-2rem)] glass-panel p-5 overflow-y-auto z-10 hidden lg:block">
-        <div className="mb-3 inline-block rounded bg-surface-2 px-2 py-1 text-xs text-muted font-mono">
+        <div className="mb-3 text-xs text-muted font-mono">
           {shown.length} / {labTestMeans.length} lab test means
         </div>
         <CollapsibleSection title="Filters" defaultOpen={false}>
