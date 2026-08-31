@@ -24,6 +24,36 @@ type Props = {
   onClose: () => void;
 };
 
+function menuItemClass(enabled: boolean) {
+  return `flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-sm rounded cursor-default ${
+    enabled ? "text-fg hover:bg-surface-2" : "text-muted opacity-60"
+  }`;
+}
+
+function MenuItem({
+  label,
+  count,
+  onClick,
+}: Readonly<{
+  label: string;
+  count: number;
+  onClick: () => void;
+}>) {
+  const enabled = count > 0;
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={!enabled}
+      onClick={onClick}
+      className={menuItemClass(enabled)}
+    >
+      <span>{label}</span>
+      <span className="font-mono text-xs">{count}</span>
+    </button>
+  );
+}
+
 export default function NodeContextMenu({
   target,
   onExpandDependsOn,
@@ -53,38 +83,6 @@ export default function NodeContextMenu({
 
   if (!target) return null;
 
-  const itemClass = (enabled: boolean) =>
-    `flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-sm rounded cursor-default ${
-      enabled ? "text-fg hover:bg-surface-2" : "text-muted opacity-60"
-    }`;
-
-  function MenuItem({
-    label,
-    count,
-    onClick,
-  }: Readonly<{
-    label: string;
-    count: number;
-    onClick: () => void;
-  }>) {
-    const enabled = count > 0;
-    return (
-      <button
-        type="button"
-        role="menuitem"
-        disabled={!enabled}
-        onClick={() => {
-          onClick();
-          onClose();
-        }}
-        className={itemClass(enabled)}
-      >
-        <span>{label}</span>
-        <span className="font-mono text-xs">{count}</span>
-      </button>
-    );
-  }
-
   return (
     <div
       ref={menuRef}
@@ -97,24 +95,36 @@ export default function NodeContextMenu({
           <MenuItem
             label="Show depends on"
             count={target.dependsOnCount}
-            onClick={() => onExpandDependsOn(target.nodeId)}
+            onClick={() => {
+              onExpandDependsOn(target.nodeId);
+              onClose();
+            }}
           />
           <MenuItem
             label="Show supports"
             count={target.supportsCount}
-            onClick={() => onExpandSupports(target.nodeId)}
+            onClick={() => {
+              onExpandSupports(target.nodeId);
+              onClose();
+            }}
           />
           <MenuItem
             label="Show shared resources"
             count={target.sharedResourcesCount}
-            onClick={() => onExpandSharedResources(target.nodeId)}
+            onClick={() => {
+              onExpandSharedResources(target.nodeId);
+              onClose();
+            }}
           />
         </>
       ) : (
         <MenuItem
           label="Usable by"
           count={target.usableByCount}
-          onClick={() => onUsableBy(target.nodeId)}
+          onClick={() => {
+            onUsableBy(target.nodeId);
+            onClose();
+          }}
         />
       )}
       <div className="my-1 border-t border-border" />
@@ -126,7 +136,7 @@ export default function NodeContextMenu({
           onHide(target.nodeId);
           onClose();
         }}
-        className={itemClass(target.canHide)}
+        className={menuItemClass(target.canHide)}
       >
         <span>Hide</span>
       </button>

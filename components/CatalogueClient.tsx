@@ -142,9 +142,11 @@ function CatalogueLoaded({
 
   const blobToDataUrl = async (blob: Blob): Promise<string | null> => {
     const buf = new Uint8Array(await blob.arrayBuffer());
-    const fmt = buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpeg" : null;
+    let fmt: "png" | "jpeg" | null = null;
+    if (buf[0] === 0x89) fmt = "png";
+    else if (buf[0] === 0xff) fmt = "jpeg";
     if (!fmt) return null;
-    const binary = Array.from(buf).map((b) => String.fromCharCode(b)).join("");
+    const binary = Array.from(buf).map((b) => String.fromCodePoint(b)).join("");
     return `data:image/${fmt};base64,${btoa(binary)}`;
   };
 

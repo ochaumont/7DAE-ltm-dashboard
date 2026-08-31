@@ -14,7 +14,7 @@ const PALETTE = [
 function hash(input: string): number {
   let h = 2166136261;
   for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
+    h ^= input.codePointAt(i) ?? 0;
     h = Math.imul(h, 16777619);
   }
   return h >>> 0;
@@ -24,7 +24,7 @@ function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (parts[0][0] + parts.at(-1)![0]).toUpperCase();
 }
 
 export default function Avatar({
@@ -40,7 +40,7 @@ export default function Avatar({
 }>) {
   const color = PALETTE[hash(seed ?? name) % PALETTE.length];
   return (
-    <span
+    <span // NOSONAR: decorative initials avatar kept as role="img" — no real image src to use <img>, see correction-issues-sonarqube.md
       role="img"
       aria-label={name}
       className={clsx(

@@ -45,7 +45,7 @@ export default function BenchPreviewModal({
   if (!target) return null;
 
   return (
-    <div
+    <div // NOSONAR: non-modal floating panel (aria-modal="false") kept as role="dialog" — native <dialog>/showModal() is modal-only, see correction-issues-sonarqube.md
       role="dialog"
       aria-modal="false"
       aria-labelledby="bench-preview-title"

@@ -155,7 +155,7 @@ function TriToggle<T extends string>({
             }}
           />
           {states.map((s) => (
-            <button
+            <button // NOSONAR: custom pill toggle kept as role="radio", not native <input type="radio"> (would need a full visual rebuild), see correction-issues-sonarqube.md
               key={s.value}
               type="button"
               role="radio"

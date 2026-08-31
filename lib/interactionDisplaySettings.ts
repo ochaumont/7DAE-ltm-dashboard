@@ -55,7 +55,7 @@ function pickNodeWidth(parsed: Record<string, unknown>, fallback: number): numbe
 }
 
 function hydrate(): void {
-  if (hydrated || typeof globalThis.window === "undefined") return;
+  if (hydrated || globalThis.window === undefined) return;
   hydrated = true;
   try {
     const raw = globalThis.localStorage.getItem(STORAGE_KEY);

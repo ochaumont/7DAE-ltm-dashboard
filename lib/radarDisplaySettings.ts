@@ -26,7 +26,7 @@ let hydrated = false;
 const listeners = new Set<() => void>();
 
 function hydrate(): void {
-  if (hydrated || typeof globalThis.window === "undefined") return;
+  if (hydrated || globalThis.window === undefined) return;
   hydrated = true;
   try {
     const raw = globalThis.localStorage.getItem(STORAGE_KEY);

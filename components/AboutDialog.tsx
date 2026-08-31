@@ -99,14 +99,14 @@ export default function AboutDialog() {
       </button>
 
       {open && (
-        <div
+        <div // NOSONAR: modal backdrop kept as role="presentation" (not <img>), see correction-issues-sonarqube.md
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
           role="presentation"
         >
-          <div
+          <div // NOSONAR: modal panel kept as role="dialog", not native <dialog> (would change close/focus behavior)
             role="dialog"
             aria-modal="true"
             aria-labelledby="about-title"

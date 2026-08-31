@@ -273,7 +273,7 @@ function RadialEdge({ data, markerEnd, style }: EdgeProps) {
   const my = (d.sy + d.ty) / 2;
   const dx = d.tx - d.sx;
   const dy = d.ty - d.sy;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const len = Math.hypot(dx, dy) || 1;
   const nx = -dy / len;
   const ny = dx / len;
   const offset = len * 0.16 * d.bend;
@@ -294,6 +294,29 @@ const edgeTypes = { radial: RadialEdge };
  * With multiple roots, all of them are seeded as children FIRST so a node
  * that's simultaneously a root AND another root's direct relation is never
  * overwritten by the second pass below. */
+function addElkChildAndEdge(
+  rootId: string,
+  kind: DependencyRelationKind,
+  rel: DependencyRelation,
+  childrenById: Map<string, ElkNode>,
+  edges: NonNullable<ElkNode["edges"]>,
+  seenPairs: Set<string>,
+  nodeWidth: number,
+): void {
+  if (rel.externalId === rootId) return; // self-reference
+  if (!childrenById.has(rel.externalId)) {
+    childrenById.set(rel.externalId, { id: rel.externalId, width: nodeWidth, height: CARD_H });
+  }
+  const pairKey = `${canonicalKind(kind)}|${[rootId, rel.externalId].sort((a, b) => a.localeCompare(b)).join("|")}`;
+  if (seenPairs.has(pairKey)) return;
+  seenPairs.add(pairKey);
+  edges.push({
+    id: `${canonicalKind(kind)}:${rootId}->${rel.externalId}`,
+    sources: [rootId],
+    targets: [rel.externalId],
+  });
+}
+
 function toElkGraph(
   rootIds: string[],
   groupsByRoot: Map<string, RelationGroup[]>,
@@ -322,20 +345,9 @@ function toElkGraph(
   rootIds.forEach((rootId) => {
     const groups = groupsByRoot.get(rootId) ?? [];
     groups.forEach(({ kind, list }) => {
-      list.forEach((rel) => {
-        if (rel.externalId === rootId) return; // self-reference
-        if (!childrenById.has(rel.externalId)) {
-          childrenById.set(rel.externalId, { id: rel.externalId, width: nodeWidth, height: CARD_H });
-        }
-        const pairKey = `${canonicalKind(kind)}|${[rootId, rel.externalId].sort((a, b) => a.localeCompare(b)).join("|")}`;
-        if (seenPairs.has(pairKey)) return;
-        seenPairs.add(pairKey);
-        edges.push({
-          id: `${canonicalKind(kind)}:${rootId}->${rel.externalId}`,
-          sources: [rootId],
-          targets: [rel.externalId],
-        });
-      });
+      list.forEach((rel) =>
+        addElkChildAndEdge(rootId, kind, rel, childrenById, edges, seenPairs, nodeWidth),
+      );
     });
   });
 
@@ -549,6 +561,83 @@ function placeNewNode(
   return { x, y };
 }
 
+/** Builds the neighbor cards for a newly-added root bench (`addBench`),
+ * covering all three relation kinds. Kept as a standalone function (not a
+ * closure inside the component) to keep nesting shallow — see `collectNewEdgesForBench`
+ * for the matching edge builder. */
+function collectNewNodesForBench(
+  bench: LabTestMean,
+  current: Node[],
+  rootPos: { x: number; y: number },
+  rootNode: Node,
+  nodeWidth: number,
+  resolveBench: (id: string) => LabTestMean | null,
+): Node[] {
+  const additions: Node[] = [];
+  const currentIds = new Set(current.map((n) => n.id));
+  const additionIds = new Set<string>();
+  relationGroups(bench).forEach(({ kind, list }) => {
+    const relevant = list.filter(
+      (rel) =>
+        rel.externalId !== bench.externalId &&
+        !currentIds.has(rel.externalId) &&
+        !additionIds.has(rel.externalId),
+    );
+    relevant.forEach((rel, i) => {
+      additionIds.add(rel.externalId);
+      additions.push({
+        id: rel.externalId,
+        type: "card",
+        position: placeNewNode(
+          rootPos,
+          i,
+          relevant.length,
+          kind,
+          [...current, rootNode, ...additions],
+          nodeWidth,
+        ),
+        data: {
+          label: rel.name,
+          isRoot: false,
+          resolved: resolveBench(rel.externalId),
+        } satisfies NodeData,
+        selectable: false,
+        style: { cursor: "pointer" },
+      });
+    });
+  });
+  return additions;
+}
+
+/** Matching edge builder for `collectNewNodesForBench` — same relation-kind
+ * traversal, deduped against `existingIds` (mutated in place). */
+function collectNewEdgesForBench(
+  bench: LabTestMean,
+  newRootId: string,
+  existingIds: Set<string>,
+): EdgeMeta[] {
+  const additions: EdgeMeta[] = [];
+  relationGroups(bench).forEach(({ kind, list }) => {
+    list.forEach((rel, i) => {
+      if (rel.externalId === newRootId) return;
+      const [source, target] =
+        kind === "supports" ? [rel.externalId, newRootId] : [newRootId, rel.externalId];
+      const edgeId = `${canonicalKind(kind)}:${source}->${target}`;
+      if (existingIds.has(edgeId)) return;
+      existingIds.add(edgeId);
+      additions.push({
+        id: edgeId,
+        source,
+        target,
+        kind: canonicalKind(kind),
+        bend: i % 2 === 0 ? 1 : -1,
+        dependencyType: rel.dependencyType,
+      });
+    });
+  });
+  return additions;
+}
+
 const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function DependencyGraph(
   { benches, allBenches, onDirty, pendingLoad, onPendingLoadConsumed },
   ref,
@@ -738,12 +827,10 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
     (nodeId: string, kind: DependencyRelationKind) => {
       const spawner = resolveBench(nodeId);
       if (!spawner) return;
-      const list =
-        kind === "depends-on"
-          ? spawner.dependsOn
-          : kind === "supports"
-            ? spawner.supports
-            : spawner.sharedResources;
+      let list: DependencyRelation[];
+      if (kind === "depends-on") list = spawner.dependsOn;
+      else if (kind === "supports") list = spawner.supports;
+      else list = spawner.sharedResources;
       const relevant = list.filter((rel) => rel.externalId !== nodeId);
       if (relevant.length === 0) return;
 
@@ -932,61 +1019,21 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
           style: { cursor: "pointer" },
         };
 
-        const additions: Node[] = [];
-        relationGroups(bench).forEach(({ kind, list }) => {
-          const relevant = list.filter(
-            (rel) =>
-              rel.externalId !== newRootId &&
-              !current.some((n) => n.id === rel.externalId) &&
-              !additions.some((n) => n.id === rel.externalId),
-          );
-          relevant.forEach((rel, i) => {
-            additions.push({
-              id: rel.externalId,
-              type: "card",
-              position: placeNewNode(
-                rootPos,
-                i,
-                relevant.length,
-                kind,
-                [...current, rootNode, ...additions],
-                displaySettings.nodeWidth,
-              ),
-              data: {
-                label: rel.name,
-                isRoot: false,
-                resolved: resolveBench(rel.externalId),
-              } satisfies NodeData,
-              selectable: false,
-              style: { cursor: "pointer" },
-            });
-          });
-        });
+        const additions = collectNewNodesForBench(
+          bench,
+          current,
+          rootPos,
+          rootNode,
+          displaySettings.nodeWidth,
+          resolveBench,
+        );
 
         return [...current, rootNode, ...additions];
       });
 
       setEdgeMeta((current) => {
         const existingIds = new Set(current.map((e) => e.id));
-        const additions: EdgeMeta[] = [];
-        relationGroups(bench).forEach(({ kind, list }) => {
-          list.forEach((rel, i) => {
-            if (rel.externalId === newRootId) return;
-            const [source, target] =
-              kind === "supports" ? [rel.externalId, newRootId] : [newRootId, rel.externalId];
-            const edgeId = `${canonicalKind(kind)}:${source}->${target}`;
-            if (existingIds.has(edgeId)) return;
-            existingIds.add(edgeId);
-            additions.push({
-              id: edgeId,
-              source,
-              target,
-              kind: canonicalKind(kind),
-              bend: i % 2 === 0 ? 1 : -1,
-              dependencyType: rel.dependencyType,
-            });
-          });
-        });
+        const additions = collectNewEdgesForBench(bench, newRootId, existingIds);
         return [...current, ...additions];
       });
     },

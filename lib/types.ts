@@ -53,8 +53,6 @@ export type Person = {
   email: string;
 };
 
-export type Manager = Person;
-
 export type Security = {
   ecLevel: string | null;
   networkSegregated: boolean | null;
@@ -121,7 +119,7 @@ export type LabTestMean = {
   instrumentation: string | null;
   status: LabTestMeanStatus;
   location: Location;
-  manager: Manager | null;
+  manager: Person | null;
   roles: Roles;
   security: Security;
   lifecycle: Lifecycle;

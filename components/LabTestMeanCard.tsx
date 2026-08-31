@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { LabTestMean } from "@/lib/types";
-import { PHOTO_PLACEHOLDER } from "@/lib/photo";
 import { usePhoto } from "@/lib/usePhoto";
 import PhotoSpinner from "./PhotoSpinner";
 import ChipType from "./ChipType";

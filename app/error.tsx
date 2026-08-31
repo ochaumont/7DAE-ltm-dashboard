@@ -7,19 +7,23 @@ import type { AtomErrorDetails } from "@/lib/atom-api";
 function buildDiagnosticRows(d: AtomErrorDetails | undefined): Array<[string, string]> {
   const rows: Array<[string, string]> = [];
   if (!d) return rows;
-  rows.push(["Requested URL", d.url]);
-  rows.push([
-    "Configured base",
-    `${d.baseUrl}${d.baseUrlFromEnv ? "" : "  ⚠ fallback (NEXT_PUBLIC_ATOM_API_BASE_URL not set at build)"}`,
-  ]);
+  rows.push(
+    ["Requested URL", d.url],
+    [
+      "Configured base",
+      `${d.baseUrl}${d.baseUrlFromEnv ? "" : "  ⚠ fallback (NEXT_PUBLIC_ATOM_API_BASE_URL not set at build)"}`,
+    ],
+  );
   if (d.pageOrigin) rows.push(["Page origin", d.pageOrigin]);
   if (d.sameOrigin !== null)
     rows.push([
       "Same-origin",
       d.sameOrigin ? "yes" : "no  ⚠ cross-origin → CORS / no gateway Bearer injection",
     ]);
-  rows.push(["Auth header sent", d.auth === "bearer-dev" ? "Bearer (dev JWT)" : "none"]);
-  rows.push(["HTTP status", d.status ? `${d.status} ${d.statusText}` : `— (${d.statusText})`]);
+  rows.push(
+    ["Auth header sent", d.auth === "bearer-dev" ? "Bearer (dev JWT)" : "none"],
+    ["HTTP status", d.status ? `${d.status} ${d.statusText}` : `— (${d.statusText})`],
+  );
   if (d.cause) rows.push(["Cause", d.cause]);
   return rows;
 }

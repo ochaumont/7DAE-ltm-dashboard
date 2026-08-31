@@ -96,11 +96,12 @@ export default function SaveLoadControls({
   const saveDisabled = !activeSaveName || disableSave;
   const saveAsDisabled = disableSave;
 
-  const saveIconClass = activeSaveName
-    ? dirty
+  let saveIconClass = "text-muted opacity-50 cursor-not-allowed";
+  if (activeSaveName) {
+    saveIconClass = dirty
       ? "text-danger cursor-pointer hover:opacity-80"
-      : "text-success cursor-pointer hover:opacity-80"
-    : "text-muted opacity-50 cursor-not-allowed";
+      : "text-success cursor-pointer hover:opacity-80";
+  }
 
   const menuItemClass = (enabled: boolean) =>
     `block w-full px-3 py-1.5 text-left text-sm rounded ${
@@ -204,14 +205,14 @@ export default function SaveLoadControls({
       )}
 
       {popup === "saveAs" && (
-        <div
+        <div // NOSONAR: modal backdrop kept as role="presentation" (not <img>), see correction-issues-sonarqube.md
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={(e) => {
             if (e.target === e.currentTarget) setPopup(null);
           }}
           role="presentation"
         >
-          <div
+          <div // NOSONAR: modal panel kept as role="dialog", not native <dialog> (would change close/focus behavior)
             role="dialog"
             aria-modal="true"
             aria-labelledby="save-as-title"
@@ -254,14 +255,14 @@ export default function SaveLoadControls({
       )}
 
       {popup === "load" && (
-        <div
+        <div // NOSONAR: modal backdrop kept as role="presentation" (not <img>), see correction-issues-sonarqube.md
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={(e) => {
             if (e.target === e.currentTarget) setPopup(null);
           }}
           role="presentation"
         >
-          <div
+          <div // NOSONAR: modal panel kept as role="dialog", not native <dialog> (would change close/focus behavior)
             role="dialog"
             aria-modal="true"
             aria-labelledby="load-title"
@@ -314,7 +315,7 @@ export default function SaveLoadControls({
       )}
 
       {popup === "import" && importDraft && (
-        <div
+        <div // NOSONAR: modal backdrop kept as role="presentation" (not <img>), see correction-issues-sonarqube.md
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={(e) => {
             if (e.target !== e.currentTarget) return;
@@ -323,7 +324,7 @@ export default function SaveLoadControls({
           }}
           role="presentation"
         >
-          <div
+          <div // NOSONAR: modal panel kept as role="dialog", not native <dialog> (would change close/focus behavior)
             role="dialog"
             aria-modal="true"
             aria-labelledby="import-title"

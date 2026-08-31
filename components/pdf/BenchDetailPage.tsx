@@ -118,11 +118,9 @@ export default function BenchDetailPage({ banc, baseUrl }: Readonly<Props>) {
 
   const complexity = banc.complexity;
   const access = banc.security.accesscontrol; // boolean | null
-  const remote = banc.technicalCapabilities.includes("remote-access")
-    ? true
-    : banc.technicalCapabilities.includes("no-remote-access")
-      ? false
-      : null;
+  let remote: boolean | null = null;
+  if (banc.technicalCapabilities.includes("remote-access")) remote = true;
+  else if (banc.technicalCapabilities.includes("no-remote-access")) remote = false;
 
   const subLocality = [banc.location.building, banc.location.room]
     .filter((s): s is string => !!s && s.length > 0)

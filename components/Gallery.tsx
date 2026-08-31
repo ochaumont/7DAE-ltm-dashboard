@@ -66,7 +66,7 @@ export default function Gallery({ photos }: Readonly<{ photos: Photo[] }>) {
       <div className="relative aspect-video bg-surface-2 rounded-card overflow-hidden">
         <img
           src={PHOTO_PLACEHOLDER}
-          alt="No photo available for this lab test mean"
+          alt="No cover available for this lab test mean"
           className="w-full h-full object-cover"
         />
       </div>

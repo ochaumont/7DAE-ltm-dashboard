@@ -14,7 +14,7 @@ import { useSyncExternalStore } from "react";
 export type Theme = "light" | "dark";
 
 function subscribe(callback: () => void): () => void {
-  if (typeof globalThis.window === "undefined") return () => {};
+  if (globalThis.window === undefined) return () => {};
   const observer = new MutationObserver(callback);
   observer.observe(document.documentElement, {
     attributes: true,
