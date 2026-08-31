@@ -40,62 +40,78 @@ export type Filters = {
   portfolios?: string[];
 };
 
+function matchesPhoto(m: LabTestMean, f: Filters): boolean {
+  if (f.photo === "with" && m.photos.length === 0) return false;
+  if (f.photo === "without" && m.photos.length > 0) return false;
+  return true;
+}
+
+function matchesQualitySeal(m: LabTestMean, f: Filters): boolean {
+  if (f.qualitySeal === "draft" && m.lxState !== "DRAFT") return false;
+  if (f.qualitySeal === "released" && m.lxState !== "RELEASE") return false;
+  return true;
+}
+
+function matchesTypeStatusCountry(m: LabTestMean, f: Filters): boolean {
+  if (f.types?.length && !f.types.includes(m.type)) return false;
+  if (f.statuses?.length && !f.statuses.includes(m.status)) return false;
+  if (f.countries?.length && !f.countries.includes(m.location.country))
+    return false;
+  return true;
+}
+
+function matchesProgram(m: LabTestMean, f: Filters): boolean {
+  const programFilterActive =
+    (f.programNodeNames && f.programNodeNames.size > 0) ||
+    f.includeUnassignedPrograms;
+  if (!programFilterActive) return true;
+  if (m.programs.length === 0) return !!f.includeUnassignedPrograms;
+  return !!f.programNodeNames && m.programs.some((p) => f.programNodeNames!.has(p));
+}
+
+function matchesComplexity(m: LabTestMean, f: Filters): boolean {
+  if (!f.complexities?.length) return true;
+  if (m.complexity == null) return f.complexities.includes(COMPLEXITY_NA);
+  return f.complexities.includes(m.complexity);
+}
+
+function matchesPortfolio(m: LabTestMean, f: Filters): boolean {
+  if (!f.portfolios?.length) return true;
+  if (m.portfolio == null) return f.portfolios.includes(PORTFOLIO_NONE);
+  return f.portfolios.includes(m.portfolio.name);
+}
+
+function matchesSearch(m: LabTestMean, f: Filters): boolean {
+  if (!f.search) return true;
+  const q = f.search.toLowerCase();
+  const hay = [
+    m.name,
+    m.externalId,
+    m.description,
+    m.manager?.name ?? "",
+    ...m.programs,
+    ...m.projects,
+  ]
+    .join(" ")
+    .toLowerCase();
+  return hay.includes(q);
+}
+
+const FILTER_PREDICATES = [
+  matchesPhoto,
+  matchesQualitySeal,
+  matchesTypeStatusCountry,
+  matchesProgram,
+  matchesComplexity,
+  matchesPortfolio,
+  matchesSearch,
+];
+
 export function filterLabTestMeans(
   list: LabTestMean[],
   f: Filters,
 ): LabTestMean[] {
-  return list.filter((m) => {
-    if (f.photo === "with" && m.photos.length === 0) return false;
-    if (f.photo === "without" && m.photos.length > 0) return false;
-    if (f.qualitySeal === "draft" && m.lxState !== "DRAFT") return false;
-    if (f.qualitySeal === "released" && m.lxState !== "RELEASE") return false;
-    if (f.types?.length && !f.types.includes(m.type)) return false;
-    if (f.statuses?.length && !f.statuses.includes(m.status)) return false;
-    if (f.countries?.length && !f.countries.includes(m.location.country))
-      return false;
-    const programFilterActive =
-      (f.programNodeNames && f.programNodeNames.size > 0) ||
-      f.includeUnassignedPrograms;
-    if (programFilterActive) {
-      if (m.programs.length === 0) {
-        if (!f.includeUnassignedPrograms) return false;
-      } else if (
-        !f.programNodeNames ||
-        !m.programs.some((p) => f.programNodeNames!.has(p))
-      ) {
-        return false;
-      }
-    }
-    if (f.complexities?.length) {
-      if (m.complexity == null) {
-        if (!f.complexities.includes(COMPLEXITY_NA)) return false;
-      } else if (!f.complexities.includes(m.complexity)) {
-        return false;
-      }
-    }
-    if (f.portfolios?.length) {
-      if (m.portfolio == null) {
-        if (!f.portfolios.includes(PORTFOLIO_NONE)) return false;
-      } else if (!f.portfolios.includes(m.portfolio.name)) {
-        return false;
-      }
-    }
-    if (f.search) {
-      const q = f.search.toLowerCase();
-      const hay = [
-        m.name,
-        m.externalId,
-        m.description,
-        m.manager?.name ?? "",
-        ...m.programs,
-        ...m.projects,
-      ]
-        .join(" ")
-        .toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
+  return list.filter((m) => FILTER_PREDICATES.every((matches) => matches(m, f)));
 }
 
 export function uniqueCountries(list: LabTestMean[]): string[] {

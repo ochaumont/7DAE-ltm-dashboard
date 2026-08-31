@@ -8,10 +8,10 @@
 export default function Section({
   title,
   children,
-}: {
+}: Readonly<{
   title: string;
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <section className="space-y-3">
       <h2 className="text-xs uppercase tracking-[0.15em] font-mono text-muted">

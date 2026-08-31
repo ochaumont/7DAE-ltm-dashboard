@@ -81,7 +81,7 @@ function RadarLoaded({
   countries,
   complexities,
   portfolios,
-}: LoadedProps) {
+}: Readonly<LoadedProps>) {
   // Independent from the catalogue's shared filter store (unlike `/`, like
   // `/map`) — filtering here shouldn't silently change what the catalogue
   // shows on return, and vice versa.

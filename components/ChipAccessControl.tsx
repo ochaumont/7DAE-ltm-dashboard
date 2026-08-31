@@ -4,7 +4,7 @@ type Props = {
   enabled: boolean | null;
 };
 
-export default function ChipAccessControl({ enabled }: Props) {
+export default function ChipAccessControl({ enabled }: Readonly<Props>) {
   if (enabled == null) return null;
   const label = enabled ? "Access is secured" : "No access control";
   return (

@@ -19,10 +19,10 @@ const colors: Record<LabTestMeanStatus, string> = {
 export default function BadgeStatus({
   status,
   withIcon = false,
-}: {
+}: Readonly<{
   status: LabTestMeanStatus;
   withIcon?: boolean;
-}) {
+}>) {
   return (
     <span
       className={clsx(

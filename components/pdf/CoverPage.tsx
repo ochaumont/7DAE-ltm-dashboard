@@ -7,7 +7,7 @@ type Props = {
   filtersDescription: string;
 };
 
-export default function CoverPage({ benchCount, filtersDescription }: Props) {
+export default function CoverPage({ benchCount, filtersDescription }: Readonly<Props>) {
   const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",

@@ -22,10 +22,10 @@ export type PreviewTarget = {
 export default function BenchPreviewModal({
   target,
   onClose,
-}: {
+}: Readonly<{
   target: PreviewTarget | null;
   onClose: () => void;
-}) {
+}>) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const { url: coverSrc, isLoading: coverLoading } = usePhoto(
     target?.resolved?.coverPhoto?.id ?? "",

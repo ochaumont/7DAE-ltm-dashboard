@@ -32,12 +32,12 @@ export default function Avatar({
   seed,
   size = 48,
   className,
-}: {
+}: Readonly<{
   name: string;
   seed?: string;
   size?: number;
   className?: string;
-}) {
+}>) {
   const color = PALETTE[hash(seed ?? name) % PALETTE.length];
   return (
     <span

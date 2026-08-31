@@ -12,9 +12,9 @@ import ChipAccessControl from "./ChipAccessControl";
 
 export default function LabTestMeanCard({
   labTestMean,
-}: {
+}: Readonly<{
   labTestMean: LabTestMean;
-}) {
+}>) {
   const { url: coverSrc, isLoading: coverLoading } = usePhoto(
     labTestMean.coverPhoto?.id ?? "",
     labTestMean.coverPhoto?.uri ?? "",

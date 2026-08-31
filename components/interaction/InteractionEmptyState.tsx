@@ -8,7 +8,7 @@ const MESSAGES: Record<Props["reason"], string> = {
   "layout-error": "Could not compute the graph layout.",
 };
 
-export default function InteractionEmptyState({ reason }: Props) {
+export default function InteractionEmptyState({ reason }: Readonly<Props>) {
   return (
     <div className="flex h-full items-center justify-center">
       <p className="text-sm text-muted">{MESSAGES[reason]}</p>

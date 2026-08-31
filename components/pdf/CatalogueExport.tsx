@@ -16,7 +16,7 @@ export default function CatalogueExport({
   benches,
   filtersDescription,
   baseUrl,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <Document title="Lab Test Means — Catalogue Export">
       <CoverPage

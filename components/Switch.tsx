@@ -3,10 +3,10 @@
 export default function Switch({
   checked,
   onChange,
-}: {
+}: Readonly<{
   checked: boolean;
   onChange: (v: boolean) => void;
-}) {
+}>) {
   return (
     <button
       type="button"

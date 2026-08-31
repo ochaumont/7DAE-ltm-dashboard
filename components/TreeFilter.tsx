@@ -23,7 +23,7 @@ export default function TreeFilter({
   selectedIds,
   counts,
   onChange,
-}: Props) {
+}: Readonly<Props>) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (id: string) => {

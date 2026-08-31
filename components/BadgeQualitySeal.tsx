@@ -15,9 +15,9 @@ const colors: Record<"DRAFT" | "RELEASE", string> = {
 
 export default function BadgeQualitySeal({
   lxState,
-}: {
+}: Readonly<{
   lxState: "DRAFT" | "RELEASE";
-}) {
+}>) {
   return (
     <span
       className={clsx(

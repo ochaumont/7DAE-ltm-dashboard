@@ -24,7 +24,7 @@ type Props = {
   onToggle: (kind: EdgeColorKind) => void;
 };
 
-export default function DependencyLegend({ counts, hidden, onToggle }: Props) {
+export default function DependencyLegend({ counts, hidden, onToggle }: Readonly<Props>) {
   return (
     <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-0.5 rounded-card bg-surface/90 border border-border px-2 py-2.5 backdrop-blur-md">
       <span className="px-2 pb-1 text-[0.65rem] uppercase tracking-wider text-muted">

@@ -34,7 +34,7 @@ export default function SaveLoadControls({
   onExportSave,
   onImport,
   onImportError,
-}: Props) {
+}: Readonly<Props>) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [popup, setPopup] = useState<"saveAs" | "load" | "import" | null>(null);
   const [name, setName] = useState("");
@@ -96,11 +96,11 @@ export default function SaveLoadControls({
   const saveDisabled = !activeSaveName || disableSave;
   const saveAsDisabled = disableSave;
 
-  const saveIconClass = !activeSaveName
-    ? "text-muted opacity-50 cursor-not-allowed"
-    : dirty
+  const saveIconClass = activeSaveName
+    ? dirty
       ? "text-danger cursor-pointer hover:opacity-80"
-      : "text-success cursor-pointer hover:opacity-80";
+      : "text-success cursor-pointer hover:opacity-80"
+    : "text-muted opacity-50 cursor-not-allowed";
 
   const menuItemClass = (enabled: boolean) =>
     `block w-full px-3 py-1.5 text-left text-sm rounded ${

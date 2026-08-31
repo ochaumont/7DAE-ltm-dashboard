@@ -31,7 +31,7 @@ function starPoints(cx: number, cy: number, R: number): string {
   return pts.join(" ");
 }
 
-export default function ComplexityIcon({ level, size = 14, className }: Props) {
+export default function ComplexityIcon({ level, size = 14, className }: Readonly<Props>) {
   const active = ACTIVE_COUNT[level];
   return (
     <svg

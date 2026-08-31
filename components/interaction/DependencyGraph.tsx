@@ -136,8 +136,8 @@ function borderPoint(
   if (dx === 0 && dy === 0) return { x: cx, y: cy };
   const halfW = w / 2;
   const halfH = h / 2;
-  const scaleX = dx !== 0 ? halfW / Math.abs(dx) : Infinity;
-  const scaleY = dy !== 0 ? halfH / Math.abs(dy) : Infinity;
+  const scaleX = dx === 0 ? Infinity : halfW / Math.abs(dx);
+  const scaleY = dy === 0 ? Infinity : halfH / Math.abs(dy);
   const scale = Math.min(scaleX, scaleY);
   return { x: cx + dx * scale, y: cy + dy * scale };
 }
@@ -169,21 +169,22 @@ const STATUS_ICON: Record<
   "out-of-service": { Icon: DismantledIcon, colorVar: "var(--color-danger)" },
 };
 
-function NodeCard({ data }: { data: NodeData }) {
+// The card's border color is driven by the resolved bench's TYPE, not by its
+// root/selected status — root vs. non-root is conveyed separately by border
+// thickness. A "SHARE" bench gets the same color as "shared-resource" edges,
+// so a resource node reads as visually tied to its relation type on sight; a
+// node that doesn't resolve in the catalogue falls back to the neutral
+// border color, same as any unresolved node always has.
+function resolveNodeColorVar(data: NodeData): string {
+  if (!data.resolved) return "var(--color-border)";
+  if (data.resolved.type === "SHARE") return "var(--color-graph-shared-resource)";
+  return "var(--color-accent)";
+}
+
+function NodeCard({ data }: Readonly<{ data: NodeData }>) {
   const displaySettings = useInteractionDisplaySettings();
   const width = displaySettings.nodeWidth;
-  // The card's border color is driven by the resolved bench's TYPE, not by
-  // its root/selected status — root vs. non-root is conveyed separately by
-  // border thickness (below). A "SHARE" bench gets the same color as
-  // "shared-resource" edges, so a resource node reads as visually tied to
-  // its relation type on sight; a node that doesn't resolve in the catalogue
-  // falls back to the neutral border color, same as any unresolved node
-  // always has.
-  const colorVar = !data.resolved
-    ? "var(--color-border)"
-    : data.resolved.type === "SHARE"
-      ? "var(--color-graph-shared-resource)"
-      : "var(--color-accent)";
+  const colorVar = resolveNodeColorVar(data);
   return (
     <div
       className="relative flex flex-col justify-center rounded-card border bg-surface px-3 py-2 shadow-sm transition-opacity"
@@ -212,7 +213,7 @@ function NodeCard({ data }: { data: NodeData }) {
       {data.resolved &&
         displaySettings.showStatus &&
         (() => {
-          const resolved = data.resolved!;
+          const resolved = data.resolved;
           const { Icon, colorVar: statusColorVar } = STATUS_ICON[resolved.status];
           return (
             <span
@@ -239,7 +240,7 @@ function NodeCard({ data }: { data: NodeData }) {
       </div>
       {data.resolved ? (
         (() => {
-          const resolved = data.resolved!;
+          const resolved = data.resolved;
           const textSegments = [
             displaySettings.showCity ? resolved.location.city : null,
             displaySettings.showBuilding ? resolved.location.building : null,
@@ -329,7 +330,7 @@ function toElkGraph(
         const pairKey = `${canonicalKind(kind)}|${[rootId, rel.externalId].sort().join("|")}`;
         if (seenPairs.has(pairKey)) return;
         seenPairs.add(pairKey);
-        edges!.push({
+        edges.push({
           id: `${canonicalKind(kind)}:${rootId}->${rel.externalId}`,
           sources: [rootId],
           targets: [rel.externalId],
@@ -1092,11 +1093,11 @@ const DependencyGraph = forwardRef<DependencyGraphHandle, Props>(function Depend
         if (e.target === node.id) connected.add(e.source);
       });
       root.querySelectorAll<HTMLElement>(".react-flow__node").forEach((el) => {
-        const id = el.getAttribute("data-id");
+        const id = el.dataset.id;
         el.classList.toggle("rf-dim", !!id && !connected.has(id));
       });
       root.querySelectorAll<SVGElement>(".react-flow__edge").forEach((el) => {
-        const id = el.getAttribute("data-id");
+        const id = el.dataset.id;
         const isTouching = id
           ? rawEdges.some(
               (e) => e.id === id && (e.source === node.id || e.target === node.id),

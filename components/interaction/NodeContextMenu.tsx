@@ -32,7 +32,7 @@ export default function NodeContextMenu({
   onUsableBy,
   onHide,
   onClose,
-}: Props) {
+}: Readonly<Props>) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,11 +62,11 @@ export default function NodeContextMenu({
     label,
     count,
     onClick,
-  }: {
+  }: Readonly<{
     label: string;
     count: number;
     onClick: () => void;
-  }) {
+  }>) {
     const enabled = count > 0;
     return (
       <button

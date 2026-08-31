@@ -14,7 +14,7 @@ const COLOR_CLASS: Record<LabTestMeanStatus, string> = {
   "in-project": "text-accent",
 };
 
-export default function StatusIcon({ status, size = 14, className }: Props) {
+export default function StatusIcon({ status, size = 14, className }: Readonly<Props>) {
   return (
     <svg
       width={size}

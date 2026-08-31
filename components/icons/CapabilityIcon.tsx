@@ -15,7 +15,7 @@ function svgProps({ size = 24, className }: Props) {
   };
 }
 
-export function AircraftSimulationIcon(props: Props) {
+export function AircraftSimulationIcon(props: Readonly<Props>) {
   return (
     <svg {...svgProps(props)}>
       <rect x="2" y="4" width="20" height="13" rx="1.5" />
@@ -28,7 +28,7 @@ export function AircraftSimulationIcon(props: Props) {
   );
 }
 
-export function AutomaticTestingIcon(props: Props) {
+export function AutomaticTestingIcon(props: Readonly<Props>) {
   return (
     <svg {...svgProps(props)}>
       <rect x="5" y="4" width="14" height="17" rx="1.5" />
@@ -41,7 +41,7 @@ export function AutomaticTestingIcon(props: Props) {
   );
 }
 
-export function RemoteAccessIcon(props: Props) {
+export function RemoteAccessIcon(props: Readonly<Props>) {
   return (
     <svg {...svgProps(props)}>
       <path d="M5 12.55a11 11 0 0 1 14 0" />
@@ -51,7 +51,7 @@ export function RemoteAccessIcon(props: Props) {
   );
 }
 
-export function NoRemoteAccessIcon(props: Props) {
+export function NoRemoteAccessIcon(props: Readonly<Props>) {
   return (
     <svg {...svgProps(props)}>
       <path d="M5 12.55a11 11 0 0 1 14 0" />

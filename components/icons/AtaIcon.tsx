@@ -7,7 +7,7 @@ type Props = {
  * Generic gear/cog icon used as a uniform pictogram for every ATA chapter
  * tile — the chapter code beneath disambiguates ATA 21 / ATA 32 / etc.
  */
-export default function AtaIcon({ size = 28, className }: Props) {
+export default function AtaIcon({ size = 28, className }: Readonly<Props>) {
   return (
     <svg
       width={size}

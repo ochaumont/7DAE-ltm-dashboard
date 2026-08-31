@@ -76,14 +76,14 @@ function Toggle<T extends string>({
   renderLabel,
   optionClassName,
   cols,
-}: {
+}: Readonly<{
   options: T[];
   value: T[];
   onChange: (v: T[]) => void;
   renderLabel?: (o: T) => string;
   optionClassName?: (o: T) => string | undefined;
   cols?: number;
-}) {
+}>) {
   const containerClass = cols ? "grid gap-1" : "flex flex-wrap gap-1";
   const containerStyle = cols
     ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }
@@ -123,13 +123,13 @@ function TriToggle<T extends string>({
   states,
   value,
   onChange,
-}: {
+}: Readonly<{
   label: string;
   ariaLabel: string;
   states: { value: T; label: string }[];
   value: T;
   onChange: (v: T) => void;
-}) {
+}>) {
   const index = Math.max(
     0,
     states.findIndex((s) => s.value === value),
@@ -184,7 +184,7 @@ export default function FilterBar({
   portfolios,
   value,
   onChange,
-}: Props) {
+}: Readonly<Props>) {
   const [search, setSearch] = useState(value.search);
   const typeRows = useMemo(() => {
     const present = new Set(types);

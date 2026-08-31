@@ -103,7 +103,7 @@ function CatalogueLoaded({
   countries,
   complexities,
   portfolios,
-}: LoadedProps) {
+}: Readonly<LoadedProps>) {
   // Filters live in an in-memory store (see lib/catalogueFilters) so they
   // survive catalogue → detail → catalogue ("Back to catalog") and can be reset
   // by the "Catalogue" menu, while being lost on reload.
@@ -171,7 +171,7 @@ function CatalogueLoaded({
     if (visible.length === 0 || isExporting) return;
     if (
       visible.length === labTestMeans.length &&
-      !window.confirm(`Export all ${visible.length} benches as PDF?`)
+      !globalThis.confirm(`Export all ${visible.length} benches as PDF?`)
     ) {
       return;
     }
@@ -189,7 +189,7 @@ function CatalogueLoaded({
         CatalogueExport({
           benches: resolved,
           filtersDescription: serializeFilters(filters, tree),
-          baseUrl: window.location.origin,
+          baseUrl: globalThis.location.origin,
         }),
       ).toBlob();
       const url = URL.createObjectURL(blob);

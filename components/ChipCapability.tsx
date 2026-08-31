@@ -30,9 +30,9 @@ const META: Record<TechnicalCapability, { label: string; Icon: IconComponent }> 
 
 export default function ChipCapability({
   capability,
-}: {
+}: Readonly<{
   capability: TechnicalCapability;
-}) {
+}>) {
   const { label, Icon } = META[capability];
   return (
     <span title={label} aria-label={label} className="inline-flex items-center">

@@ -8,7 +8,7 @@ import { SWRConfig } from "swr";
  * by the explicit Refresh button in the Header (see `RefreshButton`). The
  * default global SWR cache is used so `mutate` from anywhere hits the same data.
  */
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <SWRConfig
       value={{

@@ -1,6 +1,6 @@
 type Props = { count: number; limit: number };
 
-export default function TooDenseMessage({ count, limit }: Props) {
+export default function TooDenseMessage({ count, limit }: Readonly<Props>) {
   return (
     <div className="flex h-full items-center justify-center">
       <p className="max-w-sm text-center text-sm text-muted">

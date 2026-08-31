@@ -47,7 +47,7 @@ const entryKey = (name: string) => `interaction-save:${name}`;
 
 function safeGetItem(key: string): string | null {
   try {
-    return window.localStorage.getItem(key);
+    return globalThis.localStorage.getItem(key);
   } catch {
     return null;
   }
@@ -55,7 +55,7 @@ function safeGetItem(key: string): string | null {
 
 function safeSetItem(key: string, value: string): boolean {
   try {
-    window.localStorage.setItem(key, value);
+    globalThis.localStorage.setItem(key, value);
     return true;
   } catch {
     return false;
@@ -64,7 +64,7 @@ function safeSetItem(key: string, value: string): boolean {
 
 function safeRemoveItem(key: string): void {
   try {
-    window.localStorage.removeItem(key);
+    globalThis.localStorage.removeItem(key);
   } catch {
     // ignore — nothing to clean up if storage is unavailable
   }

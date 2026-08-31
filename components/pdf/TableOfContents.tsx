@@ -7,7 +7,7 @@ type Props = {
   baseUrl: string;
 };
 
-export default function TableOfContents({ benches, baseUrl }: Props) {
+export default function TableOfContents({ benches, baseUrl }: Readonly<Props>) {
   return (
     <Page size="A4" style={styles.page}>
       <Text style={styles.h1}>Contents</Text>

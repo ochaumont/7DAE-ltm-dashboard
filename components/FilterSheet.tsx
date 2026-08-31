@@ -40,7 +40,7 @@ export default function FilterSheet({
   onChange,
   count,
   extraContent,
-}: Props) {
+}: Readonly<Props>) {
   const [open, setOpen] = useState(false);
   const activeCount =
     value.types.length +
@@ -50,8 +50,8 @@ export default function FilterSheet({
     value.complexities.length +
     value.portfolios.length +
     (value.search ? 1 : 0) +
-    (value.photo !== "all" ? 1 : 0) +
-    (value.qualitySeal !== "all" ? 1 : 0);
+    (value.photo === "all" ? 0 : 1) +
+    (value.qualitySeal === "all" ? 0 : 1);
   return (
     <>
       <button
@@ -112,7 +112,7 @@ export default function FilterSheet({
                 onClick={() => setOpen(false)}
                 className="mt-6 w-full py-3 rounded bg-accent text-accent-fg font-semibold"
               >
-                Show {count} result{count !== 1 ? "s" : ""}
+                Show {count} result{count === 1 ? "" : "s"}
               </button>
             </motion.div>
           </>

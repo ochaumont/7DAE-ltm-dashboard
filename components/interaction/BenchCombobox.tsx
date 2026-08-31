@@ -17,7 +17,7 @@ export default function BenchCombobox({
   excludeIds,
   onSelect,
   placeholder = "Search a bench by name or code…",
-}: Props) {
+}: Readonly<Props>) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);

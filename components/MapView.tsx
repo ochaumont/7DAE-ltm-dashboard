@@ -36,9 +36,9 @@ function labelSizeClass(count: number): string {
 
 export default function MapView({
   labTestMeans,
-}: {
+}: Readonly<{
   labTestMeans: LabTestMean[];
-}) {
+}>) {
   const [selectedSite, setSelectedSite] = useState<string | null>(null);
   const theme = useTheme();
 
@@ -73,9 +73,9 @@ export default function MapView({
       : 1;
 
   const selectedGroup =
-    selectedSite != null
-      ? groups.find((g) => g.site === selectedSite) ?? null
-      : null;
+    selectedSite == null
+      ? null
+      : groups.find((g) => g.site === selectedSite) ?? null;
 
   return (
     <MapGL

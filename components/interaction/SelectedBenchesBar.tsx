@@ -5,7 +5,7 @@ type Props = {
   onRemove: (externalId: string) => void;
 };
 
-export default function SelectedBenchesBar({ benches, onRemove }: Props) {
+export default function SelectedBenchesBar({ benches, onRemove }: Readonly<Props>) {
   if (benches.length === 0) return null;
 
   return (

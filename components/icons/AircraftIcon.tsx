@@ -8,7 +8,7 @@ type Props = {
  * pictogram for every aircraft program tile — the program code beneath
  * disambiguates SA / LR-A330 / etc.
  */
-export default function AircraftIcon({ size = 28, className }: Props) {
+export default function AircraftIcon({ size = 28, className }: Readonly<Props>) {
   return (
     <svg
       width={size}

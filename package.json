@@ -6,7 +6,8 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "npx --yes serve out -l 3001",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "sonar": "bash sonar.sh"
   },
   "engines": {
     "node": ">=20.9.0"

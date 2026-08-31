@@ -15,7 +15,7 @@ function svgProps({ size = 18, className }: Props) {
   };
 }
 
-export function KickoffIcon(props: Props) {
+export function KickoffIcon(props: Readonly<Props>) {
   return (
     <svg {...svgProps(props)}>
       <path d="M4 22V4" />
@@ -24,7 +24,7 @@ export function KickoffIcon(props: Props) {
   );
 }
 
-export function InServiceIcon(props: Props) {
+export function InServiceIcon(props: Readonly<Props>) {
   return (
     <svg {...svgProps(props)}>
       <circle cx="12" cy="12" r="9" />
@@ -33,7 +33,7 @@ export function InServiceIcon(props: Props) {
   );
 }
 
-export function MothballedIcon(props: Props) {
+export function MothballedIcon(props: Readonly<Props>) {
   return (
     <svg {...svgProps(props)}>
       <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" />
@@ -41,7 +41,7 @@ export function MothballedIcon(props: Props) {
   );
 }
 
-export function DismantledIcon(props: Props) {
+export function DismantledIcon(props: Readonly<Props>) {
   return (
     <svg {...svgProps(props)}>
       <rect x="3" y="4" width="18" height="4" rx="1" />

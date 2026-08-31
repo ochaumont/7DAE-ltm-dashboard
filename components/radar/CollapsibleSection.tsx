@@ -17,7 +17,7 @@ export default function CollapsibleSection({
   defaultOpen = true,
   headerExtra,
   children,
-}: Props) {
+}: Readonly<Props>) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div>
@@ -38,7 +38,7 @@ export default function CollapsibleSection({
   );
 }
 
-function ChevronIcon({ open }: { open: boolean }) {
+function ChevronIcon({ open }: Readonly<{ open: boolean }>) {
   return (
     <svg
       width="12"
