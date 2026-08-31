@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import useSWR from "swr";
 import { getLabTestMeans } from "./labtestmeans";
-import { getAircraftTree } from "./aircraftStructure";
 import {
+  getAircraftTree,
   computeProgramCounts,
   hasUnassignedLabTestMeans,
 } from "./aircraftStructure";
@@ -21,6 +22,15 @@ import type {
   LabTestMeanType,
 } from "./types";
 
+/** Stable SWR keys for the two backend datasets — shared by the catalogue, the
+ * map, the detail page (cache-first) and the Header refresh button. */
+export const SWR_KEY_LTM = "labtestmeans";
+export const SWR_KEY_TREE = "aircraft-tree";
+
+// Stable empty references so memoised derivations don't churn while loading.
+const EMPTY_LTM: LabTestMean[] = [];
+const EMPTY_TREE: AircraftStructureNode[] = [];
+
 export type LabTestMeansData = {
   labTestMeans: LabTestMean[];
   tree: AircraftStructureNode[];
@@ -35,43 +45,52 @@ export type LabTestMeansData = {
   error: Error | null;
 };
 
+/**
+ * Loads the lab test means + aircraft tree ONCE per session via SWR (cached and
+ * shared across pages), and memoises every derived value so they are not
+ * recomputed on each render (e.g. while typing in the filters).
+ */
 export function useLabTestMeans(): LabTestMeansData {
-  const [labTestMeans, setLabTestMeans] = useState<LabTestMean[]>([]);
-  const [tree, setTree] = useState<AircraftStructureNode[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data: ltmData, error } = useSWR(SWR_KEY_LTM, getLabTestMeans);
+  // The tree fetcher swallows its own errors (returns []), so it never drives
+  // the error screen — only the lab test means do.
+  const { data: treeData } = useSWR(SWR_KEY_TREE, getAircraftTree);
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([getLabTestMeans(), getAircraftTree()])
-      .then(([ltms, t]) => {
-        if (cancelled) return;
-        setLabTestMeans(ltms);
-        setTree(t);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err : new Error(String(err)));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const labTestMeans = ltmData ?? EMPTY_LTM;
+  const tree = treeData ?? EMPTY_TREE;
+  const loading = !ltmData && !error;
+
+  const programCounts = useMemo(
+    () => computeProgramCounts(tree, labTestMeans),
+    [tree, labTestMeans],
+  );
+  const hasUnassignedPrograms = useMemo(
+    () => hasUnassignedLabTestMeans(labTestMeans),
+    [labTestMeans],
+  );
+  const types = useMemo(() => uniqueTypes(labTestMeans), [labTestMeans]);
+  const statuses = useMemo(() => uniqueStatuses(labTestMeans), [labTestMeans]);
+  const countries = useMemo(() => uniqueCountries(labTestMeans), [labTestMeans]);
+  const complexities = useMemo(
+    () => uniqueComplexities(labTestMeans),
+    [labTestMeans],
+  );
+  const portfolios = useMemo(
+    () => uniquePortfolios(labTestMeans),
+    [labTestMeans],
+  );
 
   return {
     labTestMeans,
     tree,
-    programCounts: computeProgramCounts(tree, labTestMeans),
-    hasUnassignedPrograms: hasUnassignedLabTestMeans(labTestMeans),
-    types: uniqueTypes(labTestMeans),
-    statuses: uniqueStatuses(labTestMeans),
-    countries: uniqueCountries(labTestMeans),
-    complexities: uniqueComplexities(labTestMeans),
-    portfolios: uniquePortfolios(labTestMeans),
+    programCounts,
+    hasUnassignedPrograms,
+    types,
+    statuses,
+    countries,
+    complexities,
+    portfolios,
     loading,
-    error,
+    error: (error as Error) ?? null,
   };
 }

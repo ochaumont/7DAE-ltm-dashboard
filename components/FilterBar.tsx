@@ -5,6 +5,8 @@ import type {
   AircraftStructureNode,
   LabTestMeanStatus,
   LabTestMeanType,
+  PhotoFilter,
+  QualitySealFilter,
 } from "@/lib/types";
 import { COMPLEXITY_NA, PORTFOLIO_NONE } from "@/lib/labtestmeans";
 import { STATUS_LABELS, TYPE_LABELS } from "@/lib/labels";
@@ -18,8 +20,34 @@ const STATUS_ORDER: LabTestMeanStatus[] = [
   "out-of-service",
 ];
 
+// Type filter laid out on two rows: short labels together on row 1, the long
+// ones (SIMULATOR, SHARED RESOURCE) on row 2 where they get half-width each and
+// stay readable instead of being truncated.
+const TYPE_ROWS: LabTestMeanType[][] = [
+  ["SIB", "FIB", "RT"],
+  ["SIMU", "SHARE"],
+];
+
+// Tri-state sliding switch, left → right. The knob is green for "with"/"all"
+// and red for "without" (see the requested toggle.gif visual).
+const PHOTO_STATES: { value: PhotoFilter; label: string; tone: "on" | "off" }[] =
+  [
+    { value: "with", label: "With photo", tone: "on" },
+    { value: "all", label: "All", tone: "on" },
+    { value: "without", label: "Without photo", tone: "off" },
+  ];
+
+// Same tri-state sliding switch as PHOTO_STATES, ALL in the middle position.
+const QUALITY_SEAL_STATES: { value: QualitySealFilter; label: string }[] = [
+  { value: "draft", label: "Draft" },
+  { value: "all", label: "All" },
+  { value: "released", label: "Released" },
+];
+
 export type FilterValue = {
   search: string;
+  photo: PhotoFilter;
+  qualitySeal: QualitySealFilter;
   types: LabTestMeanType[];
   statuses: LabTestMeanStatus[];
   countries: string[];
@@ -46,12 +74,14 @@ function Toggle<T extends string>({
   value,
   onChange,
   renderLabel,
+  optionClassName,
   cols,
 }: {
   options: T[];
   value: T[];
   onChange: (v: T[]) => void;
   renderLabel?: (o: T) => string;
+  optionClassName?: (o: T) => string | undefined;
   cols?: number;
 }) {
   const containerClass = cols ? "grid gap-1" : "flex flex-wrap gap-1";
@@ -70,16 +100,75 @@ function Toggle<T extends string>({
               onChange(active ? value.filter((v) => v !== o) : [...value, o])
             }
             className={clsx(
-              "px-2.5 py-1 rounded text-xs font-medium border transition-colors truncate",
+              "px-2 py-0.5 rounded text-[11px] font-medium border transition-colors truncate",
               active
                 ? "bg-accent text-accent-fg border-accent"
-                : "bg-surface text-fg border-border hover:border-accent/50"
+                : "bg-surface text-fg border-border hover:border-accent/50",
+              optionClassName?.(o)
             )}
           >
             {renderLabel ? renderLabel(o) : o}
           </button>
         );
       })}
+    </div>
+  );
+}
+
+// Tri-state sliding switch shared by "Photo" and "Quality seal" — same knob
+// animation and radiogroup semantics, parameterized by the states array.
+function TriToggle<T extends string>({
+  label,
+  ariaLabel,
+  states,
+  value,
+  onChange,
+}: {
+  label: string;
+  ariaLabel: string;
+  states: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  const index = Math.max(
+    0,
+    states.findIndex((s) => s.value === value),
+  );
+  const current = states[index];
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
+        {label}
+      </div>
+      <div className="flex items-center gap-2">
+        <div
+          role="radiogroup"
+          aria-label={ariaLabel}
+          className="relative inline-flex h-[22px] w-14 shrink-0 rounded-full bg-[#00205B] p-[3px] shadow-inner"
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute top-[3px] left-[3px] z-20 h-4 w-4 rounded-full shadow transition-transform duration-200 ease-out"
+            style={{
+              transform: `translateX(${index * 17}px)`,
+              backgroundColor: "var(--color-bg)",
+            }}
+          />
+          {states.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              role="radio"
+              aria-checked={value === s.value}
+              aria-label={s.label}
+              title={s.label}
+              onClick={() => onChange(s.value)}
+              className="relative z-10 flex-1 rounded-full bg-transparent focus:outline-none"
+            />
+          ))}
+        </div>
+        <span className="text-[11px] font-medium text-fg">{current.label}</span>
+      </div>
     </div>
   );
 }
@@ -97,10 +186,12 @@ export default function FilterBar({
   onChange,
 }: Props) {
   const [search, setSearch] = useState(value.search);
-  const sortedTypes = useMemo(
-    () => types.filter((t) => t !== "NA"),
-    [types],
-  );
+  const typeRows = useMemo(() => {
+    const present = new Set(types);
+    return TYPE_ROWS.map((row) => row.filter((t) => present.has(t))).filter(
+      (row) => row.length > 0,
+    );
+  }, [types]);
   const sortedCountries = useMemo(
     () => countries.filter((c) => c !== "Unknown"),
     [countries],
@@ -117,7 +208,7 @@ export default function FilterBar({
     [statuses],
   );
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <input
         type="search"
         placeholder="Search lab test means, references, managers…"
@@ -126,20 +217,42 @@ export default function FilterBar({
           setSearch(e.target.value);
           onChange({ ...value, search: e.target.value });
         }}
-        className="w-full px-3 py-2 rounded bg-surface border border-border text-fg placeholder:text-muted focus:outline-none focus:border-accent"
+        className="w-full px-3 py-1.5 rounded bg-surface border border-border text-sm text-fg placeholder:text-muted focus:outline-none focus:border-accent"
       />
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Type</div>
-        <Toggle
-          options={sortedTypes}
-          value={value.types}
-          onChange={(v) => onChange({ ...value, types: v })}
-          renderLabel={(t) => TYPE_LABELS[t]}
-          cols={sortedTypes.length || 1}
+      <div className="grid grid-cols-2 gap-3">
+        <TriToggle
+          label="Photo"
+          ariaLabel="Photo filter"
+          states={PHOTO_STATES}
+          value={value.photo}
+          onChange={(v) => onChange({ ...value, photo: v })}
+        />
+        <TriToggle
+          label="Quality seal"
+          ariaLabel="Quality seal filter"
+          states={QUALITY_SEAL_STATES}
+          value={value.qualitySeal}
+          onChange={(v) => onChange({ ...value, qualitySeal: v })}
         />
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Status</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Type</div>
+        <div className="space-y-1">
+          {typeRows.map((row, i) => (
+            <Toggle
+              key={i}
+              options={row}
+              value={value.types}
+              onChange={(v) => onChange({ ...value, types: v })}
+              renderLabel={(t) => TYPE_LABELS[t]}
+              optionClassName={(t) => (t === "SHARE" ? "!text-[10px]" : undefined)}
+              cols={row.length}
+            />
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Status</div>
         <Toggle
           options={sortedStatuses}
           value={value.statuses}
@@ -149,7 +262,7 @@ export default function FilterBar({
         />
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Country</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Country</div>
         <Toggle
           options={sortedCountries}
           value={value.countries}
@@ -158,7 +271,7 @@ export default function FilterBar({
         />
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Portfolio</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Portfolio</div>
         <Toggle
           options={portfolios}
           value={value.portfolios}
@@ -168,7 +281,7 @@ export default function FilterBar({
         />
       </div>
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Complexity</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Complexity</div>
         <Toggle
           options={sortedComplexities}
           value={value.complexities}
@@ -179,7 +292,7 @@ export default function FilterBar({
       </div>
       {(tree.length > 0 || hasUnassignedPrograms) && (
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Aircraft programs</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Aircraft programs</div>
           <TreeFilter
             tree={tree}
             hasUnassigned={hasUnassignedPrograms}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSWRConfig, unstable_serialize } from "swr";
 import LabTestMeanCard from "@/components/LabTestMeanCard";
 import FilterBar, { type FilterValue } from "@/components/FilterBar";
 import FilterSheet from "@/components/FilterSheet";
@@ -9,16 +10,22 @@ import { filterLabTestMeans } from "@/lib/labtestmeans";
 import { expandSelection } from "@/lib/aircraftStructure";
 import { useLabTestMeans } from "@/lib/useLabTestMeans";
 import { usePageQuery } from "@/lib/usePageQuery";
+import {
+  useCatalogueFilters,
+  setCatalogueFilters,
+  setCataloguePage,
+} from "@/lib/catalogueFilters";
 import { serializeFilters } from "@/lib/filterDescription";
 import { NEXT_PUBLIC_ATOM_API_BASE_URL } from "@/lib/atom-api";
+import { photoKey, type CachedPhoto } from "@/lib/usePhoto";
 import type { CoverPhoto } from "@/lib/types";
 
 const PAGE_SIZE = 6;
 
 function CatalogueSkeleton() {
   return (
-    <main className="px-4 md:px-6 py-8 max-w-[1600px] mx-auto">
-      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+    <main className="px-4 md:px-6 py-8 max-w-[1600px]">
+      <div className="grid lg:grid-cols-[296px_1fr] gap-6">
         <aside className="hidden lg:block">
           <div className="h-[400px] rounded-card bg-surface-2 skeleton-pulse" />
         </aside>
@@ -97,15 +104,10 @@ function CatalogueLoaded({
   complexities,
   portfolios,
 }: LoadedProps) {
-  const [filters, setFilters] = useState<FilterValue>({
-    search: "",
-    types: [],
-    statuses: [],
-    countries: [],
-    programNodeIds: [],
-    complexities: [],
-    portfolios: [],
-  });
+  // Filters live in an in-memory store (see lib/catalogueFilters) so they
+  // survive catalogue → detail → catalogue ("Back to catalog") and can be reset
+  // by the "Catalogue" menu, while being lost on reload.
+  const { filters } = useCatalogueFilters();
 
   const visible = useMemo(() => {
     const { names, includeUnassigned } = expandSelection(
@@ -123,14 +125,35 @@ function CatalogueLoaded({
   const { page, setPage } = usePageQuery(totalPages);
   const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Mirror the (URL-driven, clamped) page into the store so the detail page's
+  // "Back to catalog" link can restore it via ?page=N.
+  useEffect(() => {
+    setCataloguePage(page);
+  }, [page]);
+
   const handleFiltersChange = (v: FilterValue) => {
-    setFilters(v);
+    setCatalogueFilters(v);
     setPage(1);
   };
 
   const [isExporting, setIsExporting] = useState(false);
+  const { cache } = useSWRConfig();
+
+  const blobToDataUrl = async (blob: Blob): Promise<string | null> => {
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const fmt = buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpeg" : null;
+    if (!fmt) return null;
+    const binary = Array.from(buf).map((b) => String.fromCharCode(b)).join("");
+    return `data:image/${fmt};base64,${btoa(binary)}`;
+  };
 
   const fetchPhotoDataUrl = async (cover: CoverPhoto): Promise<string | null> => {
+    // Reuse the Blob already cached by `usePhoto` if this cover was displayed
+    // (same SWR key) — no extra POST for already-shown covers.
+    const cached = cache.get(unstable_serialize(photoKey(cover.id)))?.data as
+      | CachedPhoto
+      | undefined;
+    if (cached?.blob) return blobToDataUrl(cached.blob);
     try {
       const res = await fetch(`${NEXT_PUBLIC_ATOM_API_BASE_URL}/api/infos/resource`, {
         method: "POST",
@@ -138,11 +161,7 @@ function CatalogueLoaded({
         body: JSON.stringify({ id: cover.id, uri: cover.uri }),
       });
       if (!res.ok) return null;
-      const buf = new Uint8Array(await res.arrayBuffer());
-      const fmt = buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpeg" : null;
-      if (!fmt) return null;
-      const binary = Array.from(buf).map((b) => String.fromCharCode(b)).join("");
-      return `data:image/${fmt};base64,${btoa(binary)}`;
+      return blobToDataUrl(await res.blob());
     } catch {
       return null;
     }
@@ -189,10 +208,13 @@ function CatalogueLoaded({
   };
 
   return (
-    <main className="px-4 md:px-6 py-8 max-w-[1600px] mx-auto">
-      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+    <main className="px-4 md:px-6 py-8 max-w-[1600px]">
+      <div className="grid lg:grid-cols-[296px_1fr] gap-6">
         <aside className="hidden lg:block">
-          <div className="sticky top-[80px]">
+          <div className="sticky top-[80px] max-h-[calc(100vh-100px)] overflow-y-auto glass-panel p-5">
+            <div className="mb-3 text-xs text-muted font-mono">
+              {visible.length} / {labTestMeans.length} lab test means
+            </div>
             <FilterBar
               types={types}
               statuses={statuses}
@@ -205,9 +227,6 @@ function CatalogueLoaded({
               value={filters}
               onChange={handleFiltersChange}
             />
-            <div className="mt-4 text-xs text-muted font-mono">
-              {visible.length} / {labTestMeans.length} lab test means
-            </div>
             <button
               type="button"
               onClick={handleExportPdf}

@@ -5,6 +5,8 @@ import type {
   LabTestMean,
   LabTestMeanStatus,
   LabTestMeanType,
+  PhotoFilter,
+  QualitySealFilter,
 } from "./types";
 
 export async function getLabTestMeans(): Promise<LabTestMean[]> {
@@ -27,6 +29,8 @@ export const COMPLEXITY_NA = "__na__";
 
 export type Filters = {
   search?: string;
+  photo?: PhotoFilter;
+  qualitySeal?: QualitySealFilter;
   types?: LabTestMeanType[];
   statuses?: LabTestMeanStatus[];
   countries?: string[];
@@ -41,6 +45,10 @@ export function filterLabTestMeans(
   f: Filters,
 ): LabTestMean[] {
   return list.filter((m) => {
+    if (f.photo === "with" && m.photos.length === 0) return false;
+    if (f.photo === "without" && m.photos.length > 0) return false;
+    if (f.qualitySeal === "draft" && m.lxState !== "DRAFT") return false;
+    if (f.qualitySeal === "released" && m.lxState !== "RELEASE") return false;
     if (f.types?.length && !f.types.includes(m.type)) return false;
     if (f.statuses?.length && !f.statuses.includes(m.status)) return false;
     if (f.countries?.length && !f.countries.includes(m.location.country))

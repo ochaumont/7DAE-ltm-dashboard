@@ -25,6 +25,11 @@
   --color-success: #34d399;
   --color-warning: #fbbf24;
   --color-danger: #f87171;
+  --color-graph-depends-on: #5b8def;
+  --color-graph-supports: #34d399;
+  --color-graph-shared-resource: #fb923c;
+  --color-radar-out: #f59e0b;
+  --color-radar-in: #22d3ee;
 }
 
 :root[data-theme="light"] {
@@ -39,6 +44,91 @@
   --color-success: #047857;
   --color-warning: #b45309;
   --color-danger: #b91c1c;
+  --color-graph-depends-on: #2563eb;
+  --color-graph-supports: #047857;
+  --color-graph-shared-resource: #c2410c;
+  --color-radar-out: #b45309;
+  --color-radar-in: #0e7490;
+}
+
+/* Dependency graph hover trace — toggled imperatively on the DOM (not via
+   React state) so it never forces React Flow to re-measure node sizes. */
+.react-flow__node,
+.react-flow__edge {
+  transition: opacity 150ms ease;
+}
+.react-flow__node.rf-dim {
+  opacity: 0.25;
+}
+.react-flow__edge.rf-dim {
+  opacity: 0.15;
+}
+.react-flow__edge.rf-emph .react-flow__edge-path {
+  stroke-width: 3px;
+  transition: stroke-width 150ms ease;
+}
+
+/* Radar page hover trace — same DOM-class-toggle technique as above, adapted
+   for plain SVG (no React Flow here). Namespaced with radar- / rd- prefixes
+   to avoid any collision with the react-flow selectors used by /interaction. */
+.radar-node,
+.radar-label,
+.radar-edge {
+  transition: opacity 150ms ease, stroke 150ms ease;
+}
+.radar-node {
+  fill: var(--color-muted);
+}
+.radar-label {
+  fill: var(--color-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.radar-edge {
+  fill: none;
+  /* Gray at rest — "depends-on" vs "supports" only means something relative
+     to whichever bench is hovered (see --edge-color-out/-in below), so no
+     permanent per-kind color here. */
+  stroke: var(--color-muted);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.radar-node.rd-dim,
+.radar-label.rd-dim {
+  opacity: 0.25;
+}
+.radar-edge.rd-dim {
+  opacity: 0.08;
+}
+.radar-edge.rd-emph-out {
+  /* Set per-edge in CircularGraph.tsx from the relation kind — the hovered
+     bench is this edge's source, i.e. it depends on the other end. */
+  stroke: var(--edge-color-out);
+  stroke-width: 2;
+  opacity: 1;
+}
+.radar-edge.rd-emph-in {
+  /* The hovered bench is this edge's target, i.e. it supports the other end. */
+  stroke: var(--edge-color-in);
+  stroke-width: 2;
+  opacity: 1;
+}
+
+/* Floating "glass" card look — filter panels on /map, /depview and the
+   catalogue sidebar all use this for a consistent visual treatment,
+   regardless of which route theme class (if any) wraps the page. Formerly
+   scoped to `.theme-map-first`, which meant only /map ever rendered it. */
+.glass-panel {
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 12px 48px color-mix(in srgb, #000 40%, transparent);
+}
+
+[data-theme="light"] .glass-panel {
+  box-shadow: 0 12px 48px color-mix(in srgb, #0a0e1a 10%, transparent);
 }
 
 html,

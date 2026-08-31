@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, notFound } from "next/navigation";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import useSWR, { useSWRConfig } from "swr";
 import LabTestMeanHeader from "@/components/LabTestMeanHeader";
 import Gallery from "@/components/Gallery";
 import Section from "@/components/detail/Section";
-import { getLabTestMeans } from "@/lib/labtestmeans";
+import { getLabTestMeanByExternalId } from "@/lib/labtestmeans";
+import { SWR_KEY_LTM } from "@/lib/useLabTestMeans";
+import { getCatalogueState } from "@/lib/catalogueFilters";
 import type { LabTestMean } from "@/lib/types";
 
 function DetailSkeleton() {
@@ -29,43 +30,33 @@ function DetailSkeleton() {
 export default function LabTestMeanDetailClient() {
   const searchParams = useSearchParams();
   const externalId = searchParams.get("id") ?? "";
+  const { cache } = useSWRConfig();
 
-  const [ltm, setLtm] = useState<LabTestMean | null | undefined>(undefined);
-  const [idToExternalId, setIdToExternalId] = useState<Map<string, string>>(new Map());
-  const [error, setError] = useState<Error | null>(null);
+  // Cache-first: if the catalogue/map already loaded the list, serve the item
+  // from memory (no network). `fallbackData` makes SWR skip the fetch entirely.
+  const cachedList = cache.get(SWR_KEY_LTM)?.data as LabTestMean[] | undefined;
+  const fallbackData = cachedList?.find((m) => m.externalId === externalId);
 
-  useEffect(() => {
-    let cancelled = false;
-    getLabTestMeans()
-      .then((all) => {
-        if (cancelled) return;
-        const found = all.find((m) => m.externalId === externalId) ?? null;
-        setLtm(found);
-        setIdToExternalId(
-          new Map(
-            all
-              .filter((m) => m.externalId)
-              .map((m) => [m.id, m.externalId]),
-          ),
-        );
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err : new Error(String(err)));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [externalId]);
+  const { data: ltm, error } = useSWR(
+    externalId ? ["ltm", externalId] : null,
+    () => getLabTestMeanByExternalId(externalId),
+    { fallbackData },
+  );
 
   if (error) throw error;
+  if (!externalId) return notFound();
   if (ltm === undefined) return <DetailSkeleton />;
   if (ltm === null) return notFound();
+
+  // Restore the catalogue with its remembered page (filters live in the store
+  // and are reapplied on mount). The "Catalogue" menu, by contrast, resets them.
+  const backPage = getCatalogueState().page;
+  const backHref = backPage > 1 ? `/?page=${backPage}` : "/";
 
   return (
     <main className="px-4 md:px-8 py-8 max-w-[1400px] mx-auto">
       <Link
-        href="/"
+        href={backHref}
         className="inline-block text-xs font-mono text-muted hover:text-fg mb-6"
       >
         ← Back to catalog
@@ -109,29 +100,18 @@ export default function LabTestMeanDetailClient() {
           {ltm.dependsOn.length > 0 && (
             <Section title="Depends on">
               <div className="flex flex-wrap gap-2 max-w-detail-info">
-                {ltm.dependsOn.map((dep) => {
-                  const xid = idToExternalId.get(dep.id);
-                  return xid ? (
-                    <Link
-                      key={dep.id}
-                      href={`/labtestmean?id=${encodeURIComponent(xid)}`}
-                      // Same static page as every other detail link → no prefetch
-                      // (avoids redundant fetches and gateway 301/403 noise).
-                      prefetch={false}
-                      className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
-                    >
-                      {dep.name}
-                    </Link>
-                  ) : (
-                    <span
-                      key={dep.id}
-                      className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-surface-2 text-muted border border-border"
-                      title="lab test mean introuvable"
-                    >
-                      {dep.name}
-                    </span>
-                  );
-                })}
+                {ltm.dependsOn.map((dep) => (
+                  <Link
+                    key={dep.id}
+                    href={`/labtestmean?id=${encodeURIComponent(dep.externalId)}`}
+                    // Same static page as every other detail link → no prefetch
+                    // (avoids redundant fetches and gateway 301/403 noise).
+                    prefetch={false}
+                    className="inline-flex items-center px-2.5 py-1 rounded-md text-sm bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+                  >
+                    {dep.name}
+                  </Link>
+                ))}
               </div>
             </Section>
           )}

@@ -52,7 +52,7 @@ export default function TreeFilter({
     return (
       <div key={node.id}>
         <div
-          className="flex items-center gap-1.5 py-1 text-sm"
+          className="flex items-center gap-1.5 py-0.5 text-xs"
           style={{ paddingLeft: depth * 12 }}
         >
           {hasChildren ? (
@@ -103,7 +103,7 @@ export default function TreeFilter({
     <div className="max-h-[32vh] overflow-y-auto -mx-1 px-1">
       {sortByName(tree).map((n) => renderNode(n, 0))}
       {hasUnassigned && (
-        <div className="flex items-center gap-1.5 py-1 text-sm border-t border-border mt-1 pt-2">
+        <div className="flex items-center gap-1.5 py-0.5 text-xs border-t border-border mt-1 pt-2">
           <span className="w-4 h-4" aria-hidden="true" />
           <input
             type="checkbox"

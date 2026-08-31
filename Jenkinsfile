@@ -97,7 +97,7 @@ pipeline {
                     sh "BASE_HREF=${BASE_HREF} NEXT_PUBLIC_BASE_HREF=${BASE_HREF} NEXT_PUBLIC_ATOM_API_BASE_URL=${atomApiUrl} npm run build"
                 }
                 echo "Stashing static export and Docker config for packaging..."
-                stash includes: 'out/**,Dockerfile,nginx.conf,nginx-custom.conf', name: 'next-build'
+                stash includes: 'out/**,Dockerfile,deployment/nginx/nginx.conf,deployment/nginx/nginx-custom.conf', name: 'next-build'
             }
         }
 

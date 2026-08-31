@@ -9,10 +9,11 @@ export const STATUS_LABELS: Record<LabTestMeanStatus, string> = {
 };
 
 export const TYPE_LABELS: Record<LabTestMeanType, string> = {
+  SIMU: "SIMULATOR",
   SIB: "SIB",
-  SIMU: "SIMU",
   FIB: "FIB",
-  RT: "Mean ResearchOnTest",
+  RT: "RT",
+  SHARE: "SHARED RESOURCE",
   NA: "NA",
 };
 

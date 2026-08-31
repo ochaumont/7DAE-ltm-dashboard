@@ -1,4 +1,4 @@
-export type LabTestMeanType = "SIB" | "SIMU" | "FIB" | "RT" | "NA";
+export type LabTestMeanType = "SIB" | "SIMU" | "FIB" | "RT" | "SHARE" | "NA";
 
 export type LabTestMeanStatus =
   | "operational"
@@ -7,6 +7,12 @@ export type LabTestMeanStatus =
   | "in-project";
 
 export type Complexity = "simple" | "medium" | "complex";
+
+/** Tri-state photo filter: any LTM / only with ≥1 photo / only without photos. */
+export type PhotoFilter = "all" | "with" | "without";
+
+/** Tri-state quality seal filter: any LTM / only DRAFT / only RELEASE. */
+export type QualitySealFilter = "all" | "draft" | "released";
 
 export type TechnicalCapability =
   | "aircraft-simulation-package"
@@ -73,6 +79,21 @@ export type Lifecycle = {
   dismantled?: string;
 };
 
+export type DependencyRelationKind =
+  | "depends-on"
+  | "supports"
+  | "shared-resource";
+
+export type DependencyRelation = {
+  id: string;
+  externalId: string;
+  name: string;
+  kind: DependencyRelationKind;
+  // Absent means "not determined" — never an empty string or any value
+  // other than these two.
+  dependencyType?: "mandatory" | "optional";
+};
+
 export type AircraftStructureCategory =
   | "programFamily"
   | "aircraftType"
@@ -107,10 +128,13 @@ export type LabTestMean = {
   programs: string[];
   atas: string[];
   softwares: { id: string; name: string }[];
-  dependsOn: { id: string; name: string }[];
+  dependsOn: DependencyRelation[];
+  supports: DependencyRelation[];
+  sharedResources: DependencyRelation[];
   portfolio: { id: string; name: string } | null;
   technicalCapabilities: TechnicalCapability[];
   projects: string[];
   coverPhoto: CoverPhoto | null;
   photos: Photo[];
+  lxState: "DRAFT" | "RELEASE";
 };

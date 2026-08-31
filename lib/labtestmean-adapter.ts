@@ -5,6 +5,8 @@ import type {
   LabTestMeanDto,
 } from "./atom-api";
 import type {
+  DependencyRelation,
+  DependencyRelationKind,
   LabTestMean,
   LabTestMeanStatus,
   LabTestMeanType,
@@ -35,11 +37,14 @@ export const GEO_MAP: Record<string, { lat: number; lng: number }> = {
   BRE: { lat: 53.07, lng: 8.8 },
 };
 
+// Keyed by the backend category lowercased (see `toType`) so casing variants
+// like "RT"/"rt" or "SHARE"/"share" all resolve.
 const TYPE_MAP: Record<string, LabTestMeanType> = {
   sib: "SIB",
   simu: "SIMU",
   fib: "FIB",
-  RT: "RT",
+  rt: "RT",
+  share: "SHARE",
 };
 
 
@@ -87,9 +92,44 @@ function toPhotos(
   return [...selected, ...others];
 }
 
+/** Anything other than these two exact values (absent, `null`, a typo, a
+ * future backend value) is treated as "not determined" rather than guessed. */
+function toDependencyType(raw: string | undefined): "mandatory" | "optional" | undefined {
+  return raw === "mandatory" || raw === "optional" ? raw : undefined;
+}
+
+function toRelations(
+  refs: FactsheetRef[] | null | undefined,
+  kind: DependencyRelationKind,
+): DependencyRelation[] {
+  return (refs ?? [])
+    .filter(
+      (r): r is FactsheetRef =>
+        typeof r.id === "string" &&
+        r.id.length > 0 &&
+        typeof r.externalId === "string" &&
+        r.externalId.length > 0 &&
+        typeof r.name === "string" &&
+        r.name.length > 0,
+    )
+    .map((r) => ({
+      id: r.id,
+      externalId: r.externalId,
+      name: r.name,
+      kind,
+      dependencyType: toDependencyType(r.attributes?.dependencyType),
+    }));
+}
+
+/** APPROVED and BROKEN_QUALITY_SEAL are both "released" as far as the UI is
+ * concerned; DRAFT, and anything absent or unexpected, defaults to DRAFT. */
+function toLxTag(raw: string | null | undefined): "DRAFT" | "RELEASE" {
+  return raw === "APPROVED" || raw === "BROKEN_QUALITY_SEAL" ? "RELEASE" : "DRAFT";
+}
+
 function toType(raw: LabTestMeanDto["category"]): LabTestMeanType {
   if (raw == null) return "NA";
-  return TYPE_MAP[raw] ?? "NA";
+  return TYPE_MAP[raw.toLowerCase()] ?? "NA";
 }
 
 /**
@@ -270,15 +310,12 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
           s.name.length > 0,
       )
       .map((s) => ({ id: s.id, name: s.name })),
-    dependsOn: (dto.LTMDependsOn ?? [])
-      .filter(
-        (d) =>
-          typeof d.id === "string" &&
-          d.id.length > 0 &&
-          typeof d.name === "string" &&
-          d.name.length > 0,
-      )
-      .map((d) => ({ id: d.id, name: d.name })),
+    dependsOn: toRelations(dto.LTMDependsOn, "depends-on"),
+    supports: toRelations(dto.LTMSupports, "supports"),
+    sharedResources: toRelations(
+      dto.SharedResourcesDependsOn,
+      "shared-resource",
+    ),
     portfolio:
       dto.portfolio &&
       typeof dto.portfolio.id === "string" &&
@@ -293,5 +330,6 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
     projects: (dto.financeProjects ?? []).map((p) => p.name),
     coverPhoto,
     photos,
+    lxState: toLxTag(dto.lxState),
   };
 }

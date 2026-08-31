@@ -57,4 +57,117 @@ export const styles = StyleSheet.create({
   },
   link: { color: colors.accent, textDecoration: "underline" },
   section: { marginBottom: 12 },
+  // Icon + label row (Complexity / Access / Remote attributes).
+  iconLabel: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 3 },
+  // Centered pictogram tile (aircraft program / ATA), icon over a code label.
+  tile: {
+    width: 56,
+    alignItems: "center",
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  tileLabel: {
+    fontSize: 8,
+    fontFamily: "Courier",
+    color: colors.fg,
+    marginTop: 2,
+    textAlign: "center",
+  },
+  // Highlighted manager card.
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 4,
+    backgroundColor: colors.surface,
+    padding: 8,
+  },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    color: colors.bg,
+    fontSize: 13,
+    fontFamily: "Helvetica-Bold",
+  },
+  // Boxed description block placed after all other attributes.
+  descriptionBox: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 4,
+    backgroundColor: colors.surface,
+    padding: 10,
+  },
+  // Identity "type" chip: type glyph + label on a light accent background.
+  chipType: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#c7d7f7",
+    borderRadius: 4,
+    backgroundColor: "#eef3fd",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  chipTypeLabel: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    color: colors.accent,
+  },
+  // Small text chip (softwares).
+  chip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 4,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    fontSize: 9,
+    color: colors.fg,
+    marginRight: 4,
+    marginBottom: 4,
+  },
 });
+
+// Per-step lifecycle colors (mirrors components/detail/LifecycleSection.tsx).
+export const lifecycleColor = {
+  kickoff: colors.accent,
+  inService: colors.success,
+  mothballed: colors.warning,
+  dismantled: colors.danger,
+};
+
+// Deterministic avatar palette + helpers (mirrors components/Avatar.tsx) so the
+// manager encart shows the same initials/color as the web.
+const AVATAR_PALETTE = [
+  "#5b8def",
+  "#34d399",
+  "#fbbf24",
+  "#f87171",
+  "#a78bfa",
+  "#22d3ee",
+  "#fb7185",
+  "#84cc16",
+];
+
+export function avatarColor(seed: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return AVATAR_PALETTE[(h >>> 0) % AVATAR_PALETTE.length];
+}
+
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}

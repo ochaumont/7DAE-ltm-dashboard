@@ -6,6 +6,9 @@ import { useState } from "react";
 import clsx from "clsx";
 import ThemeToggle from "./ThemeToggle";
 import AboutDialog from "./AboutDialog";
+import RefreshButton from "./RefreshButton";
+import PhotoCacheSettingsControl from "./PhotoCacheSettingsControl";
+import { resetCatalogueFilters } from "@/lib/catalogueFilters";
 
 export default function Header() {
   // usePathname() is typed `string | null` in some Next versions (e.g. 16.2.9)
@@ -18,6 +21,10 @@ export default function Header() {
     pathname === "/" || pathname.startsWith("/labtestmean");
   const mapActive =
     pathname === "/map" || pathname.startsWith("/map/");
+  const depGraphActive =
+    pathname === "/depgraph" || pathname.startsWith("/depgraph/");
+  const depViewActive =
+    pathname === "/depview" || pathname.startsWith("/depview/");
 
   const itemClass = (active: boolean) =>
     clsx(
@@ -29,7 +36,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-[#00205B]/15 bg-white">
-      <div className="px-4 md:px-6 py-3 flex items-center gap-6 max-w-[1600px] mx-auto">
+      <div className="relative px-4 md:px-6 py-3 flex items-center gap-6 max-w-[1600px] mx-auto">
         <Link
           href="/"
           className="flex items-center hover:opacity-80 transition-opacity"
@@ -48,17 +55,36 @@ export default function Header() {
         </Link>
 
         <nav className="flex items-center gap-1">
-          <Link href="/" className={itemClass(catalogueActive)}>
+          <Link
+            href="/"
+            onClick={() => resetCatalogueFilters()}
+            className={itemClass(catalogueActive)}
+          >
             Catalogue
           </Link>
           <Link href="/map" className={itemClass(mapActive)}>
             Map
           </Link>
+          <Link href="/depgraph" className={itemClass(depGraphActive)}>
+            Dependency Graph
+          </Link>
+          <Link href="/depview" className={itemClass(depViewActive)}>
+            Dependency View
+          </Link>
         </nav>
+
+        {/* App title, perfectly centered in the bar regardless of side widths.
+            Hidden on small screens to avoid overlapping nav/actions. */}
+        <span className="hidden md:block absolute left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap text-base tracking-wide">
+          <span className="font-bold text-[#00205B]">Lab Test Means</span>{" "}
+          <span className="font-semibold text-[#00205B]/55">Board</span>
+        </span>
 
         <div className="ml-auto flex items-center gap-2 min-h-[32px]">
           {/* RESERVED: avatar, global search, notifications (V2) */}
+          <RefreshButton />
           <AboutDialog />
+          <PhotoCacheSettingsControl />
           <ThemeToggle />
         </div>
       </div>

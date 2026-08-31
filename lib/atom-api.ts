@@ -8,6 +8,9 @@ export type FactsheetRef = {
   id: string;
   externalId: string;
   name: string;
+  // Raw and possibly absent/unexpected — normalized to exactly
+  // "mandatory" | "optional" | undefined by the adapter, not here.
+  attributes?: { dependencyType?: string } | null;
   etags?: unknown;
   userSubscriptions?: unknown;
 };
@@ -28,7 +31,7 @@ export type LabTestMeanDto = {
   id: string;
   externalId: string;
   name: string;
-  category: "sib" | "simu" | "fib" | "RT" | null;
+  category: "sib" | "simu" | "fib" | "rt" | "RT" | "share" | null;
   complexity: "simple" | "medium" | "complex" | null;
   country: string | null;
   site: string | null;
@@ -56,11 +59,16 @@ export type LabTestMeanDto = {
   atas: FinanceRef[] | null;
   softwares: FinanceRef[] | null;
   LTMDependsOn: FactsheetRef[] | null;
+  LTMSupports?: FactsheetRef[] | null;
+  SharedResourcesDependsOn?: FactsheetRef[] | null;
   portfolio?: FactsheetRef | null;
   technicalCapabilities: string[] | null;
   financeAircraftPrograms: FinanceRef[] | null;
   financeProjects: FinanceRef[] | null;
   documentRefs: DocumentRef[] | null;
+  // Raw and possibly absent/unexpected — normalized to exactly
+  // "DRAFT" | "RELEASE" by the adapter, not here.
+  lxState?: string | null;
 };
 
 export type AtomErrorKind = "backend-down" | "unauthorized" | "http-error";
