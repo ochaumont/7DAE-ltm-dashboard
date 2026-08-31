@@ -206,7 +206,9 @@ export default function SaveLoadControls({
       {popup === "saveAs" && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-          onClick={() => setPopup(null)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPopup(null);
+          }}
           role="presentation"
         >
           <div
@@ -214,7 +216,6 @@ export default function SaveLoadControls({
             aria-modal="true"
             aria-labelledby="save-as-title"
             className="w-full max-w-sm rounded-lg border border-border bg-surface p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
           >
             <h2 id="save-as-title" className="mb-3 text-base font-semibold">
               Save as new
@@ -255,7 +256,9 @@ export default function SaveLoadControls({
       {popup === "load" && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-          onClick={() => setPopup(null)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPopup(null);
+          }}
           role="presentation"
         >
           <div
@@ -263,7 +266,6 @@ export default function SaveLoadControls({
             aria-modal="true"
             aria-labelledby="load-title"
             className="w-full max-w-sm max-h-[70vh] overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
           >
             <h2 id="load-title" className="mb-3 text-base font-semibold">
               Load
@@ -314,7 +316,8 @@ export default function SaveLoadControls({
       {popup === "import" && importDraft && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-          onClick={() => {
+          onClick={(e) => {
+            if (e.target !== e.currentTarget) return;
             setImportDraft(null);
             setPopup(null);
           }}
@@ -325,7 +328,6 @@ export default function SaveLoadControls({
             aria-modal="true"
             aria-labelledby="import-title"
             className="w-full max-w-sm rounded-lg border border-border bg-surface p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
           >
             <h2 id="import-title" className="mb-3 text-base font-semibold">
               Import diagram

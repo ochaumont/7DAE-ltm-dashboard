@@ -82,7 +82,7 @@ export default function Gallery({ photos }: Readonly<{ photos: Photo[] }>) {
         <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
           {photos.map((p, i) => (
             <Thumbnail
-              key={i}
+              key={p.resourceId}
               photo={p}
               active={i === active}
               onClick={() => setActive(i)}

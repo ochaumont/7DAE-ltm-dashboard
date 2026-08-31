@@ -21,6 +21,7 @@ import { photoKey, type CachedPhoto } from "@/lib/usePhoto";
 import type { CoverPhoto } from "@/lib/types";
 
 const PAGE_SIZE = 6;
+const SKELETON_CARD_KEYS = ["a", "b", "c", "d", "e", "f"];
 
 function CatalogueSkeleton() {
   return (
@@ -31,8 +32,8 @@ function CatalogueSkeleton() {
         </aside>
         <section>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-card overflow-hidden">
+            {SKELETON_CARD_KEYS.map((k) => (
+              <div key={k} className="rounded-card overflow-hidden">
                 <div className="aspect-[4/3] bg-surface-2 skeleton-pulse" />
                 <div className="px-4 pt-4 pb-3 space-y-2">
                   <div className="h-4 w-24 rounded bg-surface-2 skeleton-pulse" />

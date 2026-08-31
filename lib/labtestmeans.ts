@@ -115,7 +115,9 @@ export function filterLabTestMeans(
 }
 
 export function uniqueCountries(list: LabTestMean[]): string[] {
-  return Array.from(new Set(list.map((m) => m.location.country))).sort();
+  return Array.from(new Set(list.map((m) => m.location.country))).sort((a, b) =>
+    a.localeCompare(b),
+  );
 }
 export function uniqueTypes(list: LabTestMean[]): LabTestMeanType[] {
   return Array.from(new Set(list.map((m) => m.type)));
@@ -141,7 +143,7 @@ export function uniquePortfolios(list: LabTestMean[]): string[] {
     if (m.portfolio) names.add(m.portfolio.name);
     else hasNone = true;
   }
-  const sorted = Array.from(names).sort();
+  const sorted = Array.from(names).sort((a, b) => a.localeCompare(b));
   if (hasNone) sorted.push(PORTFOLIO_NONE);
   return sorted;
 }

@@ -46,7 +46,7 @@ export default function ComplexityIcon({ level, size = 14, className }: Readonly
         const isActive = i < active;
         return (
           <polygon
-            key={`s${i}`}
+            key={`s${cx}`}
             points={starPoints(cx, STAR_CY, STAR_R)}
             fill={isActive ? "var(--color-warning)" : "none"}
             stroke={isActive ? "var(--color-warning)" : "currentColor"}
@@ -60,7 +60,7 @@ export default function ComplexityIcon({ level, size = 14, className }: Readonly
         const isActive = active >= 3 - i;
         return (
           <circle
-            key={`r${i}`}
+            key={`r${r}`}
             cx={RING_CENTER.cx}
             cy={RING_CENTER.cy}
             r={r}

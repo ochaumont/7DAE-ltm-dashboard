@@ -327,7 +327,7 @@ function toElkGraph(
         if (!childrenById.has(rel.externalId)) {
           childrenById.set(rel.externalId, { id: rel.externalId, width: nodeWidth, height: CARD_H });
         }
-        const pairKey = `${canonicalKind(kind)}|${[rootId, rel.externalId].sort().join("|")}`;
+        const pairKey = `${canonicalKind(kind)}|${[rootId, rel.externalId].sort((a, b) => a.localeCompare(b)).join("|")}`;
         if (seenPairs.has(pairKey)) return;
         seenPairs.add(pairKey);
         edges.push({
@@ -528,7 +528,7 @@ function placeNewNode(
   nodeWidth: number,
 ): { x: number; y: number } {
   const direction = kind === "supports" ? -1 : 1;
-  const gapX = 280;
+  const gapX = nodeWidth + 100;
   const gapY = 90;
   let x = spawnerPos.x + direction * gapX;
   let y = spawnerPos.y + (index - (count - 1) / 2) * gapY;

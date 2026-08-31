@@ -57,7 +57,7 @@ export default function CoverPage({ benchCount, filtersDescription }: Readonly<P
         <Text style={styles.h3}>Active Filters</Text>
         <View style={{ marginTop: 6 }}>
           {filtersDescription.split("\n").map((line, i) => (
-            <Text key={i} style={styles.body}>
+            <Text key={`${i}-${line}`} style={styles.body}>
               {line}
             </Text>
           ))}

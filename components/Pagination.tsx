@@ -79,7 +79,7 @@ export default function Pagination({
         {slots.map((slot, i) =>
           slot === "..." ? (
             <span
-              key={`ellipsis-${i}`}
+              key={`ellipsis-before-${slots[i + 1]}`}
               aria-hidden="true"
               className="px-1.5 text-muted select-none"
             >

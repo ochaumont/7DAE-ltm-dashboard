@@ -238,9 +238,9 @@ export default function FilterBar({
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">Type</div>
         <div className="space-y-1">
-          {typeRows.map((row, i) => (
+          {typeRows.map((row) => (
             <Toggle
-              key={i}
+              key={row.join("-")}
               options={row}
               value={value.types}
               onChange={(v) => onChange({ ...value, types: v })}

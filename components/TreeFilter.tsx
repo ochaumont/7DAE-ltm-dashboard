@@ -68,21 +68,19 @@ export default function TreeFilter({
           ) : (
             <span className="w-4 h-4" aria-hidden="true" />
           )}
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => toggleSelected(node.id)}
-            className="accent-accent cursor-pointer"
-          />
-          <span
-            className={clsx(
-              "cursor-pointer",
-              isSelected ? "font-semibold text-fg" : "text-fg",
-            )}
-            onClick={() => toggleSelected(node.id)}
-          >
-            {node.name}
-          </span>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => toggleSelected(node.id)}
+              className="accent-accent cursor-pointer"
+            />
+            <span
+              className={clsx(isSelected ? "font-semibold text-fg" : "text-fg")}
+            >
+              {node.name}
+            </span>
+          </label>
           {count > 0 && (
             <span className="text-xs text-muted">({count})</span>
           )}
@@ -105,21 +103,22 @@ export default function TreeFilter({
       {hasUnassigned && (
         <div className="flex items-center gap-1.5 py-0.5 text-xs border-t border-border mt-1 pt-2">
           <span className="w-4 h-4" aria-hidden="true" />
-          <input
-            type="checkbox"
-            checked={unassignedSelected}
-            onChange={() => toggleSelected(UNASSIGNED_NODE_ID)}
-            className="accent-accent cursor-pointer"
-          />
-          <span
-            className={clsx(
-              "cursor-pointer italic",
-              unassignedSelected ? "font-semibold text-fg" : "text-muted",
-            )}
-            onClick={() => toggleSelected(UNASSIGNED_NODE_ID)}
-          >
-            Unassigned
-          </span>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={unassignedSelected}
+              onChange={() => toggleSelected(UNASSIGNED_NODE_ID)}
+              className="accent-accent cursor-pointer"
+            />
+            <span
+              className={clsx(
+                "italic",
+                unassignedSelected ? "font-semibold text-fg" : "text-muted",
+              )}
+            >
+              Unassigned
+            </span>
+          </label>
           {unassignedCount > 0 && (
             <span className="text-xs text-muted">({unassignedCount})</span>
           )}

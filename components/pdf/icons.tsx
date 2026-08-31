@@ -104,7 +104,7 @@ export function PdfComplexityIcon({
         const isActive = i < active;
         return (
           <Polygon
-            key={`s${i}`}
+            key={`s${cx}`}
             points={starPoints(cx, STAR_CY, STAR_R)}
             fill={isActive ? colors.warning : "none"}
             stroke={isActive ? colors.warning : colors.fg}
@@ -118,7 +118,7 @@ export function PdfComplexityIcon({
         const isActive = active >= 3 - i;
         return (
           <Circle
-            key={`r${i}`}
+            key={`r${r}`}
             cx={12}
             cy={16}
             r={r}
