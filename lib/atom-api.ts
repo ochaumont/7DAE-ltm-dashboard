@@ -122,10 +122,10 @@ function originInfo(url: string): {
   sameOrigin: boolean | null;
   pageOrigin: string | null;
 } {
-  if (typeof window === "undefined") {
+  if (globalThis.window === undefined) {
     return { sameOrigin: null, pageOrigin: null };
   }
-  const pageOrigin = window.location.origin;
+  const pageOrigin = globalThis.location.origin;
   try {
     return { sameOrigin: new URL(url).origin === pageOrigin, pageOrigin };
   } catch {

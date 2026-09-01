@@ -14,7 +14,7 @@ import { useSyncExternalStore } from "react";
 export type Theme = "light" | "dark";
 
 function subscribe(callback: () => void): () => void {
-  if (typeof window === "undefined") return () => {};
+  if (globalThis.window === undefined) return () => {};
   const observer = new MutationObserver(callback);
   observer.observe(document.documentElement, {
     attributes: true,
@@ -25,7 +25,7 @@ function subscribe(callback: () => void): () => void {
 
 function getSnapshot(): Theme {
   if (typeof document === "undefined") return "dark";
-  const value = document.documentElement.getAttribute("data-theme");
+  const value = document.documentElement.dataset.theme;
   return value === "light" ? "light" : "dark";
 }
 
@@ -39,7 +39,7 @@ export function useTheme(): Theme {
 
 export function setTheme(next: Theme): void {
   if (typeof document === "undefined") return;
-  document.documentElement.setAttribute("data-theme", next);
+  document.documentElement.dataset.theme = next;
   try {
     localStorage.setItem("theme", next);
   } catch {

@@ -3,9 +3,9 @@ import ChipCapability from "./ChipCapability";
 
 export default function ChipCapabilities({
   capabilities,
-}: {
+}: Readonly<{
   capabilities: TechnicalCapability[];
-}) {
+}>) {
   if (capabilities.length === 0) return null;
   return (
     <>

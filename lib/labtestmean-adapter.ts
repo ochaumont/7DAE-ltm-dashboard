@@ -10,7 +10,6 @@ import type {
   LabTestMean,
   LabTestMeanStatus,
   LabTestMeanType,
-  Manager,
   Person,
   Photo,
   Roles,
@@ -72,9 +71,9 @@ function toPhotos(
   fallbackAlt: string,
 ): Photo[] {
   if (!refs || refs.length === 0) return [];
-  const PHOTO_TYPES = ["image", "photo"];
+  const PHOTO_TYPES = new Set(["image", "photo"]);
   const images = refs.filter((r) =>
-    PHOTO_TYPES.includes(r.documentType?.toLowerCase() ?? ""),
+    PHOTO_TYPES.has(r.documentType?.toLowerCase() ?? ""),
   );
   const selected: Photo[] = [];
   const others: Photo[] = [];
@@ -156,7 +155,7 @@ function toPeople(refs: FactsheetRef[] | undefined): Person[] | undefined {
   return refs.map(toPerson);
 }
 
-function toManager(refs: FactsheetRef[] | undefined): Manager | null {
+function toManager(refs: FactsheetRef[] | undefined): Person | null {
   if (!refs || refs.length === 0) return null;
   const first = refs[0];
   return {
@@ -209,7 +208,7 @@ function toCapability(
   externalId: string,
 ): TechnicalCapability | null {
   if (typeof raw !== "string" || raw.length === 0) return null;
-  const key = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const key = raw.toLowerCase().replaceAll(/[^a-z0-9]/g, "");
   const canonical = CAPABILITY_ALIASES[key];
   if (canonical) return canonical;
   console.warn(
@@ -226,12 +225,11 @@ function toCapability(
 const RE_ATA = /^\s*ATA\s+\S+/i;
 
 function toAtaCode(name: string): string {
-  const m = name.match(RE_ATA);
+  const m = RE_ATA.exec(name);
   return m ? m[0].trim().replace(/\s+/, " ") : name;
 }
 
-export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
-  const site = dto.site ?? "";
+function toRoles(dto: LabTestMeanDto): Roles {
   const roles: Roles = {};
   const architects = toPeople(dto.architects);
   if (architects) roles.architects = architects;
@@ -245,12 +243,22 @@ export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
   if (deputies) roles.deputies = deputies;
   const depts = toPeople(dto.depts);
   if (depts) roles.depts = depts;
+  return roles;
+}
 
+function toLifecycle(dto: LabTestMeanDto): LabTestMean["lifecycle"] {
   const lifecycle: LabTestMean["lifecycle"] = {};
   if (dto.kickoff) lifecycle.kickoff = dto.kickoff;
   if (dto.eisdateyear) lifecycle.inService = dto.eisdateyear;
   if (dto.mothballed) lifecycle.mothballed = dto.mothballed;
   if (dto.dismantled) lifecycle.dismantled = dto.dismantled;
+  return lifecycle;
+}
+
+export function toLabTestMean(dto: LabTestMeanDto): LabTestMean {
+  const site = dto.site ?? "";
+  const roles = toRoles(dto);
+  const lifecycle = toLifecycle(dto);
 
   const geo = site ? GEO_MAP[site] : undefined;
 

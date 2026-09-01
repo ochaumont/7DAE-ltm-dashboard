@@ -59,7 +59,7 @@ function isOptional(edge: RadarEdge): boolean {
   return (edge.dependencyType ?? (edge.kind === "shared-resource" ? "optional" : undefined)) === "optional";
 }
 
-export default function CircularGraph({ benches, radius }: Props) {
+export default function CircularGraph({ benches, radius }: Readonly<Props>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   // The SVG's viewBox is kept 1:1 with the container's actual pixel size
@@ -138,13 +138,13 @@ export default function CircularGraph({ benches, radius }: Props) {
       });
 
       root.querySelectorAll<SVGElement>(".radar-node, .radar-label").forEach((el) => {
-        const id = el.getAttribute("data-id");
+        const id = el.dataset.id;
         el.classList.toggle("rd-dim", !!id && !connected.has(id));
       });
 
       root.querySelectorAll<SVGElement>(".radar-edge").forEach((el) => {
-        const source = el.getAttribute("data-source");
-        const target = el.getAttribute("data-target");
+        const source = el.dataset.source;
+        const target = el.dataset.target;
         const touches = source === hoveredId || target === hoveredId;
         el.classList.toggle("rd-dim", !touches);
         el.classList.remove("rd-emph-out", "rd-emph-in");

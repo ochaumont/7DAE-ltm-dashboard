@@ -23,7 +23,7 @@ export default function BenchVisibilityList({
   onToggle,
   onSelectAll,
   onDeselectAll,
-}: Props) {
+}: Readonly<Props>) {
   const hiddenCount = benches.filter((b) => hiddenIds.has(b.externalId)).length;
   const displayedCount = benches.length - hiddenCount;
   const [search, setSearch] = useState("");

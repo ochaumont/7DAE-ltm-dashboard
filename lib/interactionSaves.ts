@@ -47,7 +47,7 @@ const entryKey = (name: string) => `interaction-save:${name}`;
 
 function safeGetItem(key: string): string | null {
   try {
-    return window.localStorage.getItem(key);
+    return globalThis.localStorage.getItem(key);
   } catch {
     return null;
   }
@@ -55,7 +55,7 @@ function safeGetItem(key: string): string | null {
 
 function safeSetItem(key: string, value: string): boolean {
   try {
-    window.localStorage.setItem(key, value);
+    globalThis.localStorage.setItem(key, value);
     return true;
   } catch {
     return false;
@@ -64,7 +64,7 @@ function safeSetItem(key: string, value: string): boolean {
 
 function safeRemoveItem(key: string): void {
   try {
-    window.localStorage.removeItem(key);
+    globalThis.localStorage.removeItem(key);
   } catch {
     // ignore — nothing to clean up if storage is unavailable
   }
@@ -126,7 +126,7 @@ export function deleteSave(name: string): void {
 }
 
 function sanitizeFilename(name: string): string {
-  return name.replace(/[\\/:*?"<>|]/g, "_").trim() || "diagram";
+  return name.replaceAll(/[\\/:*?"<>|]/g, "_").trim() || "diagram";
 }
 
 /** Downloads `data` as a `.json` file named after `name` — lets a user share
@@ -206,7 +206,7 @@ export function parseImportedSave(raw: string): InteractionSave {
   const rec = parsed as UnknownRecord;
 
   if (typeof rec.savedAt !== "string") {
-    throw new Error("This file does not contain a diagram save.");
+    throw new TypeError("This file does not contain a diagram save.");
   }
   if (!isNodeArray(rec.nodes)) {
     throw new Error("This file's diagram data is malformed (nodes).");
@@ -217,7 +217,7 @@ export function parseImportedSave(raw: string): InteractionSave {
 
   if (rec.version === 1) {
     if (typeof rec.rootExternalId !== "string") {
-      throw new Error("This file's diagram data is malformed (root bench).");
+      throw new TypeError("This file's diagram data is malformed (root bench).");
     }
     return {
       version: 3,

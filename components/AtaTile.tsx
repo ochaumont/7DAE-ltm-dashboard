@@ -5,7 +5,7 @@ import AtaIcon from "./icons/AtaIcon";
  * the "ATA " prefix from the backend), stacked vertically and centered.
  * Mirrors AircraftProgramTile.
  */
-export default function AtaTile({ code }: { code: string }) {
+export default function AtaTile({ code }: Readonly<{ code: string }>) {
   return (
     <div className="flex flex-col items-center gap-1 p-1 text-fg">
       <AtaIcon size={28} />

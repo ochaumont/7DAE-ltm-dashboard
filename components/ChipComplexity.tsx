@@ -9,9 +9,9 @@ const labels: Record<Complexity, string> = {
 
 export default function ChipComplexity({
   level,
-}: {
+}: Readonly<{
   level: Complexity | null;
-}) {
+}>) {
   if (!level) return null;
   const label = labels[level];
   return (

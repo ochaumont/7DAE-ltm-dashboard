@@ -31,13 +31,24 @@ type Props = {
   baseUrl: string;
 };
 
+function triStateLabel(
+  value: boolean | null,
+  onLabel: string,
+  offLabel: string,
+  naLabel: string,
+): string {
+  if (value === true) return onLabel;
+  if (value === false) return offLabel;
+  return naLabel;
+}
+
 function Section({
   title,
   children,
-}: {
+}: Readonly<{
   title: string;
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <View style={{ marginBottom: 10 }}>
       <Text style={styles.h3}>{title}</Text>
@@ -50,10 +61,10 @@ function Section({
 function IconLabel({
   icon,
   label,
-}: {
+}: Readonly<{
   icon: React.ReactNode;
   label: string;
-}) {
+}>) {
   return (
     <View style={styles.iconLabel}>
       {icon}
@@ -101,17 +112,15 @@ const LIFECYCLE_STEPS: {
   },
 ];
 
-export default function BenchDetailPage({ banc, baseUrl }: Props) {
+export default function BenchDetailPage({ banc, baseUrl }: Readonly<Props>) {
   const status = STATUS_LABELS[banc.status] ?? banc.status;
   const statusBg = statusColor[banc.status] ?? colors.muted;
 
   const complexity = banc.complexity;
   const access = banc.security.accesscontrol; // boolean | null
-  const remote = banc.technicalCapabilities.includes("remote-access")
-    ? true
-    : banc.technicalCapabilities.includes("no-remote-access")
-      ? false
-      : null;
+  let remote: boolean | null = null;
+  if (banc.technicalCapabilities.includes("remote-access")) remote = true;
+  else if (banc.technicalCapabilities.includes("no-remote-access")) remote = false;
 
   const subLocality = [banc.location.building, banc.location.room]
     .filter((s): s is string => !!s && s.length > 0)
@@ -157,23 +166,11 @@ export default function BenchDetailPage({ banc, baseUrl }: Props) {
             />
             <IconLabel
               icon={access === null ? null : <PdfAccessIcon enabled={access} size={16} />}
-              label={
-                access === true
-                  ? "Access secured"
-                  : access === false
-                    ? "Access not secured"
-                    : "Access: —"
-              }
+              label={triStateLabel(access, "Access secured", "Access not secured", "Access: —")}
             />
             <IconLabel
               icon={remote === null ? null : <PdfRemoteIcon enabled={remote} size={16} />}
-              label={
-                remote === true
-                  ? "Remote access"
-                  : remote === false
-                    ? "No remote access"
-                    : "Remote access: —"
-              }
+              label={triStateLabel(remote, "Remote access", "No remote access", "Remote access: —")}
             />
           </View>
         </View>

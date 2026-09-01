@@ -19,7 +19,7 @@ type Props = {
   site: string;
 };
 
-export default function CountryMapIcon({ country, site }: Props) {
+export default function CountryMapIcon({ country, site }: Readonly<Props>) {
   const path = PATHS[country];
   if (!path) return null;
 

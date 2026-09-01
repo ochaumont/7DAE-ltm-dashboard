@@ -3,13 +3,54 @@
 import { useEffect } from "react";
 import type { AtomErrorDetails } from "@/lib/atom-api";
 
+// Build the diagnostics table from the real values carried on the error.
+function buildDiagnosticRows(d: AtomErrorDetails | undefined): Array<[string, string]> {
+  const rows: Array<[string, string]> = [];
+  if (!d) return rows;
+  rows.push(
+    ["Requested URL", d.url],
+    [
+      "Configured base",
+      `${d.baseUrl}${d.baseUrlFromEnv ? "" : "  ⚠ fallback (NEXT_PUBLIC_ATOM_API_BASE_URL not set at build)"}`,
+    ],
+  );
+  if (d.pageOrigin) rows.push(["Page origin", d.pageOrigin]);
+  if (d.sameOrigin !== null)
+    rows.push([
+      "Same-origin",
+      d.sameOrigin ? "yes" : "no  ⚠ cross-origin → CORS / no gateway Bearer injection",
+    ]);
+  rows.push(
+    ["Auth header sent", d.auth === "bearer-dev" ? "Bearer (dev JWT)" : "none"],
+    ["HTTP status", d.status ? `${d.status} ${d.statusText}` : `— (${d.statusText})`],
+  );
+  if (d.cause) rows.push(["Cause", d.cause]);
+  return rows;
+}
+
+function buildCopyText(
+  title: string,
+  message: string,
+  rows: Array<[string, string]>,
+  digest: string | undefined,
+): string {
+  return [
+    `[${title}]`,
+    message,
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    digest ? `Error ID: ${digest}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export default function GlobalError({
   error,
   reset,
-}: {
+}: Readonly<{
   error: Error & { digest?: string; details?: AtomErrorDetails };
   reset: () => void;
-}) {
+}>) {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -21,45 +62,20 @@ export default function GlobalError({
   const isUnauthorized = error.message.startsWith("ATOM_UNAUTHORIZED:");
   const d = error.details;
 
-  const title = isBackendDown
-    ? "ATOM API unavailable"
-    : isUnauthorized
-      ? "Access not authorized"
-      : "Something went wrong";
-
-  const summary = isBackendDown
-    ? "The request to the ATOM API did not complete (network, CORS, mixed-content or timeout). See the parameters below to diagnose."
-    : isUnauthorized
-      ? "The ATOM API rejected the request (401/403). The token was missing, expired, or not injected by the gateway. See the parameters below."
-      : "An unexpected error occurred. See the details below.";
-
-  // Build the diagnostics table from the real values carried on the error.
-  const rows: Array<[string, string]> = [];
-  if (d) {
-    rows.push(["Requested URL", d.url]);
-    rows.push([
-      "Configured base",
-      `${d.baseUrl}${d.baseUrlFromEnv ? "" : "  ⚠ fallback (NEXT_PUBLIC_ATOM_API_BASE_URL not set at build)"}`,
-    ]);
-    if (d.pageOrigin) rows.push(["Page origin", d.pageOrigin]);
-    if (d.sameOrigin !== null)
-      rows.push([
-        "Same-origin",
-        d.sameOrigin ? "yes" : "no  ⚠ cross-origin → CORS / no gateway Bearer injection",
-      ]);
-    rows.push(["Auth header sent", d.auth === "bearer-dev" ? "Bearer (dev JWT)" : "none"]);
-    rows.push(["HTTP status", d.status ? `${d.status} ${d.statusText}` : `— (${d.statusText})`]);
-    if (d.cause) rows.push(["Cause", d.cause]);
+  let title = "Something went wrong";
+  let summary = "An unexpected error occurred. See the details below.";
+  if (isBackendDown) {
+    title = "ATOM API unavailable";
+    summary =
+      "The request to the ATOM API did not complete (network, CORS, mixed-content or timeout). See the parameters below to diagnose.";
+  } else if (isUnauthorized) {
+    title = "Access not authorized";
+    summary =
+      "The ATOM API rejected the request (401/403). The token was missing, expired, or not injected by the gateway. See the parameters below.";
   }
 
-  const copyText = [
-    `[${title}]`,
-    error.message,
-    ...rows.map(([k, v]) => `${k}: ${v}`),
-    error.digest ? `Error ID: ${error.digest}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const rows = buildDiagnosticRows(d);
+  const copyText = buildCopyText(title, error.message, rows, error.digest);
 
   return (
     <main className="px-4 md:px-6 py-16 max-w-3xl mx-auto">

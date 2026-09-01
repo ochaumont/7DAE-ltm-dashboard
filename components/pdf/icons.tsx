@@ -31,10 +31,10 @@ function strokeProps(color: string, w = 1.8) {
 export function PdfStatusIcon({
   status,
   size = 12,
-}: {
+}: Readonly<{
   status: LabTestMeanStatus;
   size?: number;
-}) {
+}>) {
   const c = statusColor[status] ?? colors.muted;
   const s = strokeProps(c, 2);
   return (
@@ -93,10 +93,10 @@ function starPoints(cx: number, cy: number, R: number): string {
 export function PdfComplexityIcon({
   level,
   size = 16,
-}: {
+}: Readonly<{
   level: Complexity;
   size?: number;
-}) {
+}>) {
   const active = ACTIVE_COUNT[level];
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -104,7 +104,7 @@ export function PdfComplexityIcon({
         const isActive = i < active;
         return (
           <Polygon
-            key={`s${i}`}
+            key={`s${cx}`}
             points={starPoints(cx, STAR_CY, STAR_R)}
             fill={isActive ? colors.warning : "none"}
             stroke={isActive ? colors.warning : colors.fg}
@@ -118,7 +118,7 @@ export function PdfComplexityIcon({
         const isActive = active >= 3 - i;
         return (
           <Circle
-            key={`r${i}`}
+            key={`r${r}`}
             cx={12}
             cy={16}
             r={r}
@@ -139,10 +139,10 @@ export function PdfComplexityIcon({
 export function PdfAccessIcon({
   enabled,
   size = 16,
-}: {
+}: Readonly<{
   enabled: boolean;
   size?: number;
-}) {
+}>) {
   const c = colors.fg;
   const s = strokeProps(c, 2);
   return (
@@ -183,10 +183,10 @@ export function PdfAccessIcon({
 export function PdfRemoteIcon({
   enabled,
   size = 16,
-}: {
+}: Readonly<{
   enabled: boolean;
   size?: number;
-}) {
+}>) {
   const c = colors.fg;
   const s = strokeProps(c, 1.8);
   return (
@@ -206,11 +206,11 @@ export function PdfTypeIcon({
   type,
   size = 14,
   color = colors.accent,
-}: {
+}: Readonly<{
   type: LabTestMeanType;
   size?: number;
   color?: string;
-}) {
+}>) {
   const s = strokeProps(color, 2);
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -276,10 +276,10 @@ export function PdfTypeIcon({
 export function PdfAircraftIcon({
   size = 22,
   color = colors.fg,
-}: {
+}: Readonly<{
   size?: number;
   color?: string;
-}) {
+}>) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path
@@ -293,10 +293,10 @@ export function PdfAircraftIcon({
 export function PdfAtaIcon({
   size = 22,
   color = colors.fg,
-}: {
+}: Readonly<{
   size?: number;
   color?: string;
-}) {
+}>) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path
@@ -313,7 +313,7 @@ export function PdfAtaIcon({
 // ---------------------------------------------------------------------------
 type StepIconProps = { size?: number; color?: string };
 
-export function PdfKickoffIcon({ size = 14, color = colors.fg }: StepIconProps) {
+export function PdfKickoffIcon({ size = 14, color = colors.fg }: Readonly<StepIconProps>) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path d="M4 22V4" {...strokeProps(color)} />
@@ -322,7 +322,7 @@ export function PdfKickoffIcon({ size = 14, color = colors.fg }: StepIconProps) 
   );
 }
 
-export function PdfInServiceIcon({ size = 14, color = colors.fg }: StepIconProps) {
+export function PdfInServiceIcon({ size = 14, color = colors.fg }: Readonly<StepIconProps>) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Circle cx={12} cy={12} r={9} {...strokeProps(color)} />
@@ -331,7 +331,7 @@ export function PdfInServiceIcon({ size = 14, color = colors.fg }: StepIconProps
   );
 }
 
-export function PdfMothballedIcon({ size = 14, color = colors.fg }: StepIconProps) {
+export function PdfMothballedIcon({ size = 14, color = colors.fg }: Readonly<StepIconProps>) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path
@@ -342,7 +342,7 @@ export function PdfMothballedIcon({ size = 14, color = colors.fg }: StepIconProp
   );
 }
 
-export function PdfDismantledIcon({ size = 14, color = colors.fg }: StepIconProps) {
+export function PdfDismantledIcon({ size = 14, color = colors.fg }: Readonly<StepIconProps>) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Rect x={3} y={4} width={18} height={4} rx={1} {...strokeProps(color)} />
@@ -360,12 +360,12 @@ export function PdfCountryMap({
   site,
   width = 120,
   color = colors.fg,
-}: {
+}: Readonly<{
   country: string;
   site: string;
   width?: number;
   color?: string;
-}) {
+}>) {
   const d = PATHS[country];
   if (!d) return null;
   const height = Math.round((width * 140) / 200);
@@ -402,10 +402,10 @@ export function PdfCountryMap({
 export function PdfAirbusLogo({
   width = 120,
   color = "#00205b",
-}: {
+}: Readonly<{
   width?: number;
   color?: string;
-}) {
+}>) {
   const height = Math.round((width * 73.885) / 398.971);
   return (
     <Svg width={width} height={height} viewBox="0 0 398.971 73.885">

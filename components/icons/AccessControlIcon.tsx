@@ -8,7 +8,7 @@ export default function AccessControlIcon({
   enabled,
   size = 20,
   className,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <svg
       width={size}

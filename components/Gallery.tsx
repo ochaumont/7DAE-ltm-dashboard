@@ -7,7 +7,7 @@ import { usePhoto } from "@/lib/usePhoto";
 import PanoramaClient from "./PanoramaClient";
 import PhotoSpinner from "./PhotoSpinner";
 
-function PhotoSlide({ photo }: { photo: Photo }) {
+function PhotoSlide({ photo }: Readonly<{ photo: Photo }>) {
   const { url: src, isLoading } = usePhoto(photo.resourceId, photo.resourceUri, !photo.is360);
   if (photo.is360) return <PanoramaClient src={src} />;
   return (
@@ -26,11 +26,11 @@ function Thumbnail({
   photo,
   active,
   onClick,
-}: {
+}: Readonly<{
   photo: Photo;
   active: boolean;
   onClick: () => void;
-}) {
+}>) {
   const { url: src, isLoading } = usePhoto(photo.resourceId, photo.resourceUri, !photo.is360);
   return (
     <button
@@ -57,7 +57,7 @@ function Thumbnail({
   );
 }
 
-export default function Gallery({ photos }: { photos: Photo[] }) {
+export default function Gallery({ photos }: Readonly<{ photos: Photo[] }>) {
   const [active, setActive] = useState(0);
   const current = photos[active];
 
@@ -66,7 +66,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
       <div className="relative aspect-video bg-surface-2 rounded-card overflow-hidden">
         <img
           src={PHOTO_PLACEHOLDER}
-          alt="No photo available for this lab test mean"
+          alt="No cover available for this lab test mean"
           className="w-full h-full object-cover"
         />
       </div>
@@ -82,7 +82,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
         <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
           {photos.map((p, i) => (
             <Thumbnail
-              key={i}
+              key={p.resourceId}
               photo={p}
               active={i === active}
               onClick={() => setActive(i)}

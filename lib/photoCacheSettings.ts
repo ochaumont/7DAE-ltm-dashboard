@@ -29,10 +29,10 @@ let hydrated = false;
 const listeners = new Set<() => void>();
 
 function hydrate(): void {
-  if (hydrated || typeof window === "undefined") return;
+  if (hydrated || globalThis.window === undefined) return;
   hydrated = true;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = globalThis.localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object") {
@@ -85,7 +85,7 @@ export function setPhotoCacheSetting<K extends keyof PhotoCacheSettings>(
   hydrate();
   state = { ...state, [key]: value };
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
     // localStorage unavailable (private mode, etc.) — session-only toggle still works
   }

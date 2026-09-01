@@ -41,10 +41,8 @@ export function usePageQuery(totalPages: number): {
   };
 
   useEffect(() => {
-    if (parsed > totalPages) {
-      setPage(1);
-    } else if (raw !== null && parsed === 1) {
-      // Strip a redundant `?page=1` from the URL.
+    // Out of range (filters reduced the result set) OR a redundant `?page=1` to strip.
+    if (parsed > totalPages || (raw !== null && parsed === 1)) {
       setPage(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

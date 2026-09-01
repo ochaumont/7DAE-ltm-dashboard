@@ -73,7 +73,7 @@ function MapLoaded({
   countries,
   complexities,
   portfolios,
-}: LoadedProps) {
+}: Readonly<LoadedProps>) {
   const [filters, setFilters] = useState<FilterValue>({
     search: "",
     photo: "all",

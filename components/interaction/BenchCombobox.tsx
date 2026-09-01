@@ -17,7 +17,7 @@ export default function BenchCombobox({
   excludeIds,
   onSelect,
   placeholder = "Search a bench by name or code…",
-}: Props) {
+}: Readonly<Props>) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -127,21 +127,21 @@ export default function BenchCombobox({
         className="w-full px-3 py-2 rounded bg-surface border border-border text-fg placeholder:text-muted focus:outline-none focus:border-accent"
       />
       {open && (
-        <ul
+        <ul // NOSONAR: custom filterable combobox kept as ARIA listbox (WAI-ARIA APG pattern) — native <select>/<datalist> can't reproduce live filtering, see correction-issues-sonarqube.md
           id={listboxId}
-          role="listbox"
+          role="listbox" // NOSONAR: see note above the <ul>
           className="absolute top-full left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-card bg-surface border border-border shadow-lg z-20"
         >
           {filtered.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-muted" role="option" aria-disabled="true" aria-selected={false}>
+            <li className="px-3 py-2 text-sm text-muted" role="option" aria-disabled="true" aria-selected={false}> {/* NOSONAR: same ARIA listbox pattern as the <ul> above */}
               No bench found.
             </li>
           ) : (
             filtered.map((m, i) => (
-              <li
+              <li // NOSONAR: same ARIA listbox pattern as the <ul> above
                 key={m.id}
                 id={`bench-option-${m.id}`}
-                role="option"
+                role="option" // NOSONAR: see note above the <li>
                 aria-selected={i === activeIndex}
                 onMouseDown={(e) => {
                   e.preventDefault();

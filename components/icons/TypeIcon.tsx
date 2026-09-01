@@ -24,7 +24,7 @@ const VIEWBOX: Record<LabTestMeanType, string> = {
   NA: "0 0 24 24",
 };
 
-export default function TypeIcon({ type, size = 14, className }: Props) {
+export default function TypeIcon({ type, size = 14, className }: Readonly<Props>) {
   return (
     <svg
       width={size}

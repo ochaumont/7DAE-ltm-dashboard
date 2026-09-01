@@ -2,19 +2,19 @@
 
 import { useMemo } from "react";
 import useSWR from "swr";
-import { getLabTestMeans } from "./labtestmeans";
 import {
-  getAircraftTree,
-  computeProgramCounts,
-  hasUnassignedLabTestMeans,
-} from "./aircraftStructure";
-import {
+  getLabTestMeans,
   uniqueComplexities,
   uniqueCountries,
   uniquePortfolios,
   uniqueStatuses,
   uniqueTypes,
 } from "./labtestmeans";
+import {
+  getAircraftTree,
+  computeProgramCounts,
+  hasUnassignedLabTestMeans,
+} from "./aircraftStructure";
 import type {
   AircraftStructureNode,
   LabTestMean,

@@ -6,7 +6,7 @@ type Props = {
   roleLabel: string;
 };
 
-export default function ManagerCard({ name, email, roleLabel }: Props) {
+export default function ManagerCard({ name, email, roleLabel }: Readonly<Props>) {
   return (
     <div className="flex items-center gap-3 border border-border rounded-card p-3">
       <Avatar name={name} seed={email} size={40} />

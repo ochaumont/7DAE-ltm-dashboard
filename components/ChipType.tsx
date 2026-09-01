@@ -5,10 +5,10 @@ import { TYPE_LABELS } from "@/lib/labels";
 export default function ChipType({
   type,
   withIcon = false,
-}: {
+}: Readonly<{
   type: LabTestMeanType;
   withIcon?: boolean;
-}) {
+}>) {
   return (
     <span className="chip-type inline-flex items-center px-2 py-0.5 rounded">
       {withIcon && <TypeIcon type={type} className="mr-1.5" />}

@@ -21,6 +21,7 @@ import { photoKey, type CachedPhoto } from "@/lib/usePhoto";
 import type { CoverPhoto } from "@/lib/types";
 
 const PAGE_SIZE = 6;
+const SKELETON_CARD_KEYS = ["a", "b", "c", "d", "e", "f"];
 
 function CatalogueSkeleton() {
   return (
@@ -31,8 +32,8 @@ function CatalogueSkeleton() {
         </aside>
         <section>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-card overflow-hidden">
+            {SKELETON_CARD_KEYS.map((k) => (
+              <div key={k} className="rounded-card overflow-hidden">
                 <div className="aspect-[4/3] bg-surface-2 skeleton-pulse" />
                 <div className="px-4 pt-4 pb-3 space-y-2">
                   <div className="h-4 w-24 rounded bg-surface-2 skeleton-pulse" />
@@ -103,7 +104,7 @@ function CatalogueLoaded({
   countries,
   complexities,
   portfolios,
-}: LoadedProps) {
+}: Readonly<LoadedProps>) {
   // Filters live in an in-memory store (see lib/catalogueFilters) so they
   // survive catalogue → detail → catalogue ("Back to catalog") and can be reset
   // by the "Catalogue" menu, while being lost on reload.
@@ -141,9 +142,11 @@ function CatalogueLoaded({
 
   const blobToDataUrl = async (blob: Blob): Promise<string | null> => {
     const buf = new Uint8Array(await blob.arrayBuffer());
-    const fmt = buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpeg" : null;
+    let fmt: "png" | "jpeg" | null = null;
+    if (buf[0] === 0x89) fmt = "png";
+    else if (buf[0] === 0xff) fmt = "jpeg";
     if (!fmt) return null;
-    const binary = Array.from(buf).map((b) => String.fromCharCode(b)).join("");
+    const binary = Array.from(buf).map((b) => String.fromCodePoint(b)).join("");
     return `data:image/${fmt};base64,${btoa(binary)}`;
   };
 
@@ -171,7 +174,7 @@ function CatalogueLoaded({
     if (visible.length === 0 || isExporting) return;
     if (
       visible.length === labTestMeans.length &&
-      !window.confirm(`Export all ${visible.length} benches as PDF?`)
+      !globalThis.confirm(`Export all ${visible.length} benches as PDF?`)
     ) {
       return;
     }
@@ -189,7 +192,7 @@ function CatalogueLoaded({
         CatalogueExport({
           benches: resolved,
           filtersDescription: serializeFilters(filters, tree),
-          baseUrl: window.location.origin,
+          baseUrl: globalThis.location.origin,
         }),
       ).toBlob();
       const url = URL.createObjectURL(blob);

@@ -57,10 +57,10 @@ const STEPS: StepDef[] = [
 function StepCard({
   step,
   rawDate,
-}: {
+}: Readonly<{
   step: StepDef;
   rawDate?: string;
-}) {
+}>) {
   const reached = !!rawDate;
   const formatted = formatDate(rawDate);
   const description = reached
@@ -102,9 +102,9 @@ function StepCard({
 
 export default function LifecycleSection({
   lifecycle,
-}: {
+}: Readonly<{
   lifecycle: Lifecycle;
-}) {
+}>) {
   return (
     <ul className="space-y-3">
       {STEPS.map((s) => (

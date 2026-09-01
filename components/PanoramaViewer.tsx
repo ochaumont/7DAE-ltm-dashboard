@@ -6,7 +6,7 @@ type Props = {
   src: string;
 };
 
-export default function PanoramaViewer({ src }: Props) {
+export default function PanoramaViewer({ src }: Readonly<Props>) {
   return (
     <ReactPhotoSphereViewer
       src={src}

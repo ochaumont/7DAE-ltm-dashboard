@@ -13,9 +13,9 @@ import LifecycleSection from "./detail/LifecycleSection";
 
 export default function LabTestMeanHeader({
   labTestMean,
-}: {
+}: Readonly<{
   labTestMean: LabTestMean;
-}) {
+}>) {
   const m = labTestMean;
   const projectManager = m.roles.projectManagers?.[0];
 

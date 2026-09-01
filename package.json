@@ -6,7 +6,10 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "npx --yes serve out -l 3001",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "sonar": "bash sonar.sh",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "engines": {
     "node": ">=20.9.0"
@@ -29,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.5",
+    "@playwright/test": "^1.62.1",
     "@types/d3-geo": "3.1.0",
     "@types/node": "22.19.20",
     "@types/react": "19.2.17",

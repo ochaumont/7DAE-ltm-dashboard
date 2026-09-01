@@ -6,6 +6,6 @@ const PanoramaViewer = dynamic(() => import("./PanoramaViewer"), {
   ssr: false,
 });
 
-export default function PanoramaClient({ src }: { src: string }) {
+export default function PanoramaClient({ src }: Readonly<{ src: string }>) {
   return <PanoramaViewer src={src} />;
 }

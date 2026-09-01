@@ -36,7 +36,7 @@ export default function RefreshButton() {
   );
 }
 
-function RefreshIcon({ spinning }: { spinning: boolean }) {
+function RefreshIcon({ spinning }: Readonly<{ spinning: boolean }>) {
   return (
     <svg
       width="18"
