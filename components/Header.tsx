@@ -39,8 +39,8 @@ export default function Header() {
       <div className="relative px-4 md:px-6 py-3 flex items-center gap-6 max-w-[1600px] mx-auto">
         <Link
           href="/"
-          className="flex items-center hover:opacity-80 transition-opacity"
-          aria-label="Airbus — go to catalogue"
+          className="flex flex-col items-start gap-0.5 hover:opacity-80 transition-opacity"
+          aria-label="Airbus Lab Test Means — go to catalogue"
         >
           {logoFailed ? (
             <span className="text-lg font-bold tracking-tight">Airbus</span>
@@ -52,6 +52,11 @@ export default function Header() {
               onError={() => setLogoFailed(true)}
             />
           )}
+          <img
+            src={`${process.env.NEXT_PUBLIC_BASE_HREF ?? ""}/lab-test-means-wordmark.svg`}
+            alt="Lab Test Means"
+            className="h-2.5 w-auto"
+          />
         </Link>
 
         <nav className="flex items-center gap-1">
@@ -72,13 +77,6 @@ export default function Header() {
             Dependency View
           </Link>
         </nav>
-
-        {/* App title, perfectly centered in the bar regardless of side widths.
-            Hidden on small screens to avoid overlapping nav/actions. */}
-        <span className="hidden md:block absolute left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap text-base tracking-wide">
-          <span className="font-bold text-[#00205B]">Lab Test Means</span>{" "}
-          <span className="font-semibold text-[#00205B]/55">Board</span>
-        </span>
 
         <div className="ml-auto flex items-center gap-2 min-h-[32px]">
           {/* RESERVED: avatar, global search, notifications (V2) */}

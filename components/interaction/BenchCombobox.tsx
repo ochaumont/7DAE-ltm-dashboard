@@ -89,7 +89,7 @@ export default function BenchCombobox({
   }
 
   return (
-    <div ref={rootRef} className="relative w-full max-w-xl">
+    <div ref={rootRef} className="relative min-w-[140px] max-w-xl flex-1 basis-52">
       <input
         type="text"
         role="combobox"
