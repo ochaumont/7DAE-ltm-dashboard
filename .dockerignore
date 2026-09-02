@@ -7,6 +7,5 @@ dist
 .gitignore
 Dockerfile
 .dockerignore
-deployment
 *.md
 .env*.local

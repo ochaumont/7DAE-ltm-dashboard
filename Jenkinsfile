@@ -29,7 +29,7 @@ pipeline {
         NPMRC_PATH          = 'config/.npmrc'
 
         BASE_HREF               = "/atom-ltm-dashboard"
-        ATOM_API_URL_VAL        = "https://gateway2-val.after-val.eu.airbus.corp/atom-synchronizer-val"
+        ATOM_API_URL_VAL        = "https://gateway-val.after-val.eu.airbus.corp/atom-synchronizer-val"
         ATOM_API_URL_PROD       = "https://gateway2.after.eu.airbus.corp/atom-synchronizer-prod"
     }
 
